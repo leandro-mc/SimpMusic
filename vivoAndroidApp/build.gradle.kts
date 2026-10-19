@@ -40,6 +40,8 @@ android {
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
 
+        buildConfigField("Boolean", "IS_PERSONAL_FORK", "false")
+
         @Suppress("UnstableApiUsage")
         androidResources {
             localeFilters +=
