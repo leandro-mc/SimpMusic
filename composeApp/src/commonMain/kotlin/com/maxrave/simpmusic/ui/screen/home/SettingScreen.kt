@@ -110,6 +110,11 @@ import com.maxrave.domain.repository.ImportProgress
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
+import com.maxrave.simpmusic.expect.floatinglyrics.isFloatingLyricsAvailable
+import com.maxrave.simpmusic.expect.floatinglyrics.requestFloatingLyricsOverlayPermission
+import com.maxrave.simpmusic.expect.floatinglyrics.startFloatingLyricsWindow
+import com.maxrave.simpmusic.expect.floatinglyrics.stopFloatingLyricsWindow
 import com.maxrave.simpmusic.expect.ui.LoginSyncDialog
 import com.maxrave.simpmusic.expect.ui.filePickerResult
 import com.maxrave.simpmusic.expect.ui.fileSaverResult
@@ -2172,6 +2177,48 @@ fun SettingScreen(
                         subtitle = stringResource(Res.string.scrobbling_info),
                         switch = (lastfmScrobbleEnabled to { viewModel.setLastfmScrobbleEnabled(it) }),
                         isEnable = lastfmLoggedIn,
+                    )
+                }
+            }
+        }
+        // BEATLAND-only personal feature (floating lyrics) — not part of upstream SimpMusic. Hidden
+        // entirely everywhere isFloatingLyricsAvailable() is false (every other build/platform), the
+        // same shape as the Last.fm block above being hidden when viewModel.lastfmAvailable is false.
+        // See docs/beatland/FEATURES.md.
+        if (isFloatingLyricsAvailable()) {
+            item(key = "floating_lyrics") {
+                var permissionGranted by remember { mutableStateOf(hasFloatingLyricsOverlayPermission()) }
+                var windowShowing by rememberSaveable { mutableStateOf(false) }
+                SettingGroup(title = "Floating lyrics") {
+                    SettingItem(
+                        title = "Show floating lyrics window",
+                        subtitle =
+                            if (!permissionGranted) {
+                                "Needs the \"display over other apps\" permission — turning this on opens that " +
+                                    "system screen; turn it on again once you've granted it"
+                            } else {
+                                "A small bubble with the current lyrics stays on top of other apps (WhatsApp, " +
+                                    "Instagram, ...). Drag it anywhere, tap to expand"
+                            },
+                        smallSubtitle = true,
+                        switch =
+                            (
+                                windowShowing to { checked ->
+                                    if (checked) {
+                                        permissionGranted = hasFloatingLyricsOverlayPermission()
+                                        if (!permissionGranted) {
+                                            requestFloatingLyricsOverlayPermission()
+                                            windowShowing = false
+                                        } else {
+                                            startFloatingLyricsWindow()
+                                            windowShowing = true
+                                        }
+                                    } else {
+                                        stopFloatingLyricsWindow()
+                                        windowShowing = false
+                                    }
+                                }
+                            ),
                     )
                 }
             }

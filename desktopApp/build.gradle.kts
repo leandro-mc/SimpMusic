@@ -7,8 +7,18 @@ import java.net.URI
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Properties
 
-// desktopApp — JVM application module for SimpMusic Desktop.
+// BEATLAND: display name of the app comes from beatland.properties at the repo root (single source
+// of truth, see docs/beatland/BRANDING.md). Only DISPLAY-facing strings use it; internal
+// identifiers (app.fsname, app.rdns-name, the installed binary name, url schemes) stay "simpmusic".
+val beatlandBrandName: String =
+    Properties()
+        .apply { rootProject.file("beatland.properties").inputStream().use { load(it) } }
+        .getProperty("brand.name")
+        .trim()
+
+// desktopApp — JVM application module for SimpMusic Desktop (Beatland fork).
 //
 // Per JetBrains 2026 KMP guidance (AGP 9 + new default structure), the
 // platform-app entry points live in dedicated modules separate from the
@@ -125,11 +135,16 @@ dependencies {
 tasks.named<hydraulic.conveyor.gradle.WriteConveyorConfigTask>("writeConveyorConfig") {
     dependsOn(tasks.named("proguardReleaseJars"))
     val proguardJarsDir = layout.buildDirectory.dir("compose/tmp/main-release/proguard")
+    // BEATLAND: a local copy, so doLast does not capture the build-script object (configuration cache).
+    val brandName = beatlandBrandName
+    notCompatibleWithConfigurationCache(
+        "doLast appends Beatland-specific Conveyor config keys using build-script-level references.",
+    )
     doLast {
         destination.get().asFile.appendText(
             """
             |app.fsname = simpmusic
-            |app.display-name = SimpMusic
+            |app.display-name = $brandName
             |app.rdns-name = com.maxrave.simpmusic
             |
             |// Override the Gradle-detected classpath with the ProGuard'd
@@ -167,7 +182,7 @@ compose.desktop {
             }
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")
-            packageName = "SimpMusic"
+            packageName = beatlandBrandName
             macOS {
                 val formatedDate =
                     Instant.now().let {
@@ -178,7 +193,7 @@ compose.desktop {
                     }
                 includeAllModules = true
                 packageVersion = formatedDate
-                iconFile.set(rootDir.resolve("composeApp/icon/circle_app_icon.icns"))
+                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.icns"))
                 val macExtraPlistKeys =
                     """
                     <key>LSApplicationCategoryType</key>
@@ -213,7 +228,7 @@ compose.desktop {
                     libs.versions.version.name
                         .get()
                         .removeSuffix("-hf")
-                iconFile.set(rootDir.resolve("composeApp/icon/circle_app_icon.ico"))
+                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.ico"))
             }
             linux {
                 includeAllModules = true
@@ -221,7 +236,7 @@ compose.desktop {
                     libs.versions.version.name
                         .get()
                         .removeSuffix("-hf")
-                iconFile.set(rootDir.resolve("composeApp/icon/circle_app_icon.png"))
+                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.png"))
             }
         }
 
@@ -335,7 +350,7 @@ tasks.register("packageConveyorAppImage") {
     )
 
     doLast {
-        val appName = "SimpMusic"
+        val appName = beatlandBrandName
         val conveyorOutput = rootDir.resolve("output")
         if (!conveyorOutput.exists()) {
             throw GradleException(
@@ -379,7 +394,7 @@ tasks.register("packageConveyorAppImage") {
         FileUtils.copyDirectory(conveyorOutput, appDir)
 
         // Ensure top-level PNG icon expected by appimagetool exists.
-        val iconSrc = rootDir.resolve("composeApp/icon/circle_app_icon.png")
+        val iconSrc = rootDir.resolve("composeApp/icon/beatland_app_icon.png")
         val iconDst = appDir.resolve("simpmusic.png")
         if (!iconDst.exists() && iconSrc.exists()) {
             FileUtils.copyFile(iconSrc, iconDst)
@@ -399,13 +414,13 @@ tasks.register("packageConveyorAppImage") {
             """[Desktop Entry]
             |Type=Application
             |Version=1.0
-            |Name=SimpMusic
-            |Comment=SimpMusic v$versionName - FOSS YouTube Music Client
+            |Name=$beatlandBrandName
+            |Comment=$beatlandBrandName v$versionName - FOSS YouTube Music Client
             |Exec=bin/simpmusic %u
             |Icon=simpmusic
             |Terminal=false
             |Categories=Audio;AudioVideo;
-            |StartupWMClass=SimpMusic
+            |StartupWMClass=$beatlandBrandName
             |MimeType=x-scheme-handler/simpmusic;x-scheme-handler/wordbyword;
             |
             """.trimMargin(),

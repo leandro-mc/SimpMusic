@@ -3,6 +3,7 @@ package com.maxrave.simpmusic.ui.screen.other
 import com.maxrave.domain.extension.epochMillisToLocalDateTime
 import com.maxrave.domain.extension.now
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.expect.shareImage
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.utils.VersionManager
@@ -215,7 +216,7 @@ internal suspend fun exportLog(chooserTitle: String): Boolean {
         withContext(Dispatchers.IO) {
             runCatching {
                 buildString {
-                    appendLine("SimpMusic ${VersionManager.getVersionName()} · ${getPlatform().osName()}")
+                    appendLine("${Brand.NAME} ${VersionManager.getVersionName()} · ${getPlatform().osName()}")
                     for (name in listOf(Logger.APP_LOG, Logger.ERROR_LOG)) {
                         appendLine()
                         appendLine("===== $name.log =====")

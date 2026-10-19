@@ -83,6 +83,35 @@ android {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // BEATLAND: personal fork variant, parallel-installable next to the official app.
+    // "official" adds zero overrides: building it is the same as building this project without
+    // this block. "beatland" gets its own applicationId (installs alongside the official app, no
+    // uninstall needed), its own name/icon (src/beatland/res/..., resource-overridden; the name
+    // file is generated from beatland.properties by scripts/beatland/apply_brand.py) and the extra
+    // permission + service the floating-lyrics feature needs, added ADDITIVELY via
+    // src/beatland/AndroidManifest.xml (src/main/AndroidManifest.xml is not touched; AGP's
+    // manifest merger combines the two).
+    // The ".beatland" suffix is also checked at runtime by FloatingLyricsCapability.android.kt.
+    // See docs/beatland/ for the full picture.
+    // ─────────────────────────────────────────────────────────────────────
+    flavorDimensions += "branding"
+    productFlavors {
+        create("official") {
+            dimension = "branding"
+            // Upstream's release-only "unofficial build" check stays ON for the official flavor.
+            buildConfigField("boolean", "IS_PERSONAL_FORK", "false")
+        }
+        create("beatland") {
+            dimension = "branding"
+            applicationIdSuffix = ".beatland"
+            versionNameSuffix = "-beatland"
+            // Upstream blocks any applicationId outside Config.OFFICIAL_PACKAGE_NAMES (a list in the
+            // `core` submodule, which this fork cannot edit). MainActivity skips the check when true.
+            buildConfigField("boolean", "IS_PERSONAL_FORK", "true")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -190,7 +219,7 @@ dependencies {
 sentry {
     org.set("simpmusic")
     projectName.set("android")
-    ignoredFlavors.set(setOf("foss"))
+    ignoredFlavors.set(setOf("foss", "beatland")) // BEATLAND: no Sentry instrumentation in the personal flavor
     ignoredBuildTypes.set(setOf("debug"))
     autoInstallation.enabled = false
     if (isFullBuild) {

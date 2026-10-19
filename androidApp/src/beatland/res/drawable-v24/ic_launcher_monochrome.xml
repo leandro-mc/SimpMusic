@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon (Android 13+) source: the system re-colors this to match the user's wallpaper
+     theme, so it just needs to be the silhouette in a single opaque color. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54.00,24.00 L55.83,25.25 L57.62,26.50 L59.36,27.75 L61.00,29.00 L62.52,30.25 L63.90,31.50 L65.11,32.75 L66.12,34.00 L66.93,35.25 L67.52,36.50 L67.88,37.75 L68.00,39.00 L67.88,40.25 L67.52,41.50 L66.93,42.75 L66.12,44.00 L65.11,45.25 L63.90,46.50 L62.52,47.75 L61.00,49.00 L59.36,50.25 L57.62,51.50 L55.83,52.75 L54.00,54.00 L52.17,55.25 L50.38,56.50 L48.64,57.75 L47.00,59.00 L45.48,60.25 L44.10,61.50 L42.89,62.75 L41.88,64.00 L41.07,65.25 L40.48,66.50 L40.12,67.75 L40.00,69.00 L40.12,70.25 L40.48,71.50 L41.07,72.75 L41.88,74.00 L42.89,75.25 L44.10,76.50 L45.48,77.75 L47.00,79.00 L48.64,80.25 L50.38,81.50 L52.17,82.75 L54.00,84.00"
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="13"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

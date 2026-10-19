@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maxrave.domain.data.entities.SongEntity
 import com.maxrave.domain.extension.now
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.ui.component.EntryCard
 import com.maxrave.simpmusic.ui.component.ShareImageSheet
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsCardMaxWidth
@@ -114,7 +115,7 @@ internal fun ShareReceiptSheet(
     ShareImageSheet(
         title = stringResource(Res.string.receipt_share_title),
         seedColor = seedColor,
-        fileNamePrefix = "SimpMusic_receipt",
+        fileNamePrefix = "${Brand.NAME}_receipt",
         onDismiss = onDismiss,
     ) { captureModifier ->
         // The shadow sits outside the captured node: it belongs to the sheet, not to the image.

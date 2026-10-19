@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.brand.Brand
 import org.jetbrains.compose.resources.painterResource
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.mono
@@ -176,7 +177,7 @@ internal fun ShareCardSignature(
         }
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "SimpMusic",
+            text = Brand.NAME,
             color = content.copy(alpha = 0.68f),
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,

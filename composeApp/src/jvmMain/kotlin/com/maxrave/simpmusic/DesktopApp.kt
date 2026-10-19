@@ -73,7 +73,7 @@ import org.koin.mp.KoinPlatform.getKoin
 import org.simpmusic.lastfm.configLastfm
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.app_name
-import simpmusic.composeapp.generated.resources.circle_app_icon
+import simpmusic.composeapp.generated.resources.beatland_app_icon
 import simpmusic.composeapp.generated.resources.close_miniplayer
 import simpmusic.composeapp.generated.resources.explicit_content_blocked
 import simpmusic.composeapp.generated.resources.open_app
@@ -312,7 +312,7 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
         // Tray menus are narrow, so long titles would stretch the popup.
         val trayLabel: (String) -> String = { if (it.length > 40) it.take(39).trimEnd() + "…" else it }
         Tray(
-            icon = painterResource(Res.drawable.circle_app_icon),
+            icon = painterResource(Res.drawable.beatland_app_icon),
             tooltip =
                 when {
                     hasTrack && nowPlayingArtist.isNotBlank() -> "$nowPlayingTitle — $nowPlayingArtist"
@@ -366,7 +366,7 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
                 isVisible = false
             },
             title = stringResource(Res.string.app_name),
-            icon = painterResource(Res.drawable.circle_app_icon),
+            icon = painterResource(Res.drawable.beatland_app_icon),
             undecorated = !nativeTitleBar,
             transparent = !nativeTitleBar,
             state = windowState,

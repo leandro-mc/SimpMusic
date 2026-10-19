@@ -13,6 +13,7 @@ import com.maxrave.common.SETTINGS_FILENAME
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.repository.CommonRepository
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.brand.Brand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -158,7 +159,7 @@ class AutoBackupWorker(
                 put(MediaStore.Downloads.DISPLAY_NAME, fileName)
                 put(MediaStore.Downloads.MIME_TYPE, "application/zip")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Downloads.RELATIVE_PATH, "Download/SimpMusic")
+                    put(MediaStore.Downloads.RELATIVE_PATH, "Download/${Brand.NAME}")
                 }
             }
 
@@ -173,7 +174,7 @@ class AutoBackupWorker(
                         input.copyTo(output)
                     }
                 }
-                Logger.i(TAG, "Backup saved to Downloads/SimpMusic/$fileName")
+                Logger.i(TAG, "Backup saved to Downloads/${Brand.NAME}/$fileName")
                 true
             } ?: false
         } catch (e: Exception) {
@@ -197,7 +198,7 @@ class AutoBackupWorker(
             }
 
             val selectionArgs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                arrayOf("Download/SimpMusic/", "simpmusic_backup_%.zip")
+                arrayOf("Download/${Brand.NAME}/", "simpmusic_backup_%.zip")
             } else {
                 arrayOf("simpmusic_backup_%.zip")
             }

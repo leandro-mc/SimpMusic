@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.expect.saveImageToDevice
 import com.maxrave.simpmusic.expect.shareImage
 import com.maxrave.simpmusic.expect.ui.rememberSaveImagePermission
@@ -137,7 +138,7 @@ fun ShareLyricsSheet(
     val fileName =
         remember(songTitle) {
             val stem = songTitle.ifBlank { "lyrics" }.take(32).map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")
-            "SimpMusic_${stem}_${Random.nextInt(100_000, 999_999)}.png"
+            "${Brand.NAME}_${stem}_${Random.nextInt(100_000, 999_999)}.png"
         }
 
     // Saving is the only half that can be refused: sharing goes through the app's own cache, which

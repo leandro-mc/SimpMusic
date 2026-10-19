@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.kmpalette.loader.rememberNetworkLoader
 import com.kmpalette.rememberDominantColorState
 import com.maxrave.domain.data.model.taste.TasteProfile
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.ui.component.ShareImageSheet
 import com.maxrave.simpmusic.ui.component.lyrics.ShareCardSignature
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsCardMaxWidth
@@ -67,7 +68,7 @@ fun ShareTasteSheet(
     ShareImageSheet(
         title = stringResource(Res.string.taste_share_title),
         seedColor = seedColor,
-        fileNamePrefix = "SimpMusic_taste",
+        fileNamePrefix = "${Brand.NAME}_taste",
         onDismiss = onDismiss,
         belowImage = { content ->
             ShareLyricsPalette(

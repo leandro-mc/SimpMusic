@@ -77,6 +77,7 @@ import com.maxrave.domain.data.model.listentogether.RoomConnection
 import com.maxrave.domain.data.model.listentogether.RoomJoinRequest
 import com.maxrave.domain.data.model.listentogether.RoomMember
 import com.maxrave.domain.data.model.listentogether.RoomSuggestion
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.expect.shareUrl
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
@@ -435,7 +436,7 @@ private fun CreditFooter() {
 }
 
 /** Prefix for the share button; the code alone means nothing to the recipient. */
-private const val SHARE_PREFIX = "Join my SimpMusic room with code "
+private const val SHARE_PREFIX = "Join my ${Brand.NAME} room with code "
 
 // ───────────────────────────────── structure ─────────────────────────────────
 

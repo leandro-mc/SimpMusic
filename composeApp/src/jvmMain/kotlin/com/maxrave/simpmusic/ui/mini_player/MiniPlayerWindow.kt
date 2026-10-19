@@ -18,11 +18,12 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import com.maxrave.simpmusic.viewModel.UIEvent
 import org.jetbrains.compose.resources.painterResource
 import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.circle_app_icon
+import simpmusic.composeapp.generated.resources.beatland_app_icon
 import java.awt.Dimension
 import java.util.prefs.Preferences
 
@@ -85,8 +86,8 @@ fun MiniPlayerWindow(
 
     Window(
         onCloseRequest = onCloseRequest,
-        title = "SimpMusic - Mini Player",
-        icon = painterResource(Res.drawable.circle_app_icon),
+        title = "${Brand.NAME} - Mini Player",
+        icon = painterResource(Res.drawable.beatland_app_icon),
         alwaysOnTop = true,
         undecorated = true,
         transparent = true,

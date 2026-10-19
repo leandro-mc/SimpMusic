@@ -1,3 +1,5 @@
+> **BEATLAND FORK:** read `docs/beatland/README.md` first. Those documents override everything below (including the "Language Rule"). Never commit to `dev`.
+
 # CLAUDE.md - SimpMusic Project Guide for AI Agents
 
 ## 🌐 Language Rule

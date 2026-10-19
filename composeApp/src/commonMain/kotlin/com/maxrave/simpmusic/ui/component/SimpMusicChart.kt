@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.ui.theme.LocalIsDarkTheme
 
 @Composable
@@ -52,7 +53,7 @@ fun SimpMusicChartButton(
 
             // Text
             Text(
-                text = "Introducing SimpMusic Chart",
+                text = "Introducing ${Brand.NAME} Chart",
                 fontSize = 13.sp,
                 color = labelColor,
                 fontWeight = FontWeight.Normal

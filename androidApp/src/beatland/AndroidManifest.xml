@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Beatland-only additions, merged by AGP's manifest merger on top of the untouched
+  src/main/AndroidManifest.xml. Only present in the "beatland" flavor — the "official"
+  flavor's manifest is exactly what src/main/AndroidManifest.xml already was.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- "Display over other apps" — has no runtime dialog, granted via a system Settings screen
+         (see FloatingLyricsPermission in composeApp's androidMain). -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Required on Android 14+ (API 34) to start a foreground service whose job doesn't fit one
+         of the predefined foregroundServiceType values. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <application>
+        <service
+            android:name="com.maxrave.simpmusic.floatinglyrics.FloatingLyricsService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="floating_lyrics_overlay" />
+        </service>
+    </application>
+
+</manifest>

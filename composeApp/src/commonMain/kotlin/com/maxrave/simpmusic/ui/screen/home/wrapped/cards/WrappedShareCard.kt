@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.ui.icon.Download
 import com.maxrave.simpmusic.ui.icon.Share
 import com.maxrave.simpmusic.ui.icon.SimpIcons
@@ -376,7 +377,7 @@ private fun PosterSignature(wrapped: WrappedYear) {
             Text(
                 // A brand name, not copy — it is spelled this way in every language, exactly as
                 // the lyrics share card spells it, and set in the same muted weight it uses there.
-                text = "SimpMusic",
+                text = Brand.NAME,
                 style = MaterialTheme.typography.bodySmall,
             )
         }

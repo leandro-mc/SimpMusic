@@ -776,6 +776,13 @@ val mpvSetupAll by tasks.registering {
     inputs.property("mpvNativesTag", mpvNativesTag)
     inputs.property("mpvNativesChecksums", mpvNativesChecksums)
     outputs.dir(outputRoot)
+    // BEATLAND: doLast calls build-script-level downloadIfMissing()/sha256() helpers, which the
+    // configuration cache cannot serialize ("cannot serialize Gradle script object references").
+    // Upstream CI works around it with --no-configuration-cache on the command line; this bakes the
+    // same opt-out into the task so the flag is not needed locally. See docs/beatland/DECISIONS.md (D-012).
+    notCompatibleWithConfigurationCache(
+        "Calls build-script-level downloadIfMissing()/sha256() helpers from within doLast.",
+    )
     doLast {
         val cache = mpvCacheDir.get().asFile
         mpvSlices.forEach { slice ->

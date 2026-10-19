@@ -1,6 +1,7 @@
 package com.maxrave.simpmusic
 
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.brand.Brand
 
 /**
  * Registers the "simpmusic://" custom URI protocol handler in Windows Registry
@@ -9,7 +10,7 @@ import com.maxrave.logger.Logger
  * Registry structure:
  * ```
  * HKCU\Software\Classes\simpmusic
- *     (Default) = "URL:SimpMusic Protocol"
+ *     (Default) = "URL:${Brand.NAME} Protocol"
  *     URL Protocol = ""
  *     \DefaultIcon
  *         (Default) = "\"<exe_path>\",0"
@@ -37,8 +38,8 @@ object WindowsProtocolRegistrar {
             return
         }
 
-        register(SCHEME, "URL:SimpMusic Protocol", exePath)
-        register(LASTFM_SCHEME, "URL:SimpMusic Last.fm Callback", exePath)
+        register(SCHEME, "URL:${Brand.NAME} Protocol", exePath)
+        register(LASTFM_SCHEME, "URL:${Brand.NAME} Last.fm Callback", exePath)
     }
 
     private fun register(
@@ -89,8 +90,8 @@ object WindowsProtocolRegistrar {
     private fun resolveExePath(): String? {
         // JPackage directory structure:
         //   <app>/runtime/...  (java.home points here)
-        //   <app>/SimpMusic.exe
-        // So we go: java.home → parent (runtime) → parent (app) → SimpMusic.exe
+        //   <app>/<Brand.NAME>.exe
+        // So we go: java.home → parent (runtime) → parent (app) → <Brand.NAME>.exe
         val javaHome = System.getProperty("java.home") ?: return null
         val javaHomeDir = java.io.File(javaHome)
 
@@ -105,7 +106,7 @@ object WindowsProtocolRegistrar {
         }
 
         if (appDir != null) {
-            val exeFile = java.io.File(appDir, "SimpMusic.exe")
+            val exeFile = java.io.File(appDir, "${Brand.NAME}.exe")
             if (exeFile.exists()) {
                 return exeFile.absolutePath
             }

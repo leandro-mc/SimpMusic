@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.brand.Brand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.mp.KoinPlatform.getKoin
@@ -16,7 +17,7 @@ import java.io.File
 
 private const val TAG = "ShareImage"
 private const val MIME_PNG = "image/png"
-private const val ALBUM = "SimpMusic"
+private const val ALBUM = Brand.NAME
 
 actual suspend fun saveImageToDevice(
     bytes: ByteArray,

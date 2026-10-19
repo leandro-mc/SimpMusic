@@ -55,6 +55,7 @@ import com.kyant.backdrop.highlight.Highlight
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.expect.saveImageToDevice
 import com.maxrave.simpmusic.expect.shareImage
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
@@ -626,7 +627,7 @@ private fun rememberWrappedShare(
     // reel must not silently overwrite the first.
     val fileName =
         remember(wrapped.year) {
-            "SimpMusic_Wrapped_${wrapped.year}_${Random.nextInt(100_000, 999_999)}.png"
+            "${Brand.NAME}_Wrapped_${wrapped.year}_${Random.nextInt(100_000, 999_999)}.png"
         }
 
     // Only saving can be refused; sharing goes through the app's own cache and needs nothing. On
