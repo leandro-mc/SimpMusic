@@ -15,6 +15,8 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 - `SettingScreen.kt`: imports + bloque `item(key = "floating_lyrics")`, justo antes de `sponsor_block`.
 - `androidApp/build.gradle.kts`: flavors (ver `DECISIONS.md` D-002, D-010, D-016).
 
+**iOS:** el target iOS está comentado en `composeApp/build.gradle.kts` (upstream), por eso no hay `actual` en `iosMain`. Si upstream lo activa, añadir un `FloatingLyricsCapability.ios.kt` con todo en `false`/no-op (igual que el de jvmMain).
+
 **Disponibilidad:** `isFloatingLyricsAvailable()` es `true` solo si el `applicationId` contiene `.beatland`.
 
 **Diseño:** azul y azul marino (D-004); el tinte dinámico de la carátula puede ser de cualquier color.
