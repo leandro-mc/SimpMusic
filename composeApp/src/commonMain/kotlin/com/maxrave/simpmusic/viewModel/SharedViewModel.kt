@@ -71,6 +71,7 @@ import com.maxrave.domain.utils.toTrack
 import com.maxrave.logger.LogLevel
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.brand.ForkPolicy
 import com.maxrave.simpmusic.expect.getDownloadFolderPath
 import com.maxrave.simpmusic.expect.isOnUnmeteredNetwork
 import com.maxrave.simpmusic.expect.ui.toByteArray
@@ -1189,6 +1190,11 @@ class SharedViewModel(
     val updateResponse: StateFlow<UpdateData?> = _updateResponse
 
     fun checkForUpdate() {
+        // BEATLAND: upstream's update feeds would offer the official SimpMusic, not this fork (D-009).
+        if (!ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED) {
+            _isCheckingUpdate.value = false
+            return
+        }
         // Raised before the coroutine starts, so Home's launch banner, which reads it right after
         // startup, can never miss a check that is already under way but not yet marked.
         _isCheckingUpdate.value = true
