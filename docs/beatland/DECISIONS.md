@@ -24,7 +24,7 @@ Los IDs se citan en comentarios de código y en `scripts/beatland/apply_brand.py
 | D-017 | Reemplazada por D-020 | Ícono temporal de Sonara (onda en forma de "S"). | — |
 | D-018 | Vigente | `vivoAndroidApp` también define `buildConfigField IS_PERSONAL_FORK = false`. | `vivoAndroidApp` comparte `MainActivity.kt` con `androidApp`, que ahora lee `BuildConfig.IS_PERSONAL_FORK`; sin el campo no compila. (Lo añadió el dueño.) |
 | D-019 | Vigente | Versión del Android Gradle Plugin fijada en `9.3.0` (`gradle/libs.versions.toml`, antes `9.4.1`). | Compatibilidad con el Android Studio del dueño. Si un sync con `dev` la sube otra vez, **conservar 9.3.0** hasta que el IDE soporte la nueva. (Lo hizo el dueño.) |
-| D-020 | Vigente | Ícono Beatland: monograma "B" dorado sobre azul marino, generado por `scripts/beatland/generate_icon.py` (vectores adaptativos + monocromo + PNG/ICO/ICNS). Sin morado. | Aspecto sobrio/premium. Para cambiarlo, editar el script y volver a ejecutarlo; no editar los PNG a mano. |
+| D-020 | Vigente | Ícono Beatland v2: una "b" minúscula blanca que funciona como nota/vinilo (tallo + aro) sobre degradado azul vivo con luz suave, viñeta y sombra. Generado por `scripts/beatland/generate_icon.py` (vectores adaptativos + monocromo + PNG/ICO/ICNS). Paletas alternativas sin morado: `--palette sunset` (naranja/rojo) y `--palette ink` (negro y dorado). | Aspecto moderno/premium y legible a 40 px. Para cambiarlo, editar el script y volver a ejecutarlo; no editar los PNG a mano. Reemplaza el monograma "B" dorado inicial. |
 | D-021 | Vigente | El flavor `beatland` es el predeterminado (`isDefault = true`). | Evitar que el IDE seleccione `official` (que no muestra la ventana flotante ni el nombre Beatland). |
 
 ## Plantilla para nuevas decisiones
