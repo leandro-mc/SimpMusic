@@ -2,26 +2,30 @@
 """
 Beatland launcher icon generator (requires Pillow + numpy).
 
-    python3 scripts/beatland/generate_icon.py                 # default palette
-    python3 scripts/beatland/generate_icon.py --palette sunset
-    python3 scripts/beatland/generate_icon.py --preview-only  # only writes /tmp/beatland_icon_palettes.png
+    python3 scripts/beatland/generate_icon.py            # regenerate every asset
+    python3 scripts/beatland/generate_icon.py --preview  # also write /tmp/beatland_icon_preview.png
 
-Concept: a bold lowercase "b" that doubles as a music note / vinyl record: a rounded stem plus a ring
-(the ring is the note head and the record). White glyph on a vivid gradient with a soft light source,
-a gentle vignette and a soft drop shadow, so it reads clearly at 48 px and still looks rich at 512 px.
-No purple anywhere (docs/beatland/RULES.md).
+Concept "Beamed": two beamed eighth notes whose beam turns into a sound wave that decays off to the
+right ("beat" + "land": the rhythm travelling across the horizon). White notes with a soft cool
+gradient, cyan-to-lime wave, on a deep navy background with a teal glow. No purple anywhere
+(docs/beatland/RULES.md). Decision D-020.
+
+Everything is built from ONE geometry (normalised 0..1 "design tile" coordinates below):
+  * raster tile  (legacy launcher PNGs, desktop PNG/ICO/ICNS, in-app drawable): the tile fills the image.
+  * adaptive icon (Android 8+ vectors): the design tile is mapped onto the central ~79x79 of the 108x108
+    viewport (see ADAPTIVE_BOOST); the background layer fills the whole 108x108 and the
+    wave keeps running into the masked-out area, so it simply "leaves" the icon.
 
 Writes:
   androidApp/src/beatland/res/drawable-v24/ic_launcher_{background,foreground,monochrome}.xml
   androidApp/src/beatland/res/mipmap-{m,h,xh,xxh,xxxh}dpi/ic_launcher{,_round}.png   (legacy < API 26)
   composeApp/icon/beatland_app_icon.{png,ico,icns}                                   (desktop packaging)
   composeApp/src/commonMain/composeResources/drawable/beatland_app_icon.png          (in-app / window icon)
-
-Geometry is expressed in the Android adaptive-icon 108x108 viewport (safe zone = central 66x66).
 """
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 
 import numpy as np
@@ -30,90 +34,287 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parents[2]
 RES = ROOT / "androidApp/src/beatland/res"
 
-# ---- palettes (all purple-free). stops: (offset, rgb) along a diagonal from top-left to bottom-right --------
-PALETTES = {
-    # cool, energetic, clearly different from Spotify green / Apple red
-    "azure": {
-        "stops": [(0.0, (0x26, 0xC6, 0xF2)), (0.5, (0x25, 0x78, 0xFF)), (1.0, (0x10, 0x46, 0xD2))],
-        "glyph": ((0xFF, 0xFF, 0xFF), (0xDD, 0xEC, 0xFF)),
-        "shadow": (0x06, 0x1C, 0x6B),
-    },
-    # warm, sunny, high energy
-    "sunset": {
-        "stops": [(0.0, (0xFF, 0xB8, 0x2E)), (0.5, (0xFF, 0x6A, 0x2F)), (1.0, (0xEC, 0x23, 0x4C))],
-        "glyph": ((0xFF, 0xFF, 0xFF), (0xFF, 0xE9, 0xD9)),
-        "shadow": (0x7A, 0x0F, 0x22),
-    },
-    # dark, "premium" feel with a warm glyph
-    "ink": {
-        "stops": [(0.0, (0x1E, 0x25, 0x33)), (0.6, (0x0E, 0x12, 0x1B)), (1.0, (0x05, 0x07, 0x0C))],
-        "glyph": ((0xFF, 0xD7, 0x7A), (0xF2, 0x8B, 0x2E)),
-        "shadow": (0x00, 0x00, 0x00),
-    },
-}
-DEFAULT_PALETTE = "azure"
+# ============================================================================ design (0..1 tile) ============
+BG_TOP, BG_BOTTOM = "#0E2347", "#050A18"
+GLOW_COLOR, GLOW_CENTER, GLOW_RADIUS, GLOW_ALPHA = "#19C6D8", (0.60, 0.35), 0.60, 0.26
+NOTE_TOP, NOTE_BOTTOM = "#FFFFFF", "#CFE7FF"
+WAVE_STOPS = [(0.0, "#FFFFFF"), (0.45, "#7FF3FF"), (1.0, "#B8FF5E")]
+SHADOW = "#000814"
 
-# ---- glyph geometry: lowercase "b" = stem + ring (108 viewport) ------------------------------------------------
-# Drawn at a base size, then scaled around the icon centre by GLYPH_SCALE so the mark fills the tile
-# while staying inside the 66x66 adaptive-icon safe zone (worst-case distance ~32.4 of 33).
-GLYPH_SCALE = 1.06
-_C = 54.0
+HEADS = [  # centre x, centre y, rx, ry, rotation (deg)
+    (0.285, 0.730, 0.098, 0.072, -22.0),
+    (0.545, 0.665, 0.098, 0.072, -22.0),
+]
+STEMS = [  # x0, y0, x1, y1 (pills)
+    (0.355, 0.310, 0.402, 0.735),
+    (0.615, 0.245, 0.662, 0.670),
+]
+BEAM_X0, BEAM_KNEE, BEAM_X1 = 0.378, 0.640, 1.10
+BEAM_Y0, BEAM_Y_KNEE = 0.325, 0.268
+WAVE_AMP, WAVE_DECAY, WAVE_PERIOD = 0.07, 0.36, 0.34
+BEAM_W0, BEAM_W1 = 0.062, 0.014
+WAVE_X_GRAD = (0.35, 1.05)  # horizontal extent of the wave gradient
 
 
-def _p(v: float) -> float:  # position
-    return _C + (v - _C) * GLYPH_SCALE
+def beam_centerline(n: int = 520):
+    xs = np.linspace(BEAM_X0, BEAM_X1, n)
+    base = np.interp(xs, [BEAM_X0, BEAM_KNEE], [BEAM_Y0, BEAM_Y_KNEE])
+    after = xs > BEAM_KNEE
+    amp = np.where(after, WAVE_AMP * np.exp(-(xs - BEAM_KNEE) / WAVE_DECAY), 0.0)
+    ys = base + amp * np.sin(2 * math.pi * (xs - BEAM_KNEE) / WAVE_PERIOD) * after
+    ws = np.linspace(BEAM_W0, BEAM_W1, n)
+    return xs, ys, ws
 
 
-def _l(v: float) -> float:  # length / radius
-    return v * GLYPH_SCALE
+# ============================================================================ raster toolkit ================
+S = 1024  # master canvas
+SS = 3  # supersampling for shape masks
 
 
-STEM_X0, STEM_X1 = _p(33.5), _p(44.0)
-STEM_Y0, STEM_Y1 = _p(29.0), _p(79.5)
-RING_CX, RING_CY = _p(57.5), _p(62.0)
-RING_R_OUT, RING_R_IN = _l(17.5), _l(7.5)
-GLYPH_BOX = (_p(30.0), _p(26.0), _p(78.0), _p(82.0))  # x0, y0, x1, y1 used for the glyph's gradient
+def hexc(h: str) -> np.ndarray:
+    h = h.lstrip("#")
+    return np.array([int(h[i : i + 2], 16) for i in (0, 2, 4)], np.float32)
 
 
-def hexc(c):
-    return "#%02X%02X%02X" % tuple(c)
+YY, XX = np.mgrid[0:S, 0:S].astype(np.float32)
+XX /= S
+YY /= S
 
 
-def stem_path() -> str:
-    r = (STEM_X1 - STEM_X0) / 2
-    x0, x1, y0, y1 = STEM_X0, STEM_X1, STEM_Y0, STEM_Y1
+def mk() -> Image.Image:
+    return Image.new("L", (S * SS, S * SS), 0)
+
+
+def fin(m: Image.Image) -> np.ndarray:
+    return np.asarray(m.resize((S, S), Image.LANCZOS), dtype=np.float32) / 255.0
+
+
+def U(v: float) -> float:
+    return v * S * SS
+
+
+def m_pill(x0, y0, x1, y1) -> np.ndarray:
+    m = mk()
+    ImageDraw.Draw(m).rounded_rectangle((U(x0), U(y0), U(x1), U(y1)), radius=U(min(x1 - x0, y1 - y0) / 2), fill=255)
+    return fin(m)
+
+
+def m_ellipse_rot(cx, cy, rx, ry, deg) -> np.ndarray:
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    pts = []
+    for a in np.linspace(0, 2 * math.pi, 240):
+        x, y = rx * math.cos(a), ry * math.sin(a)
+        pts.append((U(cx + x * c - y * s), U(cy + x * s + y * c)))
+    m = mk()
+    ImageDraw.Draw(m).polygon(pts, fill=255)
+    return fin(m)
+
+
+def m_taper(xs, ys, ws) -> np.ndarray:
+    m = mk()
+    d = ImageDraw.Draw(m)
+    for x, y, w in zip(xs, ys, ws):
+        r = U(w / 2)
+        d.ellipse((U(x) - r, U(y) - r, U(x) + r, U(y) + r), fill=255)
+    return fin(m)
+
+
+def blur(a: np.ndarray, r: float) -> np.ndarray:
+    im = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(r * S))
+    return np.asarray(im, dtype=np.float32) / 255.0
+
+
+def lin(stops, p0, p1) -> np.ndarray:
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    t = np.clip(((XX - p0[0]) * dx + (YY - p0[1]) * dy) / (dx * dx + dy * dy + 1e-9), 0, 1)
+    offs = [s[0] for s in stops]
+    out = np.zeros((S, S, 3), np.float32)
+    for ch in range(3):
+        out[..., ch] = np.interp(t, offs, [hexc(s[1])[ch] for s in stops])
+    return out
+
+
+def glow(c, r, power=2.0) -> np.ndarray:
+    return np.clip(1 - np.sqrt((XX - c[0]) ** 2 + (YY - c[1]) ** 2) / r, 0, 1) ** power
+
+
+def paint(cv, mask, col, a=1.0) -> np.ndarray:
+    col = np.asarray(col, np.float32)
+    m = (mask * a)[..., None]
+    if col.ndim == 1:
+        col = col[None, None, :]
+    return cv * (1 - m) + col * m
+
+
+def drop_shadow(cv, mask, off=0.012, bl=0.014, a=0.5) -> np.ndarray:
+    return paint(cv, blur(np.roll(mask, int(off * S), axis=0), bl), hexc(SHADOW), a)
+
+
+def render_master() -> np.ndarray:
+    """Full-bleed (unmasked) S x S x 3 float canvas of the icon."""
+    cv = lin([(0, BG_TOP), (1, BG_BOTTOM)], (0, 0), (1, 1)).copy()
+    cv = paint(cv, glow(GLOW_CENTER, GLOW_RADIUS, 2.0), hexc(GLOW_COLOR), GLOW_ALPHA)
+    xs, ys, ws = beam_centerline()
+    beam = m_taper(xs, ys, ws)
+    stems = [m_pill(*s) for s in STEMS]
+    heads = [m_ellipse_rot(*h) for h in HEADS]
+    for m in (beam, *stems, *heads):
+        cv = drop_shadow(cv, m)
+    note_col = lin([(0, NOTE_TOP), (1, NOTE_BOTTOM)], (0, 0.22), (0, 0.80))
+    wave_col = lin(WAVE_STOPS, (WAVE_X_GRAD[0], 0), (WAVE_X_GRAD[1], 0))
+    for m in (*stems, *heads):
+        cv = paint(cv, m, note_col)
+    return paint(cv, beam, wave_col)
+
+
+def tile_alpha(shape: str, n: float = 5.0) -> np.ndarray:
+    N = S * 2
+    ys, xs = np.mgrid[0:N, 0:N].astype(np.float32)
+    x, y = (xs + 0.5) / N * 2 - 1, (ys + 0.5) / N * 2 - 1
+    m = (x * x + y * y <= 1) if shape == "round" else (np.abs(x) ** n + np.abs(y) ** n <= 1)
+    return m.astype(np.float32).reshape(S, 2, S, 2).mean(axis=(1, 3))
+
+
+def masked(cv: np.ndarray, shape: str) -> Image.Image:
+    rgb = np.clip(cv, 0, 255).astype(np.uint8)
+    return Image.fromarray(np.dstack([rgb, (tile_alpha(shape) * 255).astype(np.uint8)]), "RGBA")
+
+
+def write_rasters(cv: np.ndarray) -> None:
+    square, round_ = masked(cv, "squircle"), masked(cv, "round")
+    for name, px in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
+        d = RES / f"mipmap-{name}"
+        d.mkdir(parents=True, exist_ok=True)
+        square.resize((px, px), Image.LANCZOS).save(d / "ic_launcher.png", optimize=True)
+        round_.resize((px, px), Image.LANCZOS).save(d / "ic_launcher_round.png", optimize=True)
+    icon_dir = ROOT / "composeApp/icon"
+    icon_dir.mkdir(parents=True, exist_ok=True)
+    square.resize((512, 512), Image.LANCZOS).save(icon_dir / "beatland_app_icon.png", optimize=True)
+    square.save(
+        icon_dir / "beatland_app_icon.ico",
+        sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],
+    )
+    square.save(icon_dir / "beatland_app_icon.icns")
+    res_dir = ROOT / "composeApp/src/commonMain/composeResources/drawable"
+    square.resize((432, 432), Image.LANCZOS).save(res_dir / "beatland_app_icon.png", optimize=True)
+
+
+# ============================================================================ Android vectors ===============
+# The design tile is mapped around the viewport centre. 72 units is the part every launcher mask shows;
+# the extra 10 % (ADAPTIVE_BOOST) uses the free margin inside the 66-unit safe zone (checked below).
+ADAPTIVE_BOOST = 1.10
+VSCALE = 72.0 * ADAPTIVE_BOOST
+
+
+def vx(x: float) -> float:
+    return 54.0 + (x - 0.5) * VSCALE
+
+
+def vy(y: float) -> float:
+    return 54.0 + (y - 0.5) * VSCALE
+
+
+def vl(v: float) -> float:
+    return v * VSCALE
+
+
+def f(v: float) -> str:
+    return f"{v:.2f}".rstrip("0").rstrip(".")
+
+
+def pill_path(x0, y0, x1, y1) -> str:
+    X0, Y0, X1, Y1 = vx(x0), vy(y0), vx(x1), vy(y1)
+    r = (X1 - X0) / 2
     return (
-        f"M{x0 + r:.2f},{y0:.2f} A{r:.2f},{r:.2f} 0 0 1 {x1:.2f},{y0 + r:.2f} V{y1 - r:.2f} "
-        f"A{r:.2f},{r:.2f} 0 0 1 {x0 + r:.2f},{y1:.2f} A{r:.2f},{r:.2f} 0 0 1 {x0:.2f},{y1 - r:.2f} V{y0 + r:.2f} "
-        f"A{r:.2f},{r:.2f} 0 0 1 {x0 + r:.2f},{y0:.2f} Z"
+        f"M{f(X0 + r)},{f(Y0)} A{f(r)},{f(r)} 0 0 1 {f(X1)},{f(Y0 + r)} V{f(Y1 - r)} "
+        f"A{f(r)},{f(r)} 0 0 1 {f(X0 + r)},{f(Y1)} A{f(r)},{f(r)} 0 0 1 {f(X0)},{f(Y1 - r)} "
+        f"V{f(Y0 + r)} A{f(r)},{f(r)} 0 0 1 {f(X0 + r)},{f(Y0)} Z"
     )
 
 
-def ring_path() -> str:
-    cx, cy, ro, ri = RING_CX, RING_CY, RING_R_OUT, RING_R_IN
+def ellipse_path(cx, cy, rx, ry) -> str:
+    CX, CY, RX, RY = vx(cx), vy(cy), vl(rx), vl(ry)
     return (
-        f"M{cx - ro:.2f},{cy:.2f} a{ro:.2f},{ro:.2f} 0 1,0 {2 * ro:.2f},0 a{ro:.2f},{ro:.2f} 0 1,0 {-2 * ro:.2f},0 Z "
-        f"M{cx - ri:.2f},{cy:.2f} a{ri:.2f},{ri:.2f} 0 1,0 {2 * ri:.2f},0 a{ri:.2f},{ri:.2f} 0 1,0 {-2 * ri:.2f},0 Z"
+        f"M{f(CX - RX)},{f(CY)} a{f(RX)},{f(RY)} 0 1,0 {f(2 * RX)},0 "
+        f"a{f(RX)},{f(RY)} 0 1,0 {f(-2 * RX)},0 Z"
     )
 
 
-# ---- Android vector drawables ------------------------------------------------------------------------------------
-def write_vectors(pal: dict) -> None:
-    d = RES / "drawable-v24"
-    d.mkdir(parents=True, exist_ok=True)
-    stops = "\n".join(
-        f'                <item android:color="{hexc(c)}" android:offset="{o:.2f}" />' for o, c in pal["stops"]
+def beam_outline(step: int = 4):
+    xs, ys, ws = beam_centerline()
+    idx = list(range(0, len(xs), step))
+    if idx[-1] != len(xs) - 1:
+        idx.append(len(xs) - 1)
+    left, right = [], []
+    for k, i in enumerate(idx):
+        j0, j1 = max(0, i - 1), min(len(xs) - 1, i + 1)
+        tx, ty = xs[j1] - xs[j0], ys[j1] - ys[j0]
+        norm = math.hypot(tx, ty) or 1.0
+        nx, ny = -ty / norm, tx / norm
+        left.append((vx(xs[i] + nx * ws[i] / 2), vy(ys[i] + ny * ws[i] / 2)))
+        right.append((vx(xs[i] - nx * ws[i] / 2), vy(ys[i] - ny * ws[i] / 2)))
+    pts = left + right[::-1]
+    d = "M" + " L".join(f"{f(x)},{f(y)}" for x, y in pts) + " Z"
+    # round start cap
+    r0 = vl(BEAM_W0) / 2
+    cx, cy = vx(xs[0]), vy(ys[0])
+    cap = f"M{f(cx - r0)},{f(cy)} a{f(r0)},{f(r0)} 0 1,0 {f(2 * r0)},0 a{f(r0)},{f(r0)} 0 1,0 {f(-2 * r0)},0 Z"
+    return d + " " + cap, pts
+
+
+def gradient_xml(kind: str, **kw) -> str:
+    if kind == "vertical":
+        y0, y1 = kw["y"]
+        stops = kw["stops"]
+        items = "\n".join(
+            f'                <item android:color="{c}" android:offset="{f(o)}" />' for o, c in stops
+        )
+        return f'''        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="{f(y0)}"
+                android:endX="0"
+                android:endY="{f(y1)}"
+                android:type="linear">
+{items}
+            </gradient>
+        </aapt:attr>'''
+    x0, x1 = kw["x"]
+    items = "\n".join(
+        f'                <item android:color="{c}" android:offset="{f(o)}" />' for o, c in kw["stops"]
     )
-    (d / "ic_launcher_background.xml").write_text(
-        f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Beatland launcher icon background (beatland flavor only). Generated by scripts/beatland/generate_icon.py -->
+    return f'''        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="{f(x0)}"
+                android:startY="0"
+                android:endX="{f(x1)}"
+                android:endY="0"
+                android:type="linear">
+{items}
+            </gradient>
+        </aapt:attr>'''
+
+
+HEADER = '''<?xml version="1.0" encoding="utf-8"?>
+<!-- {title}. Generated by scripts/beatland/generate_icon.py (do not edit by hand). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M0,0h108v108h-108z">
+'''
+
+
+def write_vectors() -> None:
+    d = RES / "drawable-v24"
+    d.mkdir(parents=True, exist_ok=True)
+
+    # ---- background: navy diagonal gradient + soft teal glow
+    gx, gy, gr = vx(GLOW_CENTER[0]), vy(GLOW_CENTER[1]), vl(GLOW_RADIUS)
+    (d / "ic_launcher_background.xml").write_text(
+        HEADER.format(title="Beatland launcher icon background")
+        + f'''    <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:startX="0"
@@ -121,34 +322,20 @@ def write_vectors(pal: dict) -> None:
                 android:endX="108"
                 android:endY="108"
                 android:type="linear">
-{stops}
+                <item android:color="{BG_TOP}" android:offset="0" />
+                <item android:color="{BG_BOTTOM}" android:offset="1" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- soft light from the top-left -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:centerX="26"
-                android:centerY="14"
-                android:gradientRadius="96"
+                android:centerX="{f(gx)}"
+                android:centerY="{f(gy)}"
+                android:gradientRadius="{f(gr)}"
                 android:type="radial">
-                <item android:color="#38FFFFFF" android:offset="0.0" />
-                <item android:color="#00FFFFFF" android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- gentle vignette at the bottom -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="0"
-                android:startY="54"
-                android:endX="0"
-                android:endY="108"
-                android:type="linear">
-                <item android:color="#00000000" android:offset="0.0" />
-                <item android:color="#26000000" android:offset="1.0" />
+                <item android:color="#{int(GLOW_ALPHA * 255):02X}{GLOW_COLOR.lstrip('#')}" android:offset="0" />
+                <item android:color="#00{GLOW_COLOR.lstrip('#')}" android:offset="1" />
             </gradient>
         </aapt:attr>
     </path>
@@ -158,210 +345,99 @@ def write_vectors(pal: dict) -> None:
         newline="\n",
     )
 
-    g0, g1 = pal["glyph"]
-    gx0, gy0, gx1, gy1 = GLYPH_BOX
-    grad = f'''        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="0"
-                android:startY="{gy0:.2f}"
-                android:endX="0"
-                android:endY="{gy1:.2f}"
-                android:type="linear">
-                <item android:color="{hexc(g0)}" android:offset="0.0" />
-                <item android:color="{hexc(g1)}" android:offset="1.0" />
-            </gradient>
-        </aapt:attr>'''
-    sh = hexc(pal["shadow"])[1:]
-    (d / "ic_launcher_foreground.xml").write_text(
-        f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Beatland launcher icon foreground: "b" as a note/record. Generated by scripts/beatland/generate_icon.py -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- soft shadow (offset copy) -->
-    <group android:translateY="1.6">
-        <path
-            android:fillColor="#40{sh}"
-            android:pathData="{stem_path()}" />
-        <path
-            android:fillColor="#40{sh}"
-            android:fillType="evenOdd"
-            android:pathData="{ring_path()}" />
-    </group>
-    <path android:pathData="{stem_path()}">
-{grad}
-    </path>
-    <path
-        android:fillType="evenOdd"
-        android:pathData="{ring_path()}">
-{grad}
-    </path>
-</vector>
-''',
-        encoding="utf-8",
-        newline="\n",
+    # ---- foreground: notes (vertical white gradient) + beam/wave (horizontal gradient)
+    note_grad = gradient_xml(
+        "vertical", y=(vy(0.22), vy(0.80)), stops=[(0, NOTE_TOP), (1, NOTE_BOTTOM)]
     )
-    (d / "ic_launcher_monochrome.xml").write_text(
-        f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Beatland themed (monochrome) launcher icon. Generated by scripts/beatland/generate_icon.py -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="{stem_path()}" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="{ring_path()}" />
-</vector>
-''',
-        encoding="utf-8",
-        newline="\n",
+    wave_grad = gradient_xml(
+        "horizontal", x=(vx(WAVE_X_GRAD[0]), vx(WAVE_X_GRAD[1])), stops=WAVE_STOPS
     )
-
-
-# ---- Raster rendering ------------------------------------------------------------------------------------------
-SS = 4  # supersampling for shape masks
-
-
-def gradient_array(size: int, stops) -> np.ndarray:
-    ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
-    t = np.clip((xs + ys) / (2.0 * (size - 1)), 0.0, 1.0)
-    out = np.zeros((size, size, 3), np.float32)
-    offs = [s[0] for s in stops]
-    for ch in range(3):
-        out[..., ch] = np.interp(t, offs, [s[1][ch] for s in stops])
-    return out
-
-
-def glyph_mask(size: int) -> Image.Image:
-    scale = size / 108.0
-    big = size * SS
-    m = Image.new("L", (big, big), 0)
-    d = ImageDraw.Draw(m)
-    k = scale * SS
-    d.rounded_rectangle(
-        (STEM_X0 * k, STEM_Y0 * k, STEM_X1 * k, STEM_Y1 * k), radius=(STEM_X1 - STEM_X0) / 2 * k, fill=255
-    )
-    d.ellipse(
-        (
-            (RING_CX - RING_R_OUT) * k,
-            (RING_CY - RING_R_OUT) * k,
-            (RING_CX + RING_R_OUT) * k,
-            (RING_CY + RING_R_OUT) * k,
-        ),
-        fill=255,
-    )
-    d.ellipse(
-        (
-            (RING_CX - RING_R_IN) * k,
-            (RING_CY - RING_R_IN) * k,
-            (RING_CX + RING_R_IN) * k,
-            (RING_CY + RING_R_IN) * k,
-        ),
-        fill=0,
-    )
-    return m.resize((size, size), Image.LANCZOS)
-
-
-def render_icon(size: int, shape: str, pal: dict) -> Image.Image:
-    """shape: 'square' (rounded square), 'round' (circle) or 'full' (no mask)."""
-    ys, xs = np.mgrid[0:size, 0:size].astype(np.float32)
-    bg = gradient_array(size, pal["stops"])
-    # soft light from the top-left
-    d = np.sqrt((xs - 0.24 * size) ** 2 + (ys - 0.13 * size) ** 2) / (0.89 * size)
-    light = 0.22 * np.clip(1.0 - d, 0.0, 1.0) ** 1.6
-    bg = bg + (255.0 - bg) * light[..., None]
-    # gentle vignette at the bottom
-    vig = np.clip((ys / size - 0.5) / 0.5, 0.0, 1.0) ** 1.5 * 0.15
-    bg = bg * (1.0 - vig[..., None])
-    img = Image.fromarray(np.clip(bg, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
-
-    mask = glyph_mask(size)
-    # soft drop shadow
-    shadow_a = mask.filter(ImageFilter.GaussianBlur(size * 0.016)).point(lambda v: int(v * 0.42))
-    shadow_a = Image.fromarray(np.roll(np.asarray(shadow_a), int(size * 0.016), axis=0))
-    shadow = Image.new("RGBA", (size, size), tuple(pal["shadow"]) + (255,))
-    img.paste(shadow, (0, 0), shadow_a)
-    # glyph with a subtle vertical gradient
-    g0, g1 = (np.array(c, np.float32) for c in pal["glyph"])
-    y0, y1 = GLYPH_BOX[1] / 108.0 * size, GLYPH_BOX[3] / 108.0 * size
-    t = np.clip((ys - y0) / (y1 - y0), 0.0, 1.0)[..., None]
-    glyph = Image.fromarray(np.clip(g0 + (g1 - g0) * t, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
-    img.paste(glyph, (0, 0), mask)
-
-    if shape == "full":
-        return img
-    m = Image.new("L", (size * SS, size * SS), 0)
-    dr = ImageDraw.Draw(m)
-    if shape == "round":
-        dr.ellipse((0, 0, size * SS - 1, size * SS - 1), fill=255)
-    else:
-        dr.rounded_rectangle((0, 0, size * SS - 1, size * SS - 1), radius=int(size * SS * 0.225), fill=255)
-    m = m.resize((size, size), Image.LANCZOS)
-    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    out.paste(img, (0, 0), m)
-    return out
-
-
-def write_rasters(pal: dict) -> None:
-    densities = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
-    for name, px in densities.items():
-        d = RES / f"mipmap-{name}"
-        d.mkdir(parents=True, exist_ok=True)
-        render_icon(px * 4, "square", pal).resize((px, px), Image.LANCZOS).save(d / "ic_launcher.png", optimize=True)
-        render_icon(px * 4, "round", pal).resize((px, px), Image.LANCZOS).save(
-            d / "ic_launcher_round.png", optimize=True
+    beam_d, _ = beam_outline()
+    parts = []
+    for s in STEMS:
+        parts.append(f'    <path android:pathData="{pill_path(*s)}">\n{note_grad}\n    </path>\n')
+    for cx, cy, rx, ry, deg in HEADS:
+        parts.append(
+            f'    <group android:pivotX="{f(vx(cx))}" android:pivotY="{f(vy(cy))}" android:rotation="{f(deg)}">\n'
+            f'        <path android:pathData="{ellipse_path(cx, cy, rx, ry)}">\n{note_grad}\n        </path>\n'
+            f"    </group>\n"
         )
-
-    icon_dir = ROOT / "composeApp/icon"
-    icon_dir.mkdir(parents=True, exist_ok=True)
-    master = render_icon(1024, "square", pal)
-    master.resize((512, 512), Image.LANCZOS).save(icon_dir / "beatland_app_icon.png", optimize=True)
-    master.save(
-        icon_dir / "beatland_app_icon.ico",
-        sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],
+    parts.append(f'    <path android:pathData="{beam_d}">\n{wave_grad}\n    </path>\n')
+    (d / "ic_launcher_foreground.xml").write_text(
+        HEADER.format(title="Beatland launcher icon foreground: beamed notes with a sound-wave beam")
+        + "".join(parts)
+        + "</vector>\n",
+        encoding="utf-8",
+        newline="\n",
     )
-    master.save(icon_dir / "beatland_app_icon.icns")
-    res_dir = ROOT / "composeApp/src/commonMain/composeResources/drawable"
-    master.resize((432, 432), Image.LANCZOS).save(res_dir / "beatland_app_icon.png", optimize=True)
+
+    # ---- monochrome (themed icons): same shapes, single colour
+    mono = []
+    for s in STEMS:
+        mono.append(f'    <path\n        android:fillColor="#FFFFFF"\n        android:pathData="{pill_path(*s)}" />\n')
+    for cx, cy, rx, ry, deg in HEADS:
+        mono.append(
+            f'    <group android:pivotX="{f(vx(cx))}" android:pivotY="{f(vy(cy))}" android:rotation="{f(deg)}">\n'
+            f'        <path\n            android:fillColor="#FFFFFF"\n            android:pathData="{ellipse_path(cx, cy, rx, ry)}" />\n'
+            f"    </group>\n"
+        )
+    mono.append(f'    <path\n        android:fillColor="#FFFFFF"\n        android:pathData="{beam_d}" />\n')
+    (d / "ic_launcher_monochrome.xml").write_text(
+        HEADER.format(title="Beatland themed (monochrome) launcher icon")
+        .replace('    xmlns:aapt="http://schemas.android.com/aapt"\n', "")
+        + "".join(mono)
+        + "</vector>\n",
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
-def write_preview() -> None:
-    names = list(PALETTES)
-    w = 300
-    sheet = Image.new("RGBA", (len(names) * w, 2 * 150 + 190), (236, 236, 238, 255))
-    for i, n in enumerate(names):
-        pal = PALETTES[n]
-        big = render_icon(256, "square", pal)
-        sheet.paste(big, (i * w + 22, 18), big)
-        x = i * w + 22
-        for px in (96, 64, 48):
-            small = render_icon(px * 2, "round", pal).resize((px, px), Image.LANCZOS)
-            sheet.paste(small, (x, 300), small)
-            x += px + 14
-    sheet.save("/tmp/beatland_icon_palettes.png")
+# ============================================================================ verification preview ==========
+def write_preview(cv: np.ndarray) -> None:
+    """Contact sheet: squircle / circle masks, small sizes, and the adaptive-icon safe-zone check."""
+    sq, ci = masked(cv, "squircle"), masked(cv, "round")
+    sheet = Image.new("RGBA", (980, 330), (30, 32, 38, 255))
+    sheet.paste(sq.resize((300, 300), Image.LANCZOS), (15, 15), sq.resize((300, 300), Image.LANCZOS))
+    x = 335
+    for px in (120, 80, 56, 40, 28):
+        t = ci.resize((px, px), Image.LANCZOS)
+        sheet.paste(t, (x, 15), t)
+        x += px + 12
+    x = 335
+    for px in (120, 80, 56, 40, 28):
+        t = sq.resize((px, px), Image.LANCZOS)
+        sheet.paste(t, (x, 170), t)
+        x += px + 12
+    sheet.save("/tmp/beatland_icon_preview.png")
+
+
+def check_safe_zone() -> None:
+    """Report the farthest solid-note point from the adaptive-icon centre (safe zone radius = 33)."""
+    worst = 0.0
+    for cx, cy, rx, ry, deg in HEADS:
+        for a in np.linspace(0, 2 * math.pi, 360):
+            c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+            x = cx + rx * math.cos(a) * c - ry * math.sin(a) * s
+            y = cy + rx * math.cos(a) * s + ry * math.sin(a) * c
+            worst = max(worst, math.hypot(vx(x) - 54, vy(y) - 54))
+    for x0, y0, x1, y1 in STEMS:
+        for x, y in ((x0, y0), (x1, y0), (x0, y1), (x1, y1)):
+            worst = max(worst, math.hypot(vx(x) - 54, vy(y) - 54))
+    print(f"notes: farthest point {worst:.1f} from centre (safe zone radius 33, circle mask radius 36)")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--palette", default=DEFAULT_PALETTE, choices=list(PALETTES))
-    ap.add_argument("--preview-only", action="store_true")
+    ap.add_argument("--preview", action="store_true")
     args = ap.parse_args()
-    write_preview()
-    if args.preview_only:
-        print("preview: /tmp/beatland_icon_palettes.png")
-        return
-    pal = PALETTES[args.palette]
-    write_vectors(pal)
-    write_rasters(pal)
-    print(f"icon assets written (palette={args.palette}); preview: /tmp/beatland_icon_palettes.png")
+    cv = render_master()
+    write_vectors()
+    write_rasters(cv)
+    check_safe_zone()
+    if args.preview:
+        write_preview(cv)
+        print("preview: /tmp/beatland_icon_preview.png")
+    print("icon assets written")
 
 
 if __name__ == "__main__":

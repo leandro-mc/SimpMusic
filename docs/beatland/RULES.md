@@ -45,7 +45,7 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.
-- Íconos generados por `scripts/beatland/generate_icon.py` (D-020) y sus referencias en escritorio.
+- Íconos generados por `scripts/beatland/generate_icon.py` (D-020), que **sobrescribe** `drawable-v24/ic_launcher_*.xml`, los `mipmap-*` del flavor y `beatland_app_icon.*`; sus referencias en escritorio también. No editar esos archivos a mano.
 - Los `notCompatibleWithConfigurationCache` de `mpvSetupAll` y `writeConveyorConfig`.
 
 ## Nunca traer / nunca restaurar

@@ -30,7 +30,7 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).
-- **Ícono Beatland** generado por script (D-020): `python3 scripts/beatland/generate_icon.py [--palette azure|sunset|ink]` (requiere Pillow y numpy).
+- **Ícono Beatland** generado por script (D-020): `python3 scripts/beatland/generate_icon.py [--preview]` (requiere Pillow y numpy). Verifica además que las notas queden dentro de la zona segura del ícono adaptativo.
 - Flavor Android `beatland` instalable junto al oficial (D-002) y sin bloqueo de "build no oficial" (D-010).
 - Nombre y ajustes de escritorio con la marca parametrizada (`BRANDING.md`).
 - Ajuste de configuration cache en tareas de mpv/Conveyor (D-012).
