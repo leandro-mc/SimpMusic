@@ -104,6 +104,8 @@ android {
         }
         create("beatland") {
             dimension = "branding"
+            // The variant the IDE selects after a sync: avoids running/installing "official" by mistake (D-021).
+            isDefault = true
             applicationIdSuffix = ".beatland"
             versionNameSuffix = "-beatland"
             // Upstream blocks any applicationId outside Config.OFFICIAL_PACKAGE_NAMES (a list in the

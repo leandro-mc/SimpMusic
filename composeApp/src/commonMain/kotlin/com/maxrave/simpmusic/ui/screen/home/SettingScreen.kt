@@ -110,6 +110,7 @@ import com.maxrave.domain.repository.ImportProgress
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.brand.ForkPolicy
 import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
 import com.maxrave.simpmusic.expect.floatinglyrics.isFloatingLyricsAvailable
 import com.maxrave.simpmusic.expect.floatinglyrics.requestFloatingLyricsOverlayPermission
@@ -2778,53 +2779,56 @@ fun SettingScreen(
                         navController.navigate(CreditDestination)
                     },
                 )
-                SettingItem(
-                    title = stringResource(Res.string.auto_check_for_update),
-                    subtitle = stringResource(Res.string.auto_check_for_update_description),
-                    switch = (autoCheckUpdate to { viewModel.setAutoCheckUpdate(it) }),
-                )
-                SettingItem(
-                    title = stringResource(Res.string.update_channel),
-                    subtitle =
-                        if (updateChannel == DataStoreManager.FDROID) {
-                            "F-Droid"
-                        } else {
-                            "SimpMusic GitHub Release"
+                // BEATLAND: update rows hidden while the upstream update check is off (D-009)
+                if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED) {
+                    SettingItem(
+                        title = stringResource(Res.string.auto_check_for_update),
+                        subtitle = stringResource(Res.string.auto_check_for_update_description),
+                        switch = (autoCheckUpdate to { viewModel.setAutoCheckUpdate(it) }),
+                    )
+                    SettingItem(
+                        title = stringResource(Res.string.update_channel),
+                        subtitle =
+                            if (updateChannel == DataStoreManager.FDROID) {
+                                "F-Droid"
+                            } else {
+                                "SimpMusic GitHub Release"
+                            },
+                        onClick = {
+                            viewModel.setAlertData(
+                                SettingAlertState(
+                                    title = runBlocking { getString(Res.string.update_channel) },
+                                    selectOne =
+                                        SettingAlertState.SelectData(
+                                            listSelect =
+                                                listOf(
+                                                    (updateChannel == DataStoreManager.FDROID) to "F-Droid",
+                                                    (updateChannel == DataStoreManager.GITHUB) to "SimpMusic GitHub Release",
+                                                ),
+                                        ),
+                                    confirm =
+                                        runBlocking { getString(Res.string.change) } to { state ->
+                                            viewModel.setUpdateChannel(
+                                                when (state.selectOne?.getSelected()) {
+                                                    "F-Droid" -> DataStoreManager.FDROID
+                                                    "SimpMusic GitHub Release" -> DataStoreManager.GITHUB
+                                                    else -> DataStoreManager.GITHUB
+                                                },
+                                            )
+                                        },
+                                    dismiss = runBlocking { getString(Res.string.cancel) },
+                                ),
+                            )
                         },
-                    onClick = {
-                        viewModel.setAlertData(
-                            SettingAlertState(
-                                title = runBlocking { getString(Res.string.update_channel) },
-                                selectOne =
-                                    SettingAlertState.SelectData(
-                                        listSelect =
-                                            listOf(
-                                                (updateChannel == DataStoreManager.FDROID) to "F-Droid",
-                                                (updateChannel == DataStoreManager.GITHUB) to "SimpMusic GitHub Release",
-                                            ),
-                                    ),
-                                confirm =
-                                    runBlocking { getString(Res.string.change) } to { state ->
-                                        viewModel.setUpdateChannel(
-                                            when (state.selectOne?.getSelected()) {
-                                                "F-Droid" -> DataStoreManager.FDROID
-                                                "SimpMusic GitHub Release" -> DataStoreManager.GITHUB
-                                                else -> DataStoreManager.GITHUB
-                                            },
-                                        )
-                                    },
-                                dismiss = runBlocking { getString(Res.string.cancel) },
-                            ),
-                        )
-                    },
-                )
-                SettingItem(
-                    title = stringResource(Res.string.check_for_update),
-                    subtitle = checkForUpdateSubtitle,
-                    onClick = {
-                        sharedViewModel.checkForUpdate()
-                    },
-                )
+                    )
+                    SettingItem(
+                        title = stringResource(Res.string.check_for_update),
+                        subtitle = checkForUpdateSubtitle,
+                        onClick = {
+                            sharedViewModel.checkForUpdate()
+                        },
+                    )
+                }
                 SettingItem(
                     title = stringResource(Res.string.author),
                     subtitle = stringResource(Res.string.maxrave_dev),

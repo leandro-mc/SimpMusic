@@ -17,7 +17,10 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `conveyor.conf`, `desktopApp/build.gradle.kts` | Tomar upstream y reaplicar los puntos de `RULES.md` → "Mantener siempre". |
 | `androidApp/build.gradle.kts` | Conservar los bloques `productFlavors`, `IS_PERSONAL_FORK` y `ignoredFlavors … "beatland"`. |
 | `MainActivity.kt` | Conservar `!BuildConfig.IS_PERSONAL_FORK` en `checkOfficialBuild`. |
-| `SettingScreen.kt` | Conservar el bloque `floating_lyrics`; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar el bloque. |
+| `SettingScreen.kt` | Conservar el bloque `floating_lyrics` y el `if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED)` que envuelve los ajustes de actualización; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar. |
+| `HomeScreen.kt`, `SharedViewModel.kt` | Conservar las guardas de `ForkPolicy` (promos y `checkForUpdate`). Si upstream añade un diálogo promocional nuevo, protegerlo igual. |
+| `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
+| `vivoAndroidApp/build.gradle.kts` | Conservar `IS_PERSONAL_FORK` (D-018). |
 | `CLAUDE.md` | Tomar upstream y volver a poner la línea de cabecera que apunta a `docs/beatland/README.md`. |
 | Cualquier otro | Preferir upstream y reaplicar solo el cambio listado en `RULES.md`/`FEATURES.md`. |
 

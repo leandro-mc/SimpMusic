@@ -36,13 +36,16 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 ## Mantener siempre (cambios respecto al original que no se pueden perder en un merge)
 
 - Flavors `official`/`beatland` y los `buildConfigField IS_PERSONAL_FORK` en `androidApp/build.gradle.kts`.
-- La guarda `!BuildConfig.IS_PERSONAL_FORK` en `MainActivity.kt` (si se pierde, `beatlandRelease` queda bloqueado).
+- La guarda `!BuildConfig.IS_PERSONAL_FORK` en `MainActivity.kt` (si se pierde, `beatlandRelease` queda bloqueado) y el campo `IS_PERSONAL_FORK` en `androidApp` **y** en `vivoAndroidApp` (D-018).
+- `ForkPolicy.kt` y sus guardas: `HomeScreen.kt` (promos), `SharedViewModel.checkForUpdate()` y el bloque de actualizaciones de `SettingScreen.kt` (D-007, D-009).
+- AGP `9.3.0` en `gradle/libs.versions.toml` (D-019).
+- `isDefault = true` del flavor `beatland` (D-021).
 - `ignoredFlavors.set(setOf("foss", "beatland"))` de Sentry en `androidApp/build.gradle.kts`.
 - `androidApp/src/beatland/**` y `androidApp/src/beatlandDebug/**`.
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.
-- Íconos `beatland_app_icon.*` y sus referencias en escritorio.
+- Íconos generados por `scripts/beatland/generate_icon.py` (D-020), que **sobrescribe** `drawable-v24/ic_launcher_*.xml`, los `mipmap-*` del flavor y `beatland_app_icon.*`; sus referencias en escritorio también. No editar esos archivos a mano.
 - Los `notCompatibleWithConfigurationCache` de `mpvSetupAll` y `writeConveyorConfig`.
 
 ## Nunca traer / nunca restaurar
