@@ -13,10 +13,7 @@
     <string name="bl_picker_search_error">No se pudo buscar en línea. Revisa tu conexión.</string>
     <string name="bl_picker_empty">Aún no hay nada aquí. Usa el buscador para encontrar canciones.</string>
     <string name="bl_picker_already_in">En la playlist</string>
-    <string name="bl_picker_skip">Omitir</string>
-    <string name="bl_picker_done">Cerrar</string>
     <string name="bl_picker_add_count">Añadir %1$s canciones</string>
-    <string name="bl_picker_add_none">Selecciona canciones para añadir</string>
     <string name="bl_picker_adding">Añadiendo canciones…</string>
     <string name="bl_picker_added">%1$s canciones añadidas</string>
     <string name="bl_picker_select_all">Seleccionar todo</string>

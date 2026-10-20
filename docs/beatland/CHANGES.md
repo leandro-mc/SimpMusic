@@ -20,7 +20,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Ícono** | Ícono nuevo "Beamed" (notas con travesaño-onda), generado por script. Vectores adaptativos, monocromo, PNG, ICO, ICNS. | D-020 |
 | **Instalación en paralelo** | Flavor Android `beatland` (`applicationId` con sufijo `.beatland`) junto a `official`; `beatland` es el predeterminado. | D-002, D-021 |
 | **Letra flotante** | Ventana flotante con la letra encima de otras apps (solo Android, solo flavor `beatland`), con su ajuste en Configuración. Paleta azul, sin morado. | D-004 |
-| **Selector de canciones para playlists** | Al crear una playlist (y desde "Añadir canciones" en cualquier playlist local) se abre un selector con Recientes / Más escuchadas / Me gusta y búsqueda en biblioteca + YouTube Music, con selección sin tope. | D-024 |
+| **Selector de canciones para playlists** | Al crear una playlist (y desde "Añadir canciones" en cualquier playlist local) se abre un selector con Recientes / Más escuchadas / Me gusta y búsqueda en biblioteca + YouTube Music, con selección sin tope. Hecho con los componentes de la app (hoja, `Chip`, `SongFullWidthItems`, píldora de búsqueda). | D-024, D-025 |
 | **Tope de selección múltiple** | 25 → 500 canciones. | D-023 |
 | **Promos del autor original** | Diálogos de reseña/"star en GitHub", blog y footguns **desactivados** (`ForkPolicy`). | D-007 |
 | **Actualizaciones** | Verificador de actualizaciones **desactivado** y sus 3 ajustes ocultos (apuntaban a releases de upstream). | D-009 |

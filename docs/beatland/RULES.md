@@ -16,6 +16,33 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 6. No toques el submódulo `core/` (apunta a `maxrave-dev/core`, que no es nuestro). Si algo requiere cambiarlo,
    busca un gancho en `composeApp`/`androidApp` o pregunta al dueño.
 
+## UX y armonía con la app (prioridad máxima)
+
+La experiencia de usuario es **muy importante**. Toda funcionalidad nueva debe sentirse como parte original de la app, en
+**forma, UX, componentes, colores, tipografía, espaciados y comportamiento**. Una función que "funciona" pero se ve ajena, tiene
+texto ilegible o colores chillones **no está terminada**. (Caso real: el primer selector de canciones usó colores genéricos de
+Material y quedó celeste chillón e ilegible; hubo que rehacerlo con los componentes de la app. Ver D-025.)
+
+Reglas:
+
+1. **Reutiliza antes de crear.** Antes de dibujar algo, busca en `composeApp/src/commonMain/.../ui/component/` y en pantallas parecidas
+   (`grep`) cómo lo resuelve la app y usa ese componente o patrón. Ejemplos ya existentes: `SongFullWidthItems` (filas de canción, con modo de
+   selección), `Chip`, hojas con `ModalBottomSheet` + `Card` + `rememberSurfaceDarkColors()`, barra de búsqueda tipo píldora, `ActionButton`,
+   `SettingGroup`/`SettingItem`, `EndOfPage`.
+2. **Colores solo desde el tema**: `MaterialTheme.colorScheme.*`, `rememberSurfaceDarkColors()`, `seed`/`favoriteColor` de `ui/theme/Color.kt`.
+   Nada de hex sueltos para decorar. No uses `primaryContainer`/`secondaryContainer` como adorno: en esta app el color semilla es un celeste
+   claro y esos contenedores salen saturados y fuera de armonía.
+3. **Legibilidad garantizada**: usa siempre pares de color del tema (`primary` con `onPrimary`, `surface` con `onSurface`). Si el fondo no es
+   una superficie normal, pon el `color` del `Text` explícito (el `typo()` con `LocalForceDarkText` pinta blanco y desaparece sobre fondos claros).
+   Evita botones deshabilitados con texto casi invisible: oculta la acción hasta que aplique o mantén contraste suficiente.
+4. **Forma**: mismos radios, paddings (filas: `vertical = 6.dp, horizontal = 15.dp`), tamaños de miniatura (48 dp), estilos de texto
+   (`typo().titleSmall`/`bodySmall`/`labelSmall`) y la misma estructura de hojas/diálogos que ya usa la app.
+5. **Prueba en ambos temas**: claro y oscuro, y donde aplique con `LocalForceDarkText` (pantallas con degradado, como las playlists).
+6. **Comportamiento esperado**: estados de carga, vacío y error visibles; teclado que no tapa la lista; áreas táctiles normales; sin acciones
+   que parezcan no hacer nada.
+7. **Si no hay componente equivalente**, créalo con los mismos tokens y deja anotado en `CHANGES.md` qué patrón imita.
+8. El dueño valida el aspecto en su teléfono. En el aviso de entrega indica qué componentes de la app reutilizaste y qué revisar visualmente.
+
 ## Diseño
 
 - **Prohibido el color morado y derivados** (violeta, índigo, magenta, lila, púrpura) en todo lo nuevo o

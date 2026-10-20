@@ -33,7 +33,8 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 "Añadir canciones" que hay arriba de la lista en cualquier playlist local (vacía o no).
 - Con el buscador vacío: chips **Recientes / Más escuchadas / Me gusta**. Al escribir: resultados de tu biblioteca + YouTube Music (con retardo de 400 ms).
 - Selección múltiple **sin tope**; las canciones que ya están en la playlist salen marcadas y no se pueden volver a elegir.
-- Botón "Añadir N canciones"; se añaden una a una con `addTrackToLocalPlaylist` (que inserta la canción en la base si viene de la búsqueda).
+- Botón "Añadir N canciones" (solo aparece con canciones seleccionadas); se añaden una a una con `addTrackToLocalPlaylist` (que inserta la canción en la base si viene de la búsqueda).
+- Construido solo con componentes de la app (D-025): `SongFullWidthItems` en modo selección, `Chip`, píldora de búsqueda y hoja como las de `ModalBottomSheet.kt`.
 - Además, el tope de la selección múltiple normal pasa de 25 a 500 (D-023).
 
 **Archivos propios (nuevos):** `composeApp/src/commonMain/.../beatland/picker/{PlaylistSongPickerViewModel,PlaylistSongPickerSheet,AddSongsRow}.kt`,
@@ -44,7 +45,7 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 
 **Dependencias de upstream (validar tras cada sync):** `SongRepository.{getAllSongs,getMostPlayedSongs,getLikedSongs}`, `SearchRepository.getSearchDataSong`,
 `LocalPlaylistRepository.{addTrackToLocalPlaylist,getListTrackVideoId,getAllLocalPlaylists,insertLocalPlaylist}`, `SongsResult.toTrack`, `Track.toSongEntity`,
-`rememberHolderPainter`, `typo()`, `SimpIcons.{Add,Close,Search}`.
+`SongFullWidthItems`, `Chip`, `rememberSurfaceDarkColors`, `LocalForceDarkText`, `typo()`, `SimpIcons.{Add,Close,Search}`.
 
 ## Otros cambios respecto al original
 
