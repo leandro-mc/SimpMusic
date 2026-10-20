@@ -31,7 +31,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
    Corregir los literales Kotlin que reporte con `Brand.NAME`.
 7. Validar estáticamente que la ventana flotante sigue compilando contra upstream: revisar que existan y no hayan cambiado de firma
    los símbolos listados en `FEATURES.md` → "Dependencias de upstream".
-8. Registrar en `DECISIONS.md` cualquier decisión nueva y anotar en `SYNC_LOG.md` la fecha y los conflictos resueltos.
+8. Registrar en `DECISIONS.md` cualquier decisión nueva, actualizar `CHANGES.md` si cambió algún archivo propio o tocado, y anotar en `SYNC_LOG.md` la fecha y los conflictos resueltos.
 9. **Pedir al dueño que compile** `beatlandDebug`. Si hay errores, él los pasa y se corrigen en la misma rama.
 10. Cuando compile, merge de `sync/dev-AAAA-MM-DD` a `myapp` (PR o `--no-ff`). Después borrar la rama de sync.
 11. Las ramas `feature/*` abiertas se actualizan con `git merge myapp`.

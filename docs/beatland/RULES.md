@@ -9,7 +9,7 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
    salvo la documentación o la sincronización con `dev` (ver `SYNC.md`).
 3. **No hay forma de compilar en el entorno del agente.** Cuando termines, di al dueño qué compilar
    (variante `beatlandDebug` o `beatlandRelease`) y espera los errores. No afirmes que compila.
-4. Toda decisión nueva se registra en `DECISIONS.md` en el mismo commit que la introduce.
+4. Toda decisión nueva se registra en `DECISIONS.md`, y todo cambio respecto al original (archivo de upstream tocado o archivo propio nuevo) en `CHANGES.md`, en el mismo commit que lo introduce.
 5. Minimiza los cambios en archivos del proyecto original: prefiere **archivos nuevos**, source sets de
    flavor (`androidApp/src/beatland/`) y ganchos pequeños. Cada línea cambiada en un archivo de upstream es
    un futuro conflicto de merge.
