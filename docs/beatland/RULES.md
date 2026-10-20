@@ -39,6 +39,7 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 - La guarda `!BuildConfig.IS_PERSONAL_FORK` en `MainActivity.kt` (si se pierde, `beatlandRelease` queda bloqueado) y el campo `IS_PERSONAL_FORK` en `androidApp` **y** en `vivoAndroidApp` (D-018).
 - `ForkPolicy.kt` y sus guardas: `HomeScreen.kt` (promos), `SharedViewModel.checkForUpdate()` y el bloque de actualizaciones de `SettingScreen.kt` (D-007, D-009).
 - AGP `9.3.0` en `gradle/libs.versions.toml` (D-019).
+- Desactivación de `lintVital*` en el `build.gradle.kts` raíz (D-022).
 - `isDefault = true` del flavor `beatland` (D-021).
 - `ignoredFlavors.set(setOf("foss", "beatland"))` de Sentry en `androidApp/build.gradle.kts`.
 - `androidApp/src/beatland/**` y `androidApp/src/beatlandDebug/**`.
