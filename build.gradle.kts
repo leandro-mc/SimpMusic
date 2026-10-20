@@ -43,6 +43,14 @@ subprojects {
         }
     }
 
+    // BEATLAND (D-022): release builds run "lintVital" in every module, including the `core` submodule's,
+    // and it crashes with `NoClassDefFoundError: com/google/protobuf/ProtocolMessageEnum` inside
+    // `:kotlinYtmusicScraper:lintVitalAnalyzeAndroidMain` (AGP 9.3 lint classpath). The check only looks for
+    // fatal lint issues and never affects the APK, so it is switched off from here (the submodule is not editable).
+    tasks.configureEach {
+        if (name.startsWith("lintVital")) enabled = false
+    }
+
     // PipePipe and Brave both depend on com.github.TeamNewPipe:nanojson with different commit
     // hashes. Gradle's default resolver picks PipePipe's older 1d9e1aea... commit which lacks
     // JsonArray.streamAsJsonObjects(), causing NoSuchMethodError when Brave's fallback runs at
