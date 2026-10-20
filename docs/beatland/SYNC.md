@@ -20,6 +20,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `SettingScreen.kt` | Conservar el bloque `floating_lyrics` y el `if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED)` que envuelve los ajustes de actualización; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar. |
 | `HomeScreen.kt`, `SharedViewModel.kt` | Conservar las guardas de `ForkPolicy` (promos y `checkForUpdate`). Si upstream añade un diálogo promocional nuevo, protegerlo igual. |
 | `build.gradle.kts` (raíz) | Conservar el bloque `lintVital` dentro de `subprojects` (D-022). |
+| `ViewModelModule.kt`, `LibraryViewModel.kt`, `LibraryScreen.kt`, `LocalPlaylistScreen.kt`, `SongSelectionState.kt` | Conservar los ganchos del selector de playlists (marcados `BEATLAND (D-023/D-024)`); ver `FEATURES.md`. |
 | `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
 | `vivoAndroidApp/build.gradle.kts` | Conservar `IS_PERSONAL_FORK` (D-018). |
 | `CLAUDE.md` | Tomar upstream y volver a poner la línea de cabecera que apunta a `docs/beatland/README.md`. |

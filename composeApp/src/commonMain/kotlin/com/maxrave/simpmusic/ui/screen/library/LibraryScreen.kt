@@ -72,6 +72,7 @@ import com.maxrave.domain.data.model.taste.TasteProfile
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerSheet
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
 import com.maxrave.simpmusic.expect.ui.rememberBackdrop
 import com.maxrave.simpmusic.extension.copy
@@ -447,6 +448,16 @@ fun LibraryScreen(
     sharingTaste?.let { profile ->
         ShareTasteSheet(profile = profile, onDismiss = { sharingTaste = null })
     }
+    // BEATLAND (D-024): after creating a playlist, offer to fill it right away.
+    var pickerPlaylistId by rememberSaveable { mutableStateOf(-1L) }
+    var pickerPlaylistTitle by rememberSaveable { mutableStateOf("") }
+    if (pickerPlaylistId != -1L) {
+        PlaylistSongPickerSheet(
+            playlistId = pickerPlaylistId,
+            playlistTitle = pickerPlaylistTitle,
+            onDismiss = { pickerPlaylistId = -1L },
+        )
+    }
     val coroutineScope = rememberCoroutineScope()
     if (showAddSheet) {
         var newTitle by remember { mutableStateOf("") }
@@ -510,7 +521,11 @@ fun LibraryScreen(
                             if (newTitle.isBlank()) {
                                 viewModel.makeToast(runBlocking { getString(Res.string.playlist_name_cannot_be_empty) })
                             } else {
-                                viewModel.createPlaylist(newTitle)
+                                val createdTitle = newTitle
+                                viewModel.createPlaylistAndPickSongs(createdTitle) { createdId ->
+                                    pickerPlaylistTitle = createdTitle
+                                    pickerPlaylistId = createdId
+                                }
                                 hideEditTitleBottomSheet()
                             }
                         },

@@ -43,6 +43,7 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 - `isDefault = true` del flavor `beatland` (D-021).
 - `ignoredFlavors.set(setOf("foss", "beatland"))` de Sentry en `androidApp/build.gradle.kts`.
 - `androidApp/src/beatland/**` y `androidApp/src/beatlandDebug/**`.
+- Paquete `beatland/picker/` y `beatland_strings.xml` (D-024); `MAX_SONG_SELECTION = 500` (D-023).
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.

@@ -27,6 +27,25 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 `rememberNowPlayingGlowTint`, `AppTheme`, `SimpIcons.{Album,Close,Delete,DragHandle,Fullscreen,FullscreenExit,Settings}`,
 `SharedViewModel.{timeline,nowPlayingScreenData,controllerState,onUIEvent}`, `UIEvent.UpdateProgress`, `SettingGroup`, `SettingItem`.
 
+## Selector de canciones para playlists (D-024)
+
+Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi completa para llenarla; también se abre desde la fila
+"Añadir canciones" que hay arriba de la lista en cualquier playlist local (vacía o no).
+- Con el buscador vacío: chips **Recientes / Más escuchadas / Me gusta**. Al escribir: resultados de tu biblioteca + YouTube Music (con retardo de 400 ms).
+- Selección múltiple **sin tope**; las canciones que ya están en la playlist salen marcadas y no se pueden volver a elegir.
+- Botón "Añadir N canciones"; se añaden una a una con `addTrackToLocalPlaylist` (que inserta la canción en la base si viene de la búsqueda).
+- Además, el tope de la selección múltiple normal pasa de 25 a 500 (D-023).
+
+**Archivos propios (nuevos):** `composeApp/src/commonMain/.../beatland/picker/{PlaylistSongPickerViewModel,PlaylistSongPickerSheet,AddSongsRow}.kt`,
+`composeResources/values/beatland_strings.xml` y `values-es/beatland_strings.xml`.
+
+**Ganchos en archivos de upstream:** `ViewModelModule.kt` (1 línea de registro), `LibraryViewModel.kt` (`createPlaylistAndPickSongs`),
+`LibraryScreen.kt` (abre el selector tras crear), `LocalPlaylistScreen.kt` (fila + selector), `SongSelectionState.kt` (constante).
+
+**Dependencias de upstream (validar tras cada sync):** `SongRepository.{getAllSongs,getMostPlayedSongs,getLikedSongs}`, `SearchRepository.getSearchDataSong`,
+`LocalPlaylistRepository.{addTrackToLocalPlaylist,getListTrackVideoId,getAllLocalPlaylists,insertLocalPlaylist}`, `SongsResult.toTrack`, `Track.toSongEntity`,
+`rememberHolderPainter`, `typo()`, `SimpIcons.{Add,Close,Search}`.
+
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).

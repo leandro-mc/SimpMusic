@@ -1,5 +1,6 @@
 package com.maxrave.simpmusic.di
 
+import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerViewModel
 import com.maxrave.simpmusic.viewModel.AlbumViewModel
 import com.maxrave.simpmusic.utils.VersionManager
 import com.maxrave.simpmusic.viewModel.AnalyticsViewModel
@@ -60,6 +61,8 @@ val viewModelModule =
                 get(),
             )
         }
+        // BEATLAND (D-024): song picker shown after creating a playlist / from "Add songs".
+        viewModel { PlaylistSongPickerViewModel(get(), get(), get()) }
         // Only one of these resolves on a given platform: Desktop binds the host repository, Android the
         // sender. Koin resolves dependencies when a ViewModel is created, not when it is declared.
         viewModel { LoginSyncHostViewModel(get()) }

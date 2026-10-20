@@ -412,6 +412,38 @@ class LibraryViewModel(
         }
     }
 
+    /**
+     * BEATLAND (D-024): same as [createPlaylist] but reports the new playlist's id, so the UI can offer to fill it
+     * right away. `insertLocalPlaylist` only returns a message, so the id is found by diffing the playlist list.
+     */
+    fun createPlaylistAndPickSongs(
+        title: String,
+        onCreated: (Long) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val before =
+                localPlaylistRepository
+                    .getAllLocalPlaylists()
+                    .first()
+                    .map { it.id }
+                    .toSet()
+            localPlaylistRepository
+                .insertLocalPlaylist(
+                    LocalPlaylistEntity(title = title),
+                    getString(Res.string.added_local_playlist),
+                ).lastOrNull()
+            val created =
+                localPlaylistRepository
+                    .getAllLocalPlaylists()
+                    .first()
+                    .firstOrNull { it.id !in before }
+            getLocalPlaylist()
+            if (created != null) {
+                onCreated(created.id)
+            }
+        }
+    }
+
     fun deleteSong(videoId: String) {
         _recentlyAdded.value = LocalResource.Loading()
         viewModelScope.launch {
