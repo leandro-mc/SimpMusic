@@ -200,6 +200,36 @@ class LocalPlaylistViewModel(
         }
     }
 
+    // BEATLAND (D-027): the playlist header used to read the thumbnail once, when the screen opened. The automatic
+    // collage is written a few seconds AFTER songs are added, so the open screen has to follow the database or it
+    // keeps showing the old cover until the user leaves and comes back.
+    init {
+        observeThumbnailChanges()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeThumbnailChanges() {
+        viewModelScope.launch {
+            uiState
+                .map { it.id }
+                .distinctUntilChanged()
+                .flatMapLatest { playlistId ->
+                    if (playlistId == 0L) {
+                        flowOf(null)
+                    } else {
+                        localPlaylistRepository
+                            .getAllLocalPlaylists()
+                            .map { list -> list.firstOrNull { it.id == playlistId }?.thumbnail }
+                    }
+                }.distinctUntilChanged()
+                .collect { latest ->
+                    if (uiState.value.id != 0L && uiState.value.thumbnail != latest) {
+                        _uiState.update { it.copy(thumbnail = latest) }
+                    }
+                }
+        }
+    }
+
     private val _tracksPagingState: MutableStateFlow<PagingData<Pair<SongEntity, PairSongLocalPlaylist>>> =
         MutableStateFlow(
             PagingData.empty(),

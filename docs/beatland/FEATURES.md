@@ -54,6 +54,7 @@ Las playlists locales sin portada propia muestran un collage de hasta 4 carátul
 esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y el collage deja de generarse para esa playlist.
 - No se aplica a playlists sincronizadas con YouTube ni a las que tengan otra miniatura (p. ej. importadas).
 - Backfill: las playlists locales que ya existían sin portada reciben su collage en segundo plano al abrir la app.
+- La pantalla de la playlist **sigue la base de datos**: el collage aparece solo a los pocos segundos, sin salir y volver a entrar.
 - Si se vacía una playlist, su collage anterior queda hasta que se le añadan canciones.
 - Para volver al collage después de poner una portada propia habría que quitarla (no hay opción en la interfaz todavía).
 
