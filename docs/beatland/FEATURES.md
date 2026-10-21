@@ -34,6 +34,7 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 - Con el buscador vacío: chips **Recientes / Más escuchadas / Me gusta**. Al escribir: resultados de tu biblioteca + YouTube Music (con retardo de 400 ms).
 - Selección múltiple **sin tope**; las canciones que ya están en la playlist salen marcadas y no se pueden volver a elegir.
 - Botón "Añadir N canciones" (solo aparece con canciones seleccionadas); se añaden una a una con `addTrackToLocalPlaylist` (que inserta la canción en la base si viene de la búsqueda).
+- **Vista previa (D-026):** cada fila tiene un botón ▶ en el extremo derecho para reproducir la canción antes de decidir; mientras suena pasa a ⏸. Reemplaza la cola actual, como al tocar una canción en cualquier lugar de la app.
 - Construido solo con componentes de la app (D-025): `SongFullWidthItems` en modo selección, `Chip`, píldora de búsqueda y hoja como las de `ModalBottomSheet.kt`.
 - Además, el tope de la selección múltiple normal pasa de 25 a 500 (D-023).
 
@@ -46,6 +47,19 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 **Dependencias de upstream (validar tras cada sync):** `SongRepository.{getAllSongs,getMostPlayedSongs,getLikedSongs}`, `SearchRepository.getSearchDataSong`,
 `LocalPlaylistRepository.{addTrackToLocalPlaylist,getListTrackVideoId,getAllLocalPlaylists,insertLocalPlaylist}`, `SongsResult.toTrack`, `Track.toSongEntity`,
 `SongFullWidthItems`, `Chip`, `rememberSurfaceDarkColors`, `LocalForceDarkText`, `typo()`, `SimpIcons.{Add,Close,Search}`.
+
+## Collage automático de playlists locales (D-027)
+
+Las playlists locales sin portada propia muestran un collage de hasta 4 carátulas de sus primeras canciones, que se actualiza solo cuando
+esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y el collage deja de generarse para esa playlist.
+- No se aplica a playlists sincronizadas con YouTube ni a las que tengan otra miniatura (p. ej. importadas).
+- Backfill: las playlists locales que ya existían sin portada reciben su collage en segundo plano al abrir la app.
+- Si se vacía una playlist, su collage anterior queda hasta que se le añadan canciones.
+- Para volver al collage después de poner una portada propia habría que quitarla (no hay opción en la interfaz todavía).
+
+**Archivos propios (nuevos):** `composeApp/.../beatland/collage/{PlaylistCollageIo.kt, PlaylistCollageManager.kt}` (common), `PlaylistCollage.android.kt` (androidMain) y
+`PlaylistCollage.jvm.kt` (jvmMain). **Gancho en upstream:** `App.kt` (1 línea: `PlaylistCollageEffect()`).
+**Dependencias de upstream:** `LocalPlaylistRepository.{getAllLocalPlaylists,updateThumbnailLocalPlaylist}`, `SongRepository.getSongsByListVideoId`, `persistPickedImage`.
 
 ## Otros cambios respecto al original
 

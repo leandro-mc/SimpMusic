@@ -21,6 +21,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Instalación en paralelo** | Flavor Android `beatland` (`applicationId` con sufijo `.beatland`) junto a `official`; `beatland` es el predeterminado. | D-002, D-021 |
 | **Letra flotante** | Ventana flotante con la letra encima de otras apps (solo Android, solo flavor `beatland`), con su ajuste en Configuración. Paleta azul, sin morado. | D-004 |
 | **Selector de canciones para playlists** | Al crear una playlist (y desde "Añadir canciones" en cualquier playlist local) se abre un selector con Recientes / Más escuchadas / Me gusta y búsqueda en biblioteca + YouTube Music, con selección sin tope. Hecho con los componentes de la app (hoja, `Chip`, `SongFullWidthItems`, píldora de búsqueda). | D-024, D-025 |
+| **Vista previa en el selector** | Botón ▶/⏸ en cada fila para escuchar la canción antes de añadirla (reemplaza la cola actual). | D-026 |
+| **Miniatura de playlists locales** | Collage automático de hasta 4 carátulas para playlists locales sin portada propia; se actualiza solo y respeta la portada del usuario. | D-027 |
 | **Tope de selección múltiple** | 25 → 500 canciones. | D-023 |
 | **Promos del autor original** | Diálogos de reseña/"star en GitHub", blog y footguns **desactivados** (`ForkPolicy`). | D-007 |
 | **Actualizaciones** | Verificador de actualizaciones **desactivado** y sus 3 ajustes ocultos (apuntaban a releases de upstream). | D-009 |
@@ -46,6 +48,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`) |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
+| `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
 | `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |
 | `composeApp/.../ui/screen/library/LocalPlaylistScreen.kt` | Fila "Añadir canciones" + selector |
 | `composeApp/.../ui/component/selection/SongSelectionState.kt` | `MAX_SONG_SELECTION = 500` |
@@ -66,6 +69,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../floatinglyrics/` (androidMain, 4 archivos) | Servicio, interfaz, permiso y ciclo de vida de la letra flotante |
 | `composeApp/.../expect/floatinglyrics/FloatingLyricsCapability*.kt` | `expect` (common) y `actual` (android, jvm) |
 | `composeApp/.../beatland/picker/` (3 archivos) | Selector de canciones: ViewModel, hoja de interfaz y fila de entrada |
+| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (4 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |

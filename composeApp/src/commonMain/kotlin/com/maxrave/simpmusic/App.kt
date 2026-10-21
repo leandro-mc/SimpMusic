@@ -66,6 +66,7 @@ import com.maxrave.domain.data.player.GenericMediaItem
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEffect
 import com.maxrave.simpmusic.expect.Orientation
 import com.maxrave.simpmusic.expect.currentOrientation
 import com.maxrave.simpmusic.expect.openUrl
@@ -216,6 +217,8 @@ fun App(
     var userStarted by remember {
         mutableStateOf(false)
     }
+    // BEATLAND (D-027): automatic collage thumbnails for local playlists without a cover of their own.
+    PlaylistCollageEffect()
     LaunchedEffect(isShowNowPlaylistScreen) {
         if (isShowNowPlaylistScreen) userStarted = true
     }

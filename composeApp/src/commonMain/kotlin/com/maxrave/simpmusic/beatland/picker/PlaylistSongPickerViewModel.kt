@@ -3,6 +3,9 @@ package com.maxrave.simpmusic.beatland.picker
 import androidx.lifecycle.viewModelScope
 import com.maxrave.common.Config
 import com.maxrave.domain.data.entities.SongEntity
+import com.maxrave.domain.mediaservice.handler.PlayerEvent
+import com.maxrave.domain.mediaservice.handler.PlaylistType
+import com.maxrave.domain.mediaservice.handler.QueueData
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.SearchRepository
 import com.maxrave.domain.repository.SongRepository
@@ -10,6 +13,7 @@ import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.utils.collectResource
 import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
+import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -68,6 +72,7 @@ class PlaylistSongPickerViewModel(
     }
 
     private var playlistId: Long = NO_PLAYLIST
+    private var playlistTitle: String = ""
 
     private val source = MutableStateFlow(PickerSource.RECENT)
     private val query = MutableStateFlow("")
@@ -144,9 +149,13 @@ class PlaylistSongPickerViewModel(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
     /** Call when the picker opens for [id]: resets the previous session and reads what is already in it. */
-    fun start(id: Long) {
+    fun start(
+        id: Long,
+        title: String = "",
+    ) {
         if (playlistId == id) return
         playlistId = id
+        playlistTitle = title
         source.value = PickerSource.RECENT
         query.value = ""
         selected.value = emptyList()
@@ -199,6 +208,31 @@ class PlaylistSongPickerViewModel(
 
     fun clearSelection() {
         selected.value = emptyList()
+    }
+
+    /**
+     * Plays [song] right away (or pauses it if it is the one playing) so the user can decide before adding it.
+     * Same sequence the search screen uses for a tapped song: it replaces the current queue, exactly like
+     * tapping the song anywhere else in the app.
+     */
+    fun togglePreview(song: SongEntity) {
+        if (song.videoId.isBlank()) return
+        if (nowPlayingVideoId.value == song.videoId) {
+            viewModelScope.launch { mediaPlayerHandler.onPlayerEvent(PlayerEvent.PlayPause) }
+            return
+        }
+        val track = song.toTrack()
+        setQueueData(
+            QueueData.Data(
+                listTracks = arrayListOf(track),
+                firstPlayedTrack = track,
+                playlistId = "RDAMVM${track.videoId}",
+                playlistName = playlistTitle.ifBlank { Brand.NAME },
+                playlistType = PlaylistType.RADIO,
+                continuation = null,
+            ),
+        )
+        loadMediaItem(track, Config.SONG_CLICK)
     }
 
     /** Adds every picked song, one after the other, then reports how many made it in. */

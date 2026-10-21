@@ -2,6 +2,8 @@ package com.maxrave.simpmusic.beatland.picker
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +65,8 @@ import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.SongFullWidthItems
 import com.maxrave.simpmusic.ui.component.rememberSurfaceDarkColors
 import com.maxrave.simpmusic.ui.icon.Close
+import com.maxrave.simpmusic.ui.icon.Pause
+import com.maxrave.simpmusic.ui.icon.PlayArrow
 import com.maxrave.simpmusic.ui.icon.Search
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.theme.typo
@@ -78,6 +82,8 @@ import simpmusic.composeapp.generated.resources.bl_picker_empty
 import simpmusic.composeapp.generated.resources.bl_picker_in_library
 import simpmusic.composeapp.generated.resources.bl_picker_no_results
 import simpmusic.composeapp.generated.resources.bl_picker_online
+import simpmusic.composeapp.generated.resources.bl_picker_pause
+import simpmusic.composeapp.generated.resources.bl_picker_preview
 import simpmusic.composeapp.generated.resources.bl_picker_search_error
 import simpmusic.composeapp.generated.resources.bl_picker_search_hint
 import simpmusic.composeapp.generated.resources.bl_picker_searching
@@ -112,7 +118,9 @@ fun PlaylistSongPickerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val colors = rememberSurfaceDarkColors()
 
-    LaunchedEffect(playlistId) { viewModel.start(playlistId) }
+    val playingId by viewModel.nowPlayingVideoId.collectAsStateWithLifecycle()
+
+    LaunchedEffect(playlistId) { viewModel.start(playlistId, playlistTitle) }
 
     fun close() {
         viewModel.reset()
@@ -295,13 +303,13 @@ fun PlaylistSongPickerSheet(
                             item(key = "empty") { InfoText(stringResource(Res.string.bl_picker_empty)) }
                         }
                         items(state.library, key = { "lib_" + it.videoId }) { song ->
-                            PickerRow(song, selectedIds, state.alreadyInPlaylist, viewModel)
+                            PickerRow(song, selectedIds, state.alreadyInPlaylist, playingId, viewModel)
                         }
                     } else {
                         if (state.library.isNotEmpty()) {
                             item(key = "hdr_lib") { SectionHeader(stringResource(Res.string.bl_picker_in_library)) }
                             items(state.library, key = { "lib_" + it.videoId }) { song ->
-                                PickerRow(song, selectedIds, state.alreadyInPlaylist, viewModel)
+                                PickerRow(song, selectedIds, state.alreadyInPlaylist, playingId, viewModel)
                             }
                         }
                         item(key = "hdr_online") { SectionHeader(stringResource(Res.string.bl_picker_online)) }
@@ -332,7 +340,7 @@ fun PlaylistSongPickerSheet(
                             }
                             else -> {
                                 items(onlineOnly, key = { "on_" + it.videoId }) { song ->
-                                    PickerRow(song, selectedIds, state.alreadyInPlaylist, viewModel)
+                                    PickerRow(song, selectedIds, state.alreadyInPlaylist, playingId, viewModel)
                                 }
                             }
                         }
@@ -414,35 +422,71 @@ private fun InfoText(text: String) {
     )
 }
 
-/** One song, drawn by the app's own [SongFullWidthItems] in selection mode (circle indicator + row tint). */
+/**
+ * One song, drawn by the app's own [SongFullWidthItems] in selection mode (circle indicator + row tint).
+ * The preview button sits at the far RIGHT edge — opposite the selection circle on the left, which is
+ * where a tap means "pick" — so a quick tap on the row can never start playback by mistake.
+ */
 @Composable
 private fun PickerRow(
     song: SongEntity,
     selectedIds: Set<String>,
     alreadyInPlaylist: Set<String>,
+    playingId: String,
     viewModel: PlaylistSongPickerViewModel,
 ) {
     val inPlaylist = alreadyInPlaylist.contains(song.videoId)
+    val isPlayingThis = playingId == song.videoId
     val colors = rememberSurfaceDarkColors()
-    val right: (@Composable () -> Unit)? =
-        if (inPlaylist) {
-            {
+    val right: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (inPlaylist) {
                 Text(
                     text = stringResource(Res.string.bl_picker_already_in),
                     style = typo().labelSmall,
                     color = colors.subtitle,
                 )
+                Spacer(modifier = Modifier.width(8.dp))
             }
-        } else {
-            null
+            PreviewButton(playing = isPlayingThis, onClick = { viewModel.togglePreview(song) })
         }
+    }
     SongFullWidthItems(
         songEntity = song,
-        isPlaying = false,
+        isPlaying = isPlayingThis,
         selectionMode = true,
         isSelected = inPlaylist || selectedIds.contains(song.videoId),
         onSelectToggle = { if (!inPlaylist) viewModel.toggle(song) },
         modifier = Modifier.fillMaxWidth().alpha(if (inPlaylist) 0.55f else 1f),
         rightView = right,
     )
+}
+
+/** Small round outlined play button; filled with the app's primary pair while its song is playing. */
+@Composable
+private fun PreviewButton(
+    playing: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = rememberSurfaceDarkColors()
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier =
+            Modifier
+                .padding(start = 4.dp, end = 2.dp)
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(if (playing) scheme.primary else Color.Transparent)
+                .border(1.dp, if (playing) scheme.primary else colors.subtitle.copy(alpha = 0.5f), CircleShape)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (playing) SimpIcons.Pause else SimpIcons.PlayArrow,
+            contentDescription =
+                stringResource(if (playing) Res.string.bl_picker_pause else Res.string.bl_picker_preview),
+            tint = if (playing) scheme.onPrimary else colors.content,
+            modifier = Modifier.size(20.dp),
+        )
+    }
 }

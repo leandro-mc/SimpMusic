@@ -21,4 +21,6 @@
     <string name="bl_picker_clear_search">Borrar búsqueda</string>
     <string name="bl_add_songs">Añadir canciones</string>
     <string name="bl_add_songs_hint">Elige canciones de tu historial o busca nuevas</string>
+    <string name="bl_picker_preview">Escuchar vista previa</string>
+    <string name="bl_picker_pause">Pausar</string>
 </resources>

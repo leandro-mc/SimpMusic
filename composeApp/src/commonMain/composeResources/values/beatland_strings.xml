@@ -23,4 +23,6 @@
     <string name="bl_picker_clear_search">Clear search</string>
     <string name="bl_add_songs">Add songs</string>
     <string name="bl_add_songs_hint">Pick songs from your history or search for new ones</string>
+    <string name="bl_picker_preview">Play preview</string>
+    <string name="bl_picker_pause">Pause</string>
 </resources>
