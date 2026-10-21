@@ -208,6 +208,7 @@ import simpmusic.composeapp.generated.resources.artists
 import simpmusic.composeapp.generated.resources.baseline_favorite_24
 import simpmusic.composeapp.generated.resources.better_lyrics
 import simpmusic.composeapp.generated.resources.bitrate
+import simpmusic.composeapp.generated.resources.bl_regenerate_translation
 import simpmusic.composeapp.generated.resources.bpm
 import simpmusic.composeapp.generated.resources.can_not_be_empty
 import simpmusic.composeapp.generated.resources.cancel
@@ -1367,6 +1368,8 @@ fun NowPlayingBottomSheet(
     /** Called with the videoId of the track this sheet shows. */
     onYouTubeDislike: (videoId: String) -> Unit = {},
     dataStoreManager: DataStoreManager = koinInject<DataStoreManager>(),
+    // BEATLAND (D-028): used by the "Regenerate translation" action.
+    sharedViewModel: SharedViewModel = koinInject(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
@@ -1858,6 +1861,19 @@ fun NowPlayingBottomSheet(
                             ) {
                                 mainLyricsProvider = true
                             }
+                        }
+                    }
+                    // BEATLAND (D-028): ask the AI to translate the lyrics of the song that is playing again.
+                    val aiTranslationOn by dataStoreManager.useAITranslation
+                        .map { it == DataStoreManager.TRUE }
+                        .collectAsState(false)
+                    if (changeMainLyricsProviderEnable && aiTranslationOn) {
+                        ActionButton(
+                            icon = SimpIcons.Sync,
+                            text = Res.string.bl_regenerate_translation,
+                        ) {
+                            sharedViewModel.regenerateAiTranslation()
+                            hideModalBottomSheet()
                         }
                     }
                     Crossfade(targetState = setSleepTimerEnable) {

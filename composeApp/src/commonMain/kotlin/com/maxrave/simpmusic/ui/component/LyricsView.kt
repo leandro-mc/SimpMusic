@@ -215,7 +215,9 @@ private fun empEasing(x: Float): Float =
 // Repeated lyrics palette tokens hoisted to file scope: avoids re-allocating
 // the same Color() objects on every recomposition of every line item.
 private val DimOriginalColor = Color.LightGray.copy(alpha = 0.35f)
-private val DimTranslatedColor = Color(0xFF97971A).copy(alpha = 0.3f)
+// BEATLAND (D-028): the translation uses the app's own soft white (same token as Apple Music style) instead of
+// pure yellow / olive, dimmed when it is not the sung line.
+private val DimTranslatedColor = Color.White.copy(alpha = 0.3f)
 
 // A pronunciation guide sits BETWEEN the original and its translation in meaning, so it does the
 // same visually: neutral grey rather than the translation's yellow, dimmer than the original it
@@ -411,7 +413,10 @@ private fun buildSyncedTranslatedWordsByLineIndex(
                 bestDiff = diffB
             }
         }
-        if (bestDiff < thresholdMs) {
+        // BEATLAND (D-028): a blank translation means "this line has none" (dots, music symbols, a line the AI
+        // could not translate). Matching it still happens (so a neighbour's translation is never borrowed), but
+        // it is not shown.
+        if (bestDiff < thresholdMs && bestWords.isNotBlank()) {
             result[orig.index] = bestWords
             // Suppress unused warning while keeping the chosen ts visible for future tweaks.
             @Suppress("UNUSED_VARIABLE")
@@ -607,6 +612,7 @@ fun LyricsView(
                                 ?.lines
                                 ?.getOrNull(index)
                                 ?.words
+                                ?.takeIf { it.isNotBlank() } // BEATLAND (D-028)
                     }
 
                 line?.words?.let { words ->
@@ -884,7 +890,7 @@ fun LyricsLineItem(
                     alignmentText = originalWords,
                     modifier = Modifier.fillMaxWidth(),
                     style = typo().bodyMedium,
-                    color = if (bold && isCurrent) Color.Yellow else DimTranslatedColor,
+                    color = if (bold && isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -1048,7 +1054,7 @@ fun RichSyncLyricsLineItem(
                 alignmentText = originalWords,
                 modifier = Modifier.fillMaxWidth(),
                 style = translatedStyleOverride ?: typo().bodyMedium,
-                color = translatedColorOverride ?: if (isCurrent) Color.Yellow else DimTranslatedColor,
+                color = translatedColorOverride ?: if (isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
             )
         }
 

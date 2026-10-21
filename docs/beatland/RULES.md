@@ -70,6 +70,7 @@ Reglas:
 - `isDefault = true` del flavor `beatland` (D-021).
 - `ignoredFlavors.set(setOf("foss", "beatland"))` de Sentry en `androidApp/build.gradle.kts`.
 - `androidApp/src/beatland/**` y `androidApp/src/beatlandDebug/**`.
+- Paquete `beatland/translation/` y los ganchos de D-028 a D-030.
 - Paquetes `beatland/picker/` y `beatland/collage/`, `PlaylistCollageEffect()` en `App.kt` y `beatland_strings.xml` (D-024, D-026, D-027); `MAX_SONG_SELECTION = 500` (D-023).
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.

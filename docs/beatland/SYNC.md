@@ -22,6 +22,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `build.gradle.kts` (raíz) | Conservar el bloque `lintVital` dentro de `subprojects` (D-022). |
 | `ViewModelModule.kt`, `LibraryViewModel.kt`, `LibraryScreen.kt`, `LocalPlaylistScreen.kt`, `SongSelectionState.kt` | Conservar los ganchos del selector de playlists (marcados `BEATLAND (D-023/D-024)`); ver `FEATURES.md`. |
 | `App.kt` | Conservar `PlaylistCollageEffect()` (D-027). |
+| `SharedViewModel.kt` (traducción), `ModalBottomSheet.kt`, `LyricsView.kt`, `NowPlayingContentSpotify.kt`, `NowPlayingContentM3Expressive.kt`, `AppleMusicShared.kt` | Conservar `RobustLyricsTranslator` en `translateWithAi`, `regenerateAiTranslation`, la acción del menú, los colores de traducción (`AppleMusicTranslatedColor`) y el filtro de traducciones en blanco (D-028 a D-030). |
 | `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
 | `vivoAndroidApp/build.gradle.kts` | Conservar `IS_PERSONAL_FORK` (D-018). |
 | `CLAUDE.md` | Tomar upstream y volver a poner la línea de cabecera que apunta a `docs/beatland/README.md`. |

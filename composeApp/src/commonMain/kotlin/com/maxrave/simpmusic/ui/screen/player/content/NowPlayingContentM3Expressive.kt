@@ -95,6 +95,7 @@ import com.maxrave.simpmusic.extension.getScreenSizeInfo
 import com.maxrave.simpmusic.extension.isElementVisible
 import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.ui.component.AppleMusicTranslatedColor
 import com.maxrave.simpmusic.ui.component.LyricText
 import com.maxrave.simpmusic.ui.component.ExplicitBadge
 import com.maxrave.simpmusic.ui.component.heartBurst
@@ -648,8 +649,9 @@ private fun NowPlayingM3ExpressiveLayout(
                                                                     ).focusable(),
                                                             text = translatedLineText,
                                                             alignmentText = lineText,
-                                                            style = typo().bodyMedium,
-                                                            color = Color.Yellow,
+                                                            // BEATLAND (D-028): smaller than the original line and the app's soft white, not pure yellow.
+                                                            style = typo().bodySmall,
+                                                            color = AppleMusicTranslatedColor,
                                                             maxLines = 1,
                                                         )
                                                     }

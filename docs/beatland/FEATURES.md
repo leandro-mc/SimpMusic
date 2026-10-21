@@ -62,6 +62,21 @@ esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y 
 `PlaylistCollage.jvm.kt` (jvmMain). **Gancho en upstream:** `App.kt` (1 línea: `PlaylistCollageEffect()`).
 **Dependencias de upstream:** `LocalPlaylistRepository.{getAllLocalPlaylists,updateThumbnailLocalPlaylist}`, `SongRepository.getSongsByListVideoId`, `persistPickedImage`.
 
+## Traducción de letras con IA: más fiable y regenerable (D-028, D-029, D-030)
+
+- **Fiabilidad:** las líneas sin texto (puntos, ♪, `[Instrumental]`…) ya no se envían a la IA ni desplazan los versos; se traduce en bloques
+  pequeños y se reintenta solo lo que salió mal. Detalle completo en la documentación de `RobustLyricsTranslator`.
+- **Regenerar:** menú de tres puntos de la canción en reproducción (también el de la letra expandida) → **Regenerar traducción**. Aparece solo si
+  la traducción con IA está activada. Muestra avisos al empezar y al terminar; si falla, se conserva la traducción anterior.
+- **Aspecto:** la traducción usa el blanco suave de la app y es más pequeña que la letra original en todas las vistas.
+- Las traducciones ya guardadas con el método anterior no se corrigen solas: hay que usar **Regenerar** en cada canción.
+
+**Archivos propios (nuevos):** `composeApp/.../beatland/translation/RobustLyricsTranslator.kt`.
+**Ganchos en upstream:** `SharedViewModel.kt` (traducción y `regenerateAiTranslation`), `ModalBottomSheet.kt` (acción del menú),
+`LyricsView.kt`, `NowPlayingContentSpotify.kt`, `NowPlayingContentM3Expressive.kt`, `AppleMusicShared.kt` (estilo y líneas en blanco).
+**Dependencias de upstream:** `LyricsCanvasRepository.{getAITranslationLyrics,getSavedTranslatedLyrics,insertTranslatedLyrics,removeTranslatedLyrics}`,
+`Lyrics`/`Line`, `AppleMusicTranslatedColor`, `DataStoreManager.useAITranslation`.
+
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).

@@ -83,6 +83,7 @@ import com.maxrave.simpmusic.expect.ui.DeviceVolumeController
 import com.maxrave.simpmusic.extension.LeftToRight
 import com.maxrave.simpmusic.extension.formatDuration
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.ui.component.AppleMusicTranslatedColor
 import com.maxrave.simpmusic.ui.component.ExplicitBadge
 import com.maxrave.simpmusic.ui.component.heartBurst
 import com.maxrave.simpmusic.ui.component.rememberHeartBurstState
@@ -196,7 +197,8 @@ internal fun rememberAppleMusicTypography(): AppleMusicTypography {
         times = t.bodyMedium.copy(color = AppleMusicSecondaryText),
         footer = t.bodySmall.copy(color = AppleMusicSecondaryText),
         idleLyric = t.bodyMedium.copy(color = Color.White),
-        idleTranslated = t.bodyMedium.copy(color = Color.Yellow),
+        // BEATLAND (D-028): smaller than the original line and the app's soft white, not pure yellow.
+        idleTranslated = t.bodySmall.copy(color = AppleMusicTranslatedColor),
         // The line over the progress bar is the inline lyric line Classic and M3E draw under their
         // artwork: labelSmall in white, the same role and colour.
         lyricStrip = t.labelSmall.copy(color = Color.White),

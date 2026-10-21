@@ -23,4 +23,10 @@
     <string name="bl_add_songs_hint">Elige canciones de tu historial o busca nuevas</string>
     <string name="bl_picker_preview">Escuchar vista previa</string>
     <string name="bl_picker_pause">Pausar</string>
+    <string name="bl_regenerate_translation">Regenerar traducción</string>
+    <string name="bl_translation_regenerating">Regenerando traducción…</string>
+    <string name="bl_translation_regenerated">Traducción regenerada</string>
+    <string name="bl_translation_failed">No se pudo regenerar la traducción. Se conservó la anterior.</string>
+    <string name="bl_translation_needs_ai">Activa primero la traducción con IA en Ajustes</string>
+    <string name="bl_translation_no_lyrics">Esta canción no tiene letra para traducir</string>
 </resources>

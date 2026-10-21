@@ -124,6 +124,7 @@ import com.maxrave.simpmusic.extension.isElementVisible
 import com.maxrave.simpmusic.extension.parseTimestampToMilliseconds
 import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.ui.component.AppleMusicTranslatedColor
 import com.maxrave.simpmusic.ui.component.LyricText
 import com.maxrave.simpmusic.ui.component.AIBadge
 import com.maxrave.simpmusic.ui.component.DescriptionView
@@ -1274,8 +1275,9 @@ fun NowPlayingContentSpotify(
                                                                         ).focusable(),
                                                                 text = translatedLineText,
                                                                 alignmentText = lineText,
-                                                                style = typo().bodyMedium,
-                                                                color = Color.Yellow,
+                                                                // BEATLAND (D-028): smaller than the original line and the app's soft white, not pure yellow.
+                                                                style = typo().bodySmall,
+                                                                color = AppleMusicTranslatedColor,
                                                                 maxLines = 1,
                                                             )
                                                         }
