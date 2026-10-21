@@ -46,7 +46,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache` |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
-| `composeApp/.../viewModel/LocalPlaylistViewModel.kt` | Observa la miniatura en la base de datos para reflejar el collage sin recargar (D-027) |
+| `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator` y `regenerateAiTranslation()` |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
@@ -74,7 +74,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/picker/` (3 archivos) | Selector de canciones: ViewModel, hoja de interfaz y fila de entrada |
 | `composeApp/.../beatland/translation/RobustLyricsTranslator.kt` | Traducción de letras con IA fiable (D-028) |
 | `composeApp/.../beatland/lyrics/LyricsTranslationStyle.kt` | Color, tipografía y tamaño de la traducción en todas las vistas de letra (D-030) |
-| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (4 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
+| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (5 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
