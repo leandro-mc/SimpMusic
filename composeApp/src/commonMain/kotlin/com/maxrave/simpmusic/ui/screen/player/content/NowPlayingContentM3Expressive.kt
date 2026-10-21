@@ -86,6 +86,7 @@ import com.materialkolor.ktx.themeColorOrNull
 import com.materialkolor.rememberDynamicColorScheme
 import com.maxrave.domain.mediaservice.handler.RepeatState
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.lyrics.beatlandSubtitleTranslationStyle
 import com.maxrave.simpmusic.expect.ui.toReadableBitmap
 import com.maxrave.simpmusic.extension.LeftToRight
 import com.maxrave.simpmusic.extension.elapsedLabel
@@ -649,8 +650,8 @@ private fun NowPlayingM3ExpressiveLayout(
                                                                     ).focusable(),
                                                             text = translatedLineText,
                                                             alignmentText = lineText,
-                                                            // BEATLAND (D-028): smaller than the original line and the app's soft white, not pure yellow.
-                                                            style = typo().bodySmall,
+                                                            // BEATLAND (D-030): the app's translation tone, a notch smaller than the original line.
+                                                            style = beatlandSubtitleTranslationStyle(),
                                                             color = AppleMusicTranslatedColor,
                                                             maxLines = 1,
                                                         )

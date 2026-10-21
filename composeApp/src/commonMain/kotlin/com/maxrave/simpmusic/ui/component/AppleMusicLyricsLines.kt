@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.lyrics.BeatlandTranslationColor
+import com.maxrave.simpmusic.beatland.lyrics.beatlandTranslationStyle
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.theme.typo
 import kotlin.math.abs
@@ -130,7 +132,7 @@ internal val AppleMusicWrappedLineSpacing = 2.dp
 
 // White, like Apple — NOT the Classic renderer's yellow. Slightly under full opacity so the
 // translation still reads as secondary to the line it translates.
-internal val AppleMusicTranslatedColor = Color.White.copy(alpha = 0.78f)
+internal val AppleMusicTranslatedColor = BeatlandTranslationColor // BEATLAND (D-030): was Color.White.copy(alpha = 0.78f)
 
 // A shade under the translation's: on a line carrying original + reading + translation, the
 // reading is the one you stop needing once you know the song, so it recedes first.
@@ -284,11 +286,8 @@ fun AppleMusicLyricsLineItem(
                 text = translatedWords,
                 alignmentText = originalWords,
                 modifier = Modifier.fillMaxWidth(),
-                style =
-                    typo().bodyMedium.copy(
-                        fontSize = AppleMusicSubLineFontSize,
-                        lineHeight = AppleMusicSubLineHeight,
-                    ),
+                // BEATLAND (D-030): the original's own type, smaller (was the 14sp body style).
+                style = beatlandTranslationStyle(19.sp),
                 // The colour still follows the line's own state; AMLL carries the whole sub-line at
                 // a flat 0.3 opacity on top of that, which is applied as a modifier so it composes
                 // with appleMusicLyricFocus's own dimming instead of fighting it.

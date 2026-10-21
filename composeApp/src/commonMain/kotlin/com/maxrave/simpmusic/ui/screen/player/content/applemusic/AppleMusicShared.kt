@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -197,8 +198,8 @@ internal fun rememberAppleMusicTypography(): AppleMusicTypography {
         times = t.bodyMedium.copy(color = AppleMusicSecondaryText),
         footer = t.bodySmall.copy(color = AppleMusicSecondaryText),
         idleLyric = t.bodyMedium.copy(color = Color.White),
-        // BEATLAND (D-028): smaller than the original line and the app's soft white, not pure yellow.
-        idleTranslated = t.bodySmall.copy(color = AppleMusicTranslatedColor),
+        // BEATLAND (D-030): the app's translation tone, a notch smaller than the original line.
+        idleTranslated = t.bodyMedium.copy(fontSize = 12.sp, color = AppleMusicTranslatedColor),
         // The line over the progress bar is the inline lyric line Classic and M3E draw under their
         // artwork: labelSmall in white, the same role and colour.
         lyricStrip = t.labelSmall.copy(color = Color.White),

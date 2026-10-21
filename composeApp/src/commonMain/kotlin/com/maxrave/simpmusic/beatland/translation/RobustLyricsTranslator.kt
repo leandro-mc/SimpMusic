@@ -5,6 +5,7 @@ import com.maxrave.domain.data.model.metadata.Lyrics
 import com.maxrave.domain.repository.LyricsCanvasRepository
 import com.maxrave.domain.utils.Resource
 import com.maxrave.logger.Logger
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -19,13 +20,20 @@ import kotlin.coroutines.cancellation.CancellationException
  *  1. Lines with nothing to translate (no letters: dots, music symbols, dashes; or a bracketed section marker such
  *     as "[Instrumental]") are NEVER sent. Without them the model has nothing to skip or renumber.
  *  2. The rest is sent in small windows ([CHUNK_SIZE] lines) instead of the whole song, so a slip cannot drift far.
- *  3. Every answer is checked. A line that came back untranslated (the submodule fills missing keys with the original
- *     text) or empty is "bad". A window with bad lines is split in halves and asked again, down to [MIN_SPLIT] lines.
+ *  3. A second, bounded REPAIR pass asks again, in even smaller batches ([REPAIR_SIZE]), only for the lines that came
+ *     back untranslated (the submodule fills a missing key with the original text) although they are real sentences.
  *  4. The result is rebuilt locally: exactly one line per original line, with the ORIGINAL timestamps, so the screen's
- *     match-by-time can never pair a translation with a neighbouring verse. Lines without a translation are blank.
+ *     match-by-time can never pair a translation with a neighbouring verse. A line without a translation is blank
+ *     and the screen does not show it.
  *
- * It returns [Resource.Error] — so nothing is saved — when the first call fails (wrong key, same language, no
- * network) or when too little of the song ended up translated.
+ * FAILURE POLICY (what went wrong in the first version: it gave up on any failed call, so one hiccup on a small
+ * retry window threw away a song that was 95 % translated). The submodule reports every failure as the same
+ * "Translation failed", including "this chunk is already in the target language", so a failed call is NOT proof of a
+ * broken setup. Therefore:
+ *  - only the FIRST request of the song decides if the setup is unusable (key, provider, language): it is tried twice,
+ *    and if it still fails the result is [Resource.Error] and nothing is saved;
+ *  - any later failed call just leaves its lines untranslated (blank) — it never discards the rest;
+ *  - the result is kept when at least [MIN_TRANSLATED_PERCENT] % of the translatable lines really got a translation.
  */
 class RobustLyricsTranslator(
     private val lyricsCanvasRepository: LyricsCanvasRepository,
@@ -33,6 +41,10 @@ class RobustLyricsTranslator(
     private class Entry(
         val index: Int,
         val text: String,
+    )
+
+    private class Budget(
+        var calls: Int,
     )
 
     suspend fun translate(
@@ -48,22 +60,33 @@ class RobustLyricsTranslator(
         if (entries.isEmpty()) return Resource.Error("Nothing to translate")
 
         val translations = arrayOfNulls<String>(lines.size)
-        var failedCalls = 0
-        var firstWindow = true
+        val budget = Budget(MAX_CALLS)
+
+        // Pass 1: the whole song, in windows.
+        var first = true
         for (chunk in entries.chunked(CHUNK_SIZE)) {
-            val result = translateWindow(chunk, lines, lyrics.syncType, targetLanguage, depth = 0) { failedCalls++ }
-            if (firstWindow) {
-                firstWindow = false
-                // The very first request failing means the setup is unusable (key, provider, same language...).
-                if (failedCalls > 0) return Resource.Error("Translation failed")
+            val answer = ask(chunk, lines, lyrics.syncType, targetLanguage, budget)
+            if (answer == null) {
+                if (first) {
+                    Logger.w(TAG, "The first request failed twice; the AI setup is not usable for this song")
+                    return Resource.Error("Translation failed")
+                }
+                continue // later failure: those lines stay untranslated, the rest is kept
             }
-            chunk.forEachIndexed { i, entry -> translations[entry.index] = result[i] }
-            if (failedCalls >= MAX_FAILED_CALLS) break
+            first = false
+            chunk.forEachIndexed { i, entry -> translations[entry.index] = answer[i] }
         }
 
-        val covered = entries.count { translations[it.index] != null }
-        if (covered * 100 < entries.size * MIN_COVERAGE_PERCENT) {
-            Logger.w(TAG, "Only $covered/${entries.size} lines translated; not keeping the result")
+        // Pass 2: real sentences the model left untouched.
+        val missed = entries.filter { translations[it.index] == null && looksLikeASentence(it.text) }
+        for (batch in missed.chunked(REPAIR_SIZE)) {
+            val answer = ask(batch, lines, lyrics.syncType, targetLanguage, budget) ?: continue
+            batch.forEachIndexed { i, entry -> answer[i]?.let { translations[entry.index] = it } }
+        }
+
+        val translated = entries.count { translations[it.index] != null }
+        Logger.d(TAG, "Translated $translated of ${entries.size} translatable lines (${lines.size} total, ${budget.calls} calls left)")
+        if (translated * 100 < entries.size * MIN_TRANSLATED_PERCENT) {
             return Resource.Error("Translation incomplete")
         }
         val rebuilt =
@@ -79,41 +102,16 @@ class RobustLyricsTranslator(
     }
 
     /**
-     * Translates [window]. Returns one slot per entry: the translation, "" when the line legitimately needs none
-     * (an interjection that stays the same), or null when it could not be translated.
+     * One AI request for [window], tried up to twice. Returns one slot per entry — the translation, or null when the
+     * model left the line as it was or empty — or null as a whole when the call failed (or [budget] ran out).
      */
-    private suspend fun translateWindow(
+    private suspend fun ask(
         window: List<Entry>,
         lines: List<Line>,
         syncType: String?,
         language: String,
-        depth: Int,
-        onCallFailed: () -> Unit,
-    ): Array<String?> {
-        val result =
-            requestWindow(window, lines, syncType, language)
-                ?: run {
-                    // The call itself failed (key, quota, network, same language): splitting would only repeat it.
-                    onCallFailed()
-                    return arrayOfNulls(window.size)
-                }
-        if (result.none { it == null }) return result
-        if (depth >= MAX_DEPTH || window.size < MIN_SPLIT) return result
-        val mid = window.size / 2
-        val merged =
-            translateWindow(window.subList(0, mid), lines, syncType, language, depth + 1, onCallFailed) +
-                translateWindow(window.subList(mid, window.size), lines, syncType, language, depth + 1, onCallFailed)
-        return if (merged.count { it == null } <= result.count { it == null }) merged else result
-    }
-
-    /** One AI request for [window]. Returns null when the call failed or the answer cannot be lined up with it. */
-    private suspend fun requestWindow(
-        window: List<Entry>,
-        lines: List<Line>,
-        syncType: String?,
-        language: String,
+        budget: Budget,
     ): Array<String?>? {
-        val out = arrayOfNulls<String>(window.size)
         val request =
             Lyrics(
                 error = false,
@@ -128,36 +126,38 @@ class RobustLyricsTranslator(
                     },
                 syncType = syncType,
             )
-        val answer =
-            try {
-                lyricsCanvasRepository.getAITranslationLyrics(request, language).firstOrNull()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Logger.w(TAG, "AI request failed: ${e.message}")
-                null
-            }
-        val answered = (answer as? Resource.Success<Lyrics>)?.data?.lines
-        if (answered == null || answered.size != window.size) return null
-        window.forEachIndexed { i, entry ->
-            val text = answered[i].words.trim()
-            out[i] =
-                when {
-                    text.isEmpty() -> null
-                    sameText(text, entry.text) -> if (isShortInterjection(entry.text)) "" else null
-                    else -> text
+        repeat(ATTEMPTS) { attempt ->
+            if (budget.calls <= 0) return null
+            budget.calls--
+            val answer =
+                try {
+                    lyricsCanvasRepository.getAITranslationLyrics(request, language).firstOrNull()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Logger.w(TAG, "AI request threw: ${e.message}")
+                    null
                 }
+            val answered = (answer as? Resource.Success<Lyrics>)?.data?.lines
+            if (answered != null && answered.size == window.size) {
+                return Array(window.size) { i ->
+                    val text = answered[i].words.trim()
+                    if (text.isEmpty() || sameText(text, window[i].text)) null else text
+                }
+            }
+            if (attempt < ATTEMPTS - 1) delay(RETRY_DELAY_MS)
         }
-        return out
+        return null
     }
 
     companion object {
         private const val TAG = "RobustLyricsTranslator"
         private const val CHUNK_SIZE = 20
-        private const val MAX_DEPTH = 2
-        private const val MIN_SPLIT = 4
-        private const val MAX_FAILED_CALLS = 4
-        private const val MIN_COVERAGE_PERCENT = 70
+        private const val REPAIR_SIZE = 12
+        private const val ATTEMPTS = 2
+        private const val RETRY_DELAY_MS = 800L
+        private const val MAX_CALLS = 40
+        private const val MIN_TRANSLATED_PERCENT = 40
 
         private val SECTION_MARKERS =
             setOf(
@@ -186,7 +186,17 @@ class RobustLyricsTranslator(
             b: String,
         ): Boolean = normalize(a) == normalize(b)
 
-        /** "Oh oh oh", "Yeah", names: an unchanged answer is fine and not worth another request. */
-        private fun isShortInterjection(text: String): Boolean = text.trim().split(Regex("\\s+")).size <= 2
+        /**
+         * A real sentence worth a second try: at least three different words. "Oh oh oh", "Yeah", "La la la" and names
+         * that stay the same are left alone.
+         */
+        private fun looksLikeASentence(text: String): Boolean {
+            val words =
+                text
+                    .lowercase()
+                    .split(Regex("[^\\p{L}]+"))
+                    .filter { it.isNotEmpty() }
+            return words.size >= 3 && words.toSet().size >= 3
+        }
     }
 }

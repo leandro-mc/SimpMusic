@@ -65,11 +65,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.data.model.lyrics.RomanizationDictionaryState
 import com.maxrave.domain.data.model.lyrics.RomanizationLanguage
 import com.maxrave.domain.repository.LyricsRomanizerRepository
+import com.maxrave.simpmusic.beatland.lyrics.BeatlandTranslationDimColor
+import com.maxrave.simpmusic.beatland.lyrics.beatlandTranslationStyle
 import com.maxrave.simpmusic.expect.ui.isLyricsBlurSupported
 import com.maxrave.domain.data.model.metadata.Line
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentActions
@@ -217,7 +220,7 @@ private fun empEasing(x: Float): Float =
 private val DimOriginalColor = Color.LightGray.copy(alpha = 0.35f)
 // BEATLAND (D-028): the translation uses the app's own soft white (same token as Apple Music style) instead of
 // pure yellow / olive, dimmed when it is not the sung line.
-private val DimTranslatedColor = Color.White.copy(alpha = 0.3f)
+private val DimTranslatedColor = BeatlandTranslationDimColor
 
 // A pronunciation guide sits BETWEEN the original and its translation in meaning, so it does the
 // same visually: neutral grey rather than the translation's yellow, dimmer than the original it
@@ -889,7 +892,7 @@ fun LyricsLineItem(
                     text = translatedWords,
                     alignmentText = originalWords,
                     modifier = Modifier.fillMaxWidth(),
-                    style = typo().bodyMedium,
+                    style = beatlandTranslationStyle(), // BEATLAND (D-030)
                     color = if (bold && isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
                 )
             }
@@ -1053,7 +1056,8 @@ fun RichSyncLyricsLineItem(
                 text = translatedWords,
                 alignmentText = originalWords,
                 modifier = Modifier.fillMaxWidth(),
-                style = translatedStyleOverride ?: typo().bodyMedium,
+                // BEATLAND (D-030): same type as the original line; the Apple Music style (it passes an override) is bigger.
+                style = if (translatedStyleOverride != null) beatlandTranslationStyle(19.sp) else beatlandTranslationStyle(),
                 color = translatedColorOverride ?: if (isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
             )
         }
