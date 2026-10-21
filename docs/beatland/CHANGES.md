@@ -45,7 +45,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache` |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
-| `composeApp/.../viewModel/LocalPlaylistViewModel.kt` | Observa la miniatura en la base de datos para reflejar el collage sin recargar (D-027) |
+| `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`) |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
@@ -70,7 +70,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../floatinglyrics/` (androidMain, 4 archivos) | Servicio, interfaz, permiso y ciclo de vida de la letra flotante |
 | `composeApp/.../expect/floatinglyrics/FloatingLyricsCapability*.kt` | `expect` (common) y `actual` (android, jvm) |
 | `composeApp/.../beatland/picker/` (3 archivos) | Selector de canciones: ViewModel, hoja de interfaz y fila de entrada |
-| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (4 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
+| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (5 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |

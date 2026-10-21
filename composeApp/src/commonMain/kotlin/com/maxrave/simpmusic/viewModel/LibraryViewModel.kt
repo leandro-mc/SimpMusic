@@ -27,6 +27,7 @@ import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.utils.isRadioPlaylistId
+import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEvents
 import com.maxrave.simpmusic.ui.screen.home.analytics.monthFullNameResource
 import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
@@ -294,6 +295,18 @@ class LibraryViewModel(
         viewModelScope.launch {
             songRepository.getCanvasSong(max = 5).collect { data ->
                 _listCanvasSong.value = LocalResource.Success(data)
+            }
+        }
+    }
+
+    // BEATLAND (D-027): the library list is loaded once per screen visit; when a collage thumbnail is written while the
+    // list is on screen, reload it so the new cover shows without leaving and coming back.
+    init {
+        viewModelScope.launch {
+            PlaylistCollageEvents.updated.collect {
+                // A silent swap of the list (no Loading state in between, so the grid does not flash).
+                _yourLocalPlaylist.value =
+                    LocalResource.Success(localPlaylistRepository.getAllLocalPlaylists().first().reversed())
             }
         }
     }
