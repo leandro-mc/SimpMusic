@@ -31,6 +31,7 @@ import com.maxrave.domain.mediaservice.handler.QueueData
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.FilterState
+import com.maxrave.domain.utils.LocalResource
 import com.maxrave.domain.utils.collectLatestResource
 import com.maxrave.domain.utils.collectResource
 import com.maxrave.domain.utils.toArrayListTrack
@@ -38,6 +39,7 @@ import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
 import com.maxrave.logger.LogLevel
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEvents
 import com.maxrave.simpmusic.pagination.PagingActions
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flatMapLatest
@@ -197,6 +200,26 @@ class LocalPlaylistViewModel(
                 }
             listTrackStringJob.join()
             resetSuggestions.join()
+        }
+    }
+
+    // BEATLAND (D-027): the playlist header reads the thumbnail once, when the screen opens, but the automatic collage
+    // is written a few seconds AFTER songs are added. The repository cannot be observed (its queries are one-shot),
+    // so the collage manager announces each new thumbnail and the open screen reloads it from here.
+    init {
+        viewModelScope.launch {
+            PlaylistCollageEvents.updated.collect { updatedId ->
+                if (updatedId != uiState.value.id) return@collect
+                val latest =
+                    localPlaylistRepository
+                        .getLocalPlaylist(updatedId)
+                        .firstOrNull { it is LocalResource.Success }
+                        ?.data
+                        ?.thumbnail
+                if (latest != null && latest != uiState.value.thumbnail) {
+                    _uiState.update { it.copy(thumbnail = latest) }
+                }
+            }
         }
     }
 

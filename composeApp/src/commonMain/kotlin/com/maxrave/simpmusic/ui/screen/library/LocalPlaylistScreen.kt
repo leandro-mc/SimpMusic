@@ -49,6 +49,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import com.maxrave.simpmusic.beatland.picker.AddSongsRow
+import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerSheet
 import com.maxrave.simpmusic.extension.barBlurStyle
 import com.maxrave.simpmusic.ui.component.DownloadingIndicator
 import com.maxrave.simpmusic.ui.icon.Search
@@ -267,6 +269,7 @@ fun LocalPlaylistScreen(
     val selectionViewModel: SongSelectionViewModel = koinViewModel()
     var showSelectionSheet by rememberSaveable { mutableStateOf(false) }
     var showSelectionAddToPlaylist by rememberSaveable { mutableStateOf(false) }
+    var showSongPicker by rememberSaveable { mutableStateOf(false) } // BEATLAND (D-024)
     var shouldShowSuggestButton by rememberSaveable { mutableStateOf(false) }
 
     val playingTrack by sharedViewModel.nowPlayingState
@@ -1332,6 +1335,10 @@ fun LocalPlaylistScreen(
                 }
             }
         }
+        // BEATLAND (D-024): always-available way to add songs, also when the playlist is empty.
+        item(key = "beatland_add_songs") {
+            AddSongsRow(onClick = { showSongPicker = true })
+        }
         items(count = trackPagingItems.itemCount, key = { index ->
             val item = trackPagingItems[index]
             (item?.first?.videoId ?: "") + "item_$index" + item?.second?.inPlaylist + item?.second?.position
@@ -1443,6 +1450,13 @@ fun LocalPlaylistScreen(
             onOpenActions = { showSelectionSheet = true },
             modifier =
                 Modifier.hazeBlur(HazeInput.Sources(hazeState), barBlurStyle(mutedPaletteBg, 0.55f)),
+        )
+    }
+    if (showSongPicker) {
+        PlaylistSongPickerSheet(
+            playlistId = id,
+            playlistTitle = uiState.title,
+            onDismiss = { showSongPicker = false },
         )
     }
     if (showSelectionSheet) {

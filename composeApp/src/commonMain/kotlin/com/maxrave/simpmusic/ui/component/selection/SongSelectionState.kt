@@ -18,7 +18,7 @@ import simpmusic.composeapp.generated.resources.max_selection_reached
  * (download, add to playlist, add to queue) fires one request per song, so the cap keeps a
  * single gesture from firing hundreds of them with no way to cancel.
  */
-const val MAX_SONG_SELECTION = 25
+const val MAX_SONG_SELECTION = 500 // BEATLAND (D-023): upstream's value was 25
 
 /**
  * Selection state for a list of songs. Held by the screen, read by [com.maxrave.simpmusic.ui.component.SongFullWidthItems].

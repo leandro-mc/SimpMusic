@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Beatland fork: strings for personal features. New file on purpose (never edit upstream's strings.xml
+     for fork features: it is a guaranteed merge conflict). Keys are prefixed bl_. Other languages fall
+     back to this file; only Spanish is translated. See docs/beatland/FEATURES.md. -->
+<resources>
+    <string name="bl_picker_title">Add songs to “%1$s”</string>
+    <string name="bl_picker_search_hint">Search songs or artists</string>
+    <string name="bl_picker_source_recent">Recent</string>
+    <string name="bl_picker_source_most_played">Most played</string>
+    <string name="bl_picker_source_liked">Liked</string>
+    <string name="bl_picker_in_library">In your library</string>
+    <string name="bl_picker_online">YouTube Music</string>
+    <string name="bl_picker_searching">Searching…</string>
+    <string name="bl_picker_no_results">No songs found</string>
+    <string name="bl_picker_search_error">Could not search online. Check your connection.</string>
+    <string name="bl_picker_empty">Nothing here yet. Use the search to find songs.</string>
+    <string name="bl_picker_already_in">In playlist</string>
+    <string name="bl_picker_add_count">Add %1$s songs</string>
+    <string name="bl_picker_adding">Adding songs…</string>
+    <string name="bl_picker_added">%1$s songs added</string>
+    <string name="bl_picker_select_all">Select all</string>
+    <string name="bl_picker_clear">Clear</string>
+    <string name="bl_picker_clear_search">Clear search</string>
+    <string name="bl_add_songs">Add songs</string>
+    <string name="bl_add_songs_hint">Pick songs from your history or search for new ones</string>
+    <string name="bl_picker_preview">Play preview</string>
+    <string name="bl_picker_pause">Pause</string>
+</resources>

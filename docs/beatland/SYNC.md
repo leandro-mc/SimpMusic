@@ -20,6 +20,8 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `SettingScreen.kt` | Conservar el bloque `floating_lyrics` y el `if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED)` que envuelve los ajustes de actualización; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar. |
 | `HomeScreen.kt`, `SharedViewModel.kt` | Conservar las guardas de `ForkPolicy` (promos y `checkForUpdate`). Si upstream añade un diálogo promocional nuevo, protegerlo igual. |
 | `build.gradle.kts` (raíz) | Conservar el bloque `lintVital` dentro de `subprojects` (D-022). |
+| `ViewModelModule.kt`, `LibraryViewModel.kt`, `LibraryScreen.kt`, `LocalPlaylistScreen.kt`, `SongSelectionState.kt` | Conservar los ganchos del selector de playlists (marcados `BEATLAND (D-023/D-024)`); ver `FEATURES.md`. |
+| `App.kt` | Conservar `PlaylistCollageEffect()` (D-027). |
 | `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
 | `vivoAndroidApp/build.gradle.kts` | Conservar `IS_PERSONAL_FORK` (D-018). |
 | `CLAUDE.md` | Tomar upstream y volver a poner la línea de cabecera que apunta a `docs/beatland/README.md`. |
@@ -30,7 +32,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
    Corregir los literales Kotlin que reporte con `Brand.NAME`.
 7. Validar estáticamente que la ventana flotante sigue compilando contra upstream: revisar que existan y no hayan cambiado de firma
    los símbolos listados en `FEATURES.md` → "Dependencias de upstream".
-8. Registrar en `DECISIONS.md` cualquier decisión nueva y anotar en `SYNC_LOG.md` la fecha y los conflictos resueltos.
+8. Registrar en `DECISIONS.md` cualquier decisión nueva, actualizar `CHANGES.md` si cambió algún archivo propio o tocado, y anotar en `SYNC_LOG.md` la fecha y los conflictos resueltos.
 9. **Pedir al dueño que compile** `beatlandDebug`. Si hay errores, él los pasa y se corrigen en la misma rama.
 10. Cuando compile, merge de `sync/dev-AAAA-MM-DD` a `myapp` (PR o `--no-ff`). Después borrar la rama de sync.
 11. Las ramas `feature/*` abiertas se actualizan con `git merge myapp`.

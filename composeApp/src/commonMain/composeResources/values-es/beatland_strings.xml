@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Beatland fork: traducción al español de values/beatland_strings.xml -->
+<resources>
+    <string name="bl_picker_title">Añadir canciones a «%1$s»</string>
+    <string name="bl_picker_search_hint">Buscar canciones o artistas</string>
+    <string name="bl_picker_source_recent">Recientes</string>
+    <string name="bl_picker_source_most_played">Más escuchadas</string>
+    <string name="bl_picker_source_liked">Me gusta</string>
+    <string name="bl_picker_in_library">En tu biblioteca</string>
+    <string name="bl_picker_online">YouTube Music</string>
+    <string name="bl_picker_searching">Buscando…</string>
+    <string name="bl_picker_no_results">No se encontraron canciones</string>
+    <string name="bl_picker_search_error">No se pudo buscar en línea. Revisa tu conexión.</string>
+    <string name="bl_picker_empty">Aún no hay nada aquí. Usa el buscador para encontrar canciones.</string>
+    <string name="bl_picker_already_in">En la playlist</string>
+    <string name="bl_picker_add_count">Añadir %1$s canciones</string>
+    <string name="bl_picker_adding">Añadiendo canciones…</string>
+    <string name="bl_picker_added">%1$s canciones añadidas</string>
+    <string name="bl_picker_select_all">Seleccionar todo</string>
+    <string name="bl_picker_clear">Limpiar</string>
+    <string name="bl_picker_clear_search">Borrar búsqueda</string>
+    <string name="bl_add_songs">Añadir canciones</string>
+    <string name="bl_add_songs_hint">Elige canciones de tu historial o busca nuevas</string>
+    <string name="bl_picker_preview">Escuchar vista previa</string>
+    <string name="bl_picker_pause">Pausar</string>
+</resources>

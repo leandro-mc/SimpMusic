@@ -27,6 +27,7 @@ import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.utils.isRadioPlaylistId
+import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEvents
 import com.maxrave.simpmusic.ui.screen.home.analytics.monthFullNameResource
 import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
@@ -298,6 +299,18 @@ class LibraryViewModel(
         }
     }
 
+    // BEATLAND (D-027): the library list is loaded once per screen visit; when a collage thumbnail is written while the
+    // list is on screen, reload it so the new cover shows without leaving and coming back.
+    init {
+        viewModelScope.launch {
+            PlaylistCollageEvents.updated.collect {
+                // A silent swap of the list (no Loading state in between, so the grid does not flash).
+                _yourLocalPlaylist.value =
+                    LocalResource.Success(localPlaylistRepository.getAllLocalPlaylists().first().reversed())
+            }
+        }
+    }
+
     fun getLocalPlaylist() {
         _yourLocalPlaylist.value = LocalResource.Loading()
         viewModelScope.launch {
@@ -409,6 +422,38 @@ class LibraryViewModel(
                     log("Created playlist with id: $it")
                 }
             getLocalPlaylist()
+        }
+    }
+
+    /**
+     * BEATLAND (D-024): same as [createPlaylist] but reports the new playlist's id, so the UI can offer to fill it
+     * right away. `insertLocalPlaylist` only returns a message, so the id is found by diffing the playlist list.
+     */
+    fun createPlaylistAndPickSongs(
+        title: String,
+        onCreated: (Long) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val before =
+                localPlaylistRepository
+                    .getAllLocalPlaylists()
+                    .first()
+                    .map { it.id }
+                    .toSet()
+            localPlaylistRepository
+                .insertLocalPlaylist(
+                    LocalPlaylistEntity(title = title),
+                    getString(Res.string.added_local_playlist),
+                ).lastOrNull()
+            val created =
+                localPlaylistRepository
+                    .getAllLocalPlaylists()
+                    .first()
+                    .firstOrNull { it.id !in before }
+            getLocalPlaylist()
+            if (created != null) {
+                onCreated(created.id)
+            }
         }
     }
 
