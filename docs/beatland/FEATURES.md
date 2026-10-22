@@ -19,6 +19,12 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 
 **Disponibilidad:** `isFloatingLyricsAvailable()` es `true` solo si el `applicationId` contiene `.beatland`.
 
+**Cómo se abre (D-032):** desde Ajustes → "Floating lyrics", **o** desde el menú de tres puntos de la canción en reproducción (y de la letra expandida) → "Letra flotante" / "Cerrar letra flotante". `floatingLyricsWindowShowing()` es el estado único que leen ambos.
+
+**Vista expandida (D-032):** bajo la cabecera hay una franja fina con ⏯, ⏭, una línea de progreso y la pastilla de velocidad. Tocar la pastilla abre un selector
+(− / + de 0,1 en 0,1, de 0,2× a 2,0×, y "Reset"). La velocidad usa el mismo ajuste que la hoja "Velocidad y tono" de la app. Al cerrar la ventana de cualquier forma,
+la velocidad vuelve a 1.0× (`onDestroy` del servicio).
+
 **Diseño:** azul y azul marino (D-004); el tinte dinámico de la carátula puede ser de cualquier color.
 
 ### Dependencias de upstream (validar tras cada sync)

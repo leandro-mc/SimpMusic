@@ -19,7 +19,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Nombre** | La app se llama **Beatland** en todos los textos visibles (31 idiomas), en el launcher, en el escritorio y en nombres de archivos compartidos. Se cambia desde `beatland.properties` + `apply_brand.py`. | D-005, D-014 |
 | **Ícono** | Ícono nuevo "Beamed" (notas con travesaño-onda), generado por script. Vectores adaptativos, monocromo, PNG, ICO, ICNS. | D-020 |
 | **Instalación en paralelo** | Flavor Android `beatland` (`applicationId` con sufijo `.beatland`) junto a `official`; `beatland` es el predeterminado. | D-002, D-021 |
-| **Letra flotante** | Ventana flotante con la letra encima de otras apps (solo Android, solo flavor `beatland`), con su ajuste en Configuración. Paleta azul, sin morado. | D-004 |
+| **Letra flotante** | Ventana flotante con la letra encima de otras apps (solo Android, solo flavor `beatland`). Se abre desde Ajustes **o desde el menú de la canción en reproducción**; la vista expandida tiene un miniplayer sutil (pausa, siguiente, progreso) y control de velocidad de 0,1 en 0,1 que vuelve a 1.0× al cerrar la ventana. Paleta azul, sin morado. | D-004, D-032 |
 | **Selector de canciones para playlists** | Al crear una playlist (y desde "Añadir canciones" en cualquier playlist local) se abre un selector con Recientes / Más escuchadas / Me gusta y búsqueda en biblioteca + YouTube Music, con selección sin tope. Hecho con los componentes de la app (hoja, `Chip`, `SongFullWidthItems`, píldora de búsqueda). | D-024, D-025 |
 | **Vista previa en el selector** | Botón ▶/⏸ en cada fila para escuchar la canción antes de añadirla (reemplaza la cola actual). | D-026 |
 | **Miniatura de playlists locales** | Collage automático de hasta 4 carátulas para playlists locales sin portada propia; se actualiza solo y respeta la portada del usuario. | D-027 |
@@ -49,7 +49,9 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
+| `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
+| `composeApp/.../ui/screen/home/SettingScreen.kt` (además) | El interruptor de la letra flotante lee `floatingLyricsWindowShowing()` (D-032) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
 | `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |

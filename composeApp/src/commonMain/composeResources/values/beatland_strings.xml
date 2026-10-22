@@ -34,4 +34,7 @@
     <string name="bl_translation_already_running">This song is already being translated</string>
     <string name="bl_translation_queued">Added to the translation queue (%1$s ahead)</string>
     <string name="bl_translation_queue_full">The translation queue is full. Try again in a moment</string>
+    <string name="bl_floating_lyrics_open">Floating lyrics</string>
+    <string name="bl_floating_lyrics_close">Close floating lyrics</string>
+    <string name="bl_floating_lyrics_permission">Allow “Display over other apps” for this app, then open it again</string>
 </resources>

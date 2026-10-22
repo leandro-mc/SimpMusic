@@ -32,4 +32,7 @@
     <string name="bl_translation_already_running">Esta canción ya se está traduciendo</string>
     <string name="bl_translation_queued">Añadida a la cola de traducción (%1$s por delante)</string>
     <string name="bl_translation_queue_full">La cola de traducción está llena. Inténtalo en un momento</string>
+    <string name="bl_floating_lyrics_open">Letra flotante</string>
+    <string name="bl_floating_lyrics_close">Cerrar letra flotante</string>
+    <string name="bl_floating_lyrics_permission">Permite «Mostrar sobre otras apps» para esta app y vuelve a abrirla</string>
 </resources>

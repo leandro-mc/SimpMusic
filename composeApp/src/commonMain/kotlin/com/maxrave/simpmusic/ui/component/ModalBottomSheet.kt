@@ -138,6 +138,12 @@ import com.maxrave.domain.utils.connectArtists
 import com.maxrave.domain.utils.toListName
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.expect.copyToClipboard
+import com.maxrave.simpmusic.expect.floatinglyrics.floatingLyricsWindowShowing
+import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
+import com.maxrave.simpmusic.expect.floatinglyrics.isFloatingLyricsAvailable
+import com.maxrave.simpmusic.expect.floatinglyrics.requestFloatingLyricsOverlayPermission
+import com.maxrave.simpmusic.expect.floatinglyrics.startFloatingLyricsWindow
+import com.maxrave.simpmusic.expect.floatinglyrics.stopFloatingLyricsWindow
 import com.maxrave.simpmusic.expect.shareUrl
 import com.maxrave.simpmusic.expect.ui.persistPickedImage
 import com.maxrave.simpmusic.expect.ui.photoPickerResult
@@ -208,6 +214,9 @@ import simpmusic.composeapp.generated.resources.artists
 import simpmusic.composeapp.generated.resources.baseline_favorite_24
 import simpmusic.composeapp.generated.resources.better_lyrics
 import simpmusic.composeapp.generated.resources.bitrate
+import simpmusic.composeapp.generated.resources.bl_floating_lyrics_close
+import simpmusic.composeapp.generated.resources.bl_floating_lyrics_open
+import simpmusic.composeapp.generated.resources.bl_floating_lyrics_permission
 import simpmusic.composeapp.generated.resources.bl_regenerate_translation
 import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.bpm
@@ -1862,6 +1871,26 @@ fun NowPlayingBottomSheet(
                             ) {
                                 mainLyricsProvider = true
                             }
+                        }
+                    }
+                    // BEATLAND (D-032): open (or close) the floating lyrics window from the song that is playing, not only
+                    // from Settings. Hidden everywhere the window does not exist (every build but Beatland, desktop).
+                    if (changeMainLyricsProviderEnable && isFloatingLyricsAvailable()) {
+                        val floatingShowing by floatingLyricsWindowShowing().collectAsState()
+                        val needsPermissionMessage = stringResource(Res.string.bl_floating_lyrics_permission)
+                        ActionButton(
+                            icon = SimpIcons.Lyrics,
+                            text = if (floatingShowing) Res.string.bl_floating_lyrics_close else Res.string.bl_floating_lyrics_open,
+                        ) {
+                            when {
+                                floatingShowing -> stopFloatingLyricsWindow()
+                                hasFloatingLyricsOverlayPermission() -> startFloatingLyricsWindow()
+                                else -> {
+                                    requestFloatingLyricsOverlayPermission()
+                                    sharedViewModel.makeToast(needsPermissionMessage)
+                                }
+                            }
+                            hideModalBottomSheet()
                         }
                     }
                     // BEATLAND (D-028): ask the AI to translate the lyrics of the song that is playing again.

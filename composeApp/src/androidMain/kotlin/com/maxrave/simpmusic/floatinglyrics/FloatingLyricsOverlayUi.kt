@@ -16,6 +16,7 @@ package com.maxrave.simpmusic.floatinglyrics
  */
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
@@ -34,6 +35,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -41,12 +43,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -91,14 +95,19 @@ import com.maxrave.simpmusic.extension.rgbFactor
 import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.RichSyncLyricsLineItem
 import com.maxrave.simpmusic.ui.component.rememberNowPlayingGlowTint
+import com.maxrave.simpmusic.ui.icon.Add
 import com.maxrave.simpmusic.ui.icon.Album
 import com.maxrave.simpmusic.ui.icon.Close
 import com.maxrave.simpmusic.ui.icon.Delete
 import com.maxrave.simpmusic.ui.icon.DragHandle
 import com.maxrave.simpmusic.ui.icon.Fullscreen
 import com.maxrave.simpmusic.ui.icon.FullscreenExit
+import com.maxrave.simpmusic.ui.icon.Pause
+import com.maxrave.simpmusic.ui.icon.PlayArrow
+import com.maxrave.simpmusic.ui.icon.Remove
 import com.maxrave.simpmusic.ui.icon.Settings
 import com.maxrave.simpmusic.ui.icon.SimpIcons
+import com.maxrave.simpmusic.ui.icon.SkipNext
 import com.maxrave.simpmusic.ui.theme.AppTheme
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.NowPlayingScreenData
@@ -154,6 +163,9 @@ fun FloatingLyricsOverlayRoot(
     onOpacityChange: (Float) -> Unit,
     onLockedChange: (Boolean) -> Unit,
     onAutoCollapseChange: (Boolean) -> Unit,
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    onSpeedReset: () -> Unit,
 ) {
     AppTheme(themeMode = DataStoreManager.THEME_MODE_DARK) {
         val screenData by sharedViewModel.nowPlayingScreenData.collectAsStateWithLifecycle()
@@ -215,6 +227,10 @@ fun FloatingLyricsOverlayRoot(
                             onOpacityChange = onOpacityChange,
                             onLockedChange = onLockedChange,
                             onAutoCollapseChange = onAutoCollapseChange,
+                            isPlaying = controllerState.isPlaying,
+                            speed = speed,
+                            onSpeedChange = onSpeedChange,
+                            onSpeedReset = onSpeedReset,
                         )
                     }
                 }
@@ -538,8 +554,13 @@ private fun ExpandedLyricsContent(
     onOpacityChange: (Float) -> Unit,
     onLockedChange: (Boolean) -> Unit,
     onAutoCollapseChange: (Boolean) -> Unit,
+    isPlaying: Boolean,
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    onSpeedReset: () -> Unit,
 ) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showSpeed by rememberSaveable { mutableStateOf(false) } // BEATLAND (D-032)
 
     Column(modifier = Modifier.fillMaxWidth().height(FloatingLyricsSizes.expandedHeight)) {
         Row(
@@ -586,6 +607,25 @@ private fun ExpandedLyricsContent(
             MiniIconButton(icon = SimpIcons.Close, contentDescription = "Minimize", onClick = onMinimize)
         }
 
+        // BEATLAND (D-032): a slim mini player that belongs to the header: pause/resume, next, a thin progress line and
+        // the playback speed. Same 24dp round buttons and white tones as the window buttons above it.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MiniIconButton(
+                icon = if (isPlaying) SimpIcons.Pause else SimpIcons.PlayArrow,
+                contentDescription = if (isPlaying) "Pause" else "Play",
+            ) { sharedViewModel.onUIEvent(UIEvent.PlayPause) }
+            Spacer(Modifier.width(6.dp))
+            MiniIconButton(icon = SimpIcons.SkipNext, contentDescription = "Next song") { sharedViewModel.onUIEvent(UIEvent.Next) }
+            MiniProgressLine(timeline = timeline, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
+            SpeedChip(speed = speed, expanded = showSpeed) { showSpeed = !showSpeed }
+        }
+        AnimatedVisibility(visible = showSpeed) {
+            SpeedStepper(speed = speed, onChange = onSpeedChange, onReset = onSpeedReset)
+        }
+
         AnimatedContent(targetState = showSettings, modifier = Modifier.weight(1f), label = "expanded_body") { settingsShown ->
             if (settingsShown) {
                 SettingsPanel(
@@ -618,6 +658,94 @@ private fun ExpandedLyricsContent(
                     }
                 }
             }
+        }
+    }
+}
+
+/** Thin read-only progress line of the song (tapping a lyric line already seeks). */
+@Composable
+private fun MiniProgressLine(
+    timeline: TimeLine,
+    modifier: Modifier = Modifier,
+) {
+    val fraction =
+        if (timeline.isLive || timeline.total <= 0L) 0f else (timeline.current.toFloat() / timeline.total).coerceIn(0f, 1f)
+    Box(
+        modifier =
+            modifier
+                .height(3.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.14f)),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth(fraction)
+                    .fillMaxHeight()
+                    .background(Color.White.copy(alpha = 0.7f)),
+        )
+    }
+}
+
+/** The current speed as a small pill in the same style as [SyncBadge]; brighter while it is not normal. */
+@Composable
+private fun SpeedChip(
+    speed: Float,
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    val changed = speed != 1f
+    Box(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = if (changed || expanded) 0.22f else 0.12f))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = "${String.format("%.1f", speed)}×",
+            style = typo().labelSmall,
+            color = Color.White.copy(alpha = if (changed) 0.95f else 0.75f),
+        )
+    }
+}
+
+/** Slower / faster in steps of 0.1 and a way back to normal. Only on screen after tapping the speed pill. */
+@Composable
+private fun SpeedStepper(
+    speed: Float,
+    onChange: (Float) -> Unit,
+    onReset: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(text = "Playback speed", style = typo().labelSmall, color = Color.White.copy(alpha = 0.6f))
+        Spacer(Modifier.width(12.dp))
+        MiniIconButton(icon = SimpIcons.Remove, contentDescription = "Slower") { onChange(speed - 0.1f) }
+        Text(
+            text = "${String.format("%.1f", speed)}×",
+            style = typo().bodyMedium,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 48.dp),
+        )
+        MiniIconButton(icon = SimpIcons.Add, contentDescription = "Faster") { onChange(speed + 0.1f) }
+        if (speed != 1f) {
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = "Reset",
+                style = typo().labelSmall,
+                color = Color.White.copy(alpha = 0.85f),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onReset)
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+            )
         }
     }
 }

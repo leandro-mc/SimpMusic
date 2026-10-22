@@ -21,12 +21,15 @@ import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -52,6 +55,7 @@ class FloatingLyricsService :
     Service(),
     KoinComponent {
     private val sharedViewModel: SharedViewModel by inject()
+    private val dataStoreManager: DataStoreManager by inject()
 
     private lateinit var windowManager: WindowManager
     private var composeView: ComposeView? = null
@@ -73,6 +77,10 @@ class FloatingLyricsService :
     private val lockedState = mutableStateOf(false)
     private val autoCollapseState = mutableStateOf(false)
     private val dismissZoneActiveState = mutableStateOf(false)
+
+    // BEATLAND (D-032): the playback speed shown in the window. It mirrors the app's own setting (the same value the
+    // "Playback speed & pitch" sheet edits), so both always agree.
+    private val speedState = mutableFloatStateOf(1f)
 
     /** What BUBBLE taps back into — whichever of MINI/EXPANDED was last actually shown. */
     private var lastExpandedMode = FloatingLyricsMode.MINI
@@ -100,6 +108,8 @@ class FloatingLyricsService :
         startForegroundWithNotification()
         addOverlayWindow()
         observePlaybackForAutoCollapse()
+        observePlaybackSpeed()
+        _running.value = true
     }
 
     override fun onStartCommand(
@@ -114,6 +124,10 @@ class FloatingLyricsService :
     }
 
     override fun onDestroy() {
+        // BEATLAND (D-032): however the window ends (dragged onto the trash, the Settings switch, the notification's
+        // Stop, the menu), a speed set from it must not outlive it: back to normal.
+        resetPlaybackSpeed()
+        _running.value = false
         hideTrashZone()
         removeOverlayWindow()
         serviceJob.cancel()
@@ -148,6 +162,9 @@ class FloatingLyricsService :
                         onOpacityChange = ::onOpacityChange,
                         onLockedChange = ::onLockedChange,
                         onAutoCollapseChange = ::onAutoCollapseChange,
+                        speed = speedState.floatValue,
+                        onSpeedChange = ::onSpeedChange,
+                        onSpeedReset = ::resetPlaybackSpeed,
                     )
                 }
             }
@@ -357,6 +374,27 @@ class FloatingLyricsService :
         prefs.edit().putBoolean(KEY_AUTO_COLLAPSE, value).apply()
     }
 
+    // ───────────────────────────── playback speed (D-032) ─────────────────────────────
+
+    private fun observePlaybackSpeed() {
+        serviceScope.launch {
+            dataStoreManager.playbackSpeed.collect { speedState.floatValue = it }
+        }
+    }
+
+    /** Sets the speed to [target], rounded to a tenth and kept inside the range the app's own speed sheet allows. */
+    private fun onSpeedChange(target: Float) {
+        val tenths = (target * 10f).roundToInt().coerceIn(MIN_SPEED_TENTHS, MAX_SPEED_TENTHS)
+        dataStoreManager.setPlaybackSpeed(tenths / 10f)
+    }
+
+    private fun resetPlaybackSpeed() {
+        if (speedState.floatValue != 1f) {
+            speedState.floatValue = 1f
+            dataStoreManager.setPlaybackSpeed(1f)
+        }
+    }
+
     private fun observePlaybackForAutoCollapse() {
         serviceScope.launch {
             sharedViewModel.controllerState
@@ -529,6 +567,15 @@ class FloatingLyricsService :
     }
 
     companion object {
+        // BEATLAND (D-032): same limits as the app's "Playback speed & pitch" sheet (0.2x to 2.0x, steps of 0.1).
+        private const val MIN_SPEED_TENTHS = 2
+        private const val MAX_SPEED_TENTHS = 20
+
+        private val _running = MutableStateFlow(false)
+
+        /** True while the window exists. Settings and the now-playing menu read it to show the right state. */
+        val running: StateFlow<Boolean> = _running
+
         private const val CHANNEL_ID = "beatland_floating_lyrics"
         private const val NOTIFICATION_ID = 4271
         const val ACTION_STOP = "com.maxrave.simpmusic.floatinglyrics.ACTION_STOP"
