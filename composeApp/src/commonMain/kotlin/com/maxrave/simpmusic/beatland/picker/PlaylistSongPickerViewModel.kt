@@ -13,6 +13,7 @@ import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.utils.collectResource
 import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
+import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEvents
 import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -269,6 +270,8 @@ class PlaylistSongPickerViewModel(
                 org.jetbrains.compose.resources
                     .getString(Res.string.bl_picker_added, added.toString()),
             )
+            // The playlist's first songs may have changed: have the collage manager look right now.
+            PlaylistCollageEvents.requestCheck()
             onDone(added)
         }
     }

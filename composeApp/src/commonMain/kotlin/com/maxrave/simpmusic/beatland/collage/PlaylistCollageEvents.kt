@@ -19,4 +19,14 @@ object PlaylistCollageEvents {
     fun notifyUpdated(playlistId: Long) {
         _updated.tryEmit(playlistId)
     }
+
+    private val _wake = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Emits when something that surely changed a playlist's songs happened: the manager checks right away. */
+    val wake: SharedFlow<Unit> = _wake
+
+    /** Ask the collage manager to look at the playlists now instead of waiting for its next scheduled check. */
+    fun requestCheck() {
+        _wake.tryEmit(Unit)
+    }
 }

@@ -55,6 +55,7 @@ esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y 
 - No se aplica a playlists sincronizadas con YouTube ni a las que tengan otra miniatura (p. ej. importadas).
 - Backfill: las playlists locales que ya existían sin portada reciben su collage en segundo plano al abrir la app.
 - El collage aparece solo, unos 3-6 segundos después del último cambio, **sin salir de la pantalla**: la playlist abierta y la lista de la biblioteca se recargan con un evento (`PlaylistCollageEvents`).
+- Coste: una consulta local por revisión (sin red ni imágenes si nada cambió). Va cada 3 s mientras hay cambios y pasa a cada 15 s tras ~1 minuto en calma; no se detiene mientras la app está abierta. El selector de canciones lo despierta al instante.
 - Si se vacía una playlist, su collage anterior queda hasta que se le añadan canciones.
 - Para volver al collage después de poner una portada propia habría que quitarla (no hay opción en la interfaz todavía).
 
