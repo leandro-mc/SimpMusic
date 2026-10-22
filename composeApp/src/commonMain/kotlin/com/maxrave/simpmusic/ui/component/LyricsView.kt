@@ -65,11 +65,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.data.model.lyrics.RomanizationDictionaryState
 import com.maxrave.domain.data.model.lyrics.RomanizationLanguage
 import com.maxrave.domain.repository.LyricsRomanizerRepository
+import com.maxrave.simpmusic.beatland.lyrics.BeatlandTranslationDimColor
+import com.maxrave.simpmusic.beatland.lyrics.beatlandTranslationStyle
 import com.maxrave.simpmusic.expect.ui.isLyricsBlurSupported
 import com.maxrave.domain.data.model.metadata.Line
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentActions
@@ -215,7 +218,9 @@ private fun empEasing(x: Float): Float =
 // Repeated lyrics palette tokens hoisted to file scope: avoids re-allocating
 // the same Color() objects on every recomposition of every line item.
 private val DimOriginalColor = Color.LightGray.copy(alpha = 0.35f)
-private val DimTranslatedColor = Color(0xFF97971A).copy(alpha = 0.3f)
+// BEATLAND (D-028): the translation uses the app's own soft white (same token as Apple Music style) instead of
+// pure yellow / olive, dimmed when it is not the sung line.
+private val DimTranslatedColor = BeatlandTranslationDimColor
 
 // A pronunciation guide sits BETWEEN the original and its translation in meaning, so it does the
 // same visually: neutral grey rather than the translation's yellow, dimmer than the original it
@@ -411,7 +416,10 @@ private fun buildSyncedTranslatedWordsByLineIndex(
                 bestDiff = diffB
             }
         }
-        if (bestDiff < thresholdMs) {
+        // BEATLAND (D-028): a blank translation means "this line has none" (dots, music symbols, a line the AI
+        // could not translate). Matching it still happens (so a neighbour's translation is never borrowed), but
+        // it is not shown.
+        if (bestDiff < thresholdMs && bestWords.isNotBlank()) {
             result[orig.index] = bestWords
             // Suppress unused warning while keeping the chosen ts visible for future tweaks.
             @Suppress("UNUSED_VARIABLE")
@@ -607,6 +615,7 @@ fun LyricsView(
                                 ?.lines
                                 ?.getOrNull(index)
                                 ?.words
+                                ?.takeIf { it.isNotBlank() } // BEATLAND (D-028)
                     }
 
                 line?.words?.let { words ->
@@ -883,8 +892,8 @@ fun LyricsLineItem(
                     text = translatedWords,
                     alignmentText = originalWords,
                     modifier = Modifier.fillMaxWidth(),
-                    style = typo().bodyMedium,
-                    color = if (bold && isCurrent) Color.Yellow else DimTranslatedColor,
+                    style = beatlandTranslationStyle(), // BEATLAND (D-030)
+                    color = if (bold && isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -1047,8 +1056,9 @@ fun RichSyncLyricsLineItem(
                 text = translatedWords,
                 alignmentText = originalWords,
                 modifier = Modifier.fillMaxWidth(),
-                style = translatedStyleOverride ?: typo().bodyMedium,
-                color = translatedColorOverride ?: if (isCurrent) Color.Yellow else DimTranslatedColor,
+                // BEATLAND (D-030): same type as the original line; the Apple Music style (it passes an override) is bigger.
+                style = if (translatedStyleOverride != null) beatlandTranslationStyle(19.sp) else beatlandTranslationStyle(),
+                color = translatedColorOverride ?: if (isCurrent) AppleMusicTranslatedColor else DimTranslatedColor,
             )
         }
 

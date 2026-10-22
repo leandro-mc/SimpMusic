@@ -71,6 +71,8 @@ import com.maxrave.domain.utils.toTrack
 import com.maxrave.logger.LogLevel
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.translation.RobustLyricsTranslator
+import com.maxrave.simpmusic.beatland.translation.TranslationQueue
 import com.maxrave.simpmusic.brand.ForkPolicy
 import com.maxrave.simpmusic.expect.getDownloadFolderPath
 import com.maxrave.simpmusic.expect.isOnUnmeteredNetwork
@@ -113,6 +115,14 @@ import org.simpmusic.lastfm.completeLogin
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.added_to_queue
 import simpmusic.composeapp.generated.resources.added_to_youtube_liked
+import simpmusic.composeapp.generated.resources.bl_translation_already_running
+import simpmusic.composeapp.generated.resources.bl_translation_failed
+import simpmusic.composeapp.generated.resources.bl_translation_needs_ai
+import simpmusic.composeapp.generated.resources.bl_translation_no_lyrics
+import simpmusic.composeapp.generated.resources.bl_translation_queue_full
+import simpmusic.composeapp.generated.resources.bl_translation_queued
+import simpmusic.composeapp.generated.resources.bl_translation_regenerated
+import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.disliked
 import simpmusic.composeapp.generated.resources.error
 import simpmusic.composeapp.generated.resources.lastfm_login_failed
@@ -1817,10 +1827,7 @@ class SharedViewModel(
         lyrics: Lyrics,
     ) {
         Logger.d(tag, "Get AI Translation Lyrics for $videoId")
-        if (dataStoreManager.useAITranslation.first() == TRUE &&
-            dataStoreManager.aiApiKey.first().isNotEmpty() &&
-            dataStoreManager.enableTranslateLyric.first() == FALSE
-        ) {
+        if (isAiTranslationAvailable()) {
             val savedTranslatedLyrics =
                 lyricsCanvasRepository
                     .getSavedTranslatedLyrics(
@@ -1837,49 +1844,135 @@ class SharedViewModel(
                     LyricsProvider.AI,
                 )
             } else {
-                // Convert RICH_SYNCED to LINE_SYNCED before sending to AI
-                // AI should only work with line-level or plain lyrics
-                val lyricsForAi =
-                    if (lyrics.syncType == "RICH_SYNCED") {
-                        lyrics.toSyncedLyrics()
-                    } else {
-                        lyrics
-                    }
-                lyricsCanvasRepository
-                    .getAITranslationLyrics(
-                        lyricsForAi,
-                        dataStoreManager.translationLanguage.first(),
-                    ).cancellable()
-                    .collectLatest {
-                        val data = it.data
-                        when (it) {
-                            is Resource.Success if (data != null) -> {
-                                Logger.d(tag, "Get AI Translate Lyrics Success")
-                                lyricsCanvasRepository.insertTranslatedLyrics(
-                                    TranslatedLyricsEntity(
-                                        videoId = videoId,
-                                        language = dataStoreManager.translationLanguage.first(),
-                                        error = false,
-                                        lines = data.lines,
-                                        syncType = data.syncType,
-                                    ),
-                                )
-                                updateLyrics(
-                                    videoId,
-                                    0,
-                                    data,
-                                    true,
-                                    LyricsProvider.AI,
-                                )
-                            }
-
-                            else -> {
-                                Logger.w(tag, "Get AI Translate Lyrics Error: ${it.message}")
-                            }
-                        }
-                    }
+                // BEATLAND (D-031): through the queue, so it can never overlap a regenerate of the same song.
+                translationQueue.enqueue(
+                    videoId,
+                    lyrics,
+                    TranslationQueue.Kind.AUTO,
+                    _nowPlayingScreenData.value.nowPlayingTitle,
+                )
             }
         }
+    }
+
+    private suspend fun isAiTranslationAvailable(): Boolean =
+        dataStoreManager.useAITranslation.first() == TRUE &&
+            dataStoreManager.aiApiKey.first().isNotEmpty() &&
+            dataStoreManager.enableTranslateLyric.first() == FALSE
+
+    /**
+     * BEATLAND (D-028): runs the AI translation through [RobustLyricsTranslator] (see its doc for what it fixes),
+     * saves it and shows it. Used for the first translation of a song and by [regenerateAiTranslation].
+     * Returns whether a usable translation was produced.
+     */
+    private suspend fun translateWithAi(
+        videoId: String,
+        lyrics: Lyrics,
+    ): Boolean {
+        // Convert RICH_SYNCED to LINE_SYNCED before sending to AI
+        // AI should only work with line-level or plain lyrics
+        val lyricsForAi =
+            if (lyrics.syncType == "RICH_SYNCED") {
+                lyrics.toSyncedLyrics()
+            } else {
+                lyrics
+            }
+        val language = dataStoreManager.translationLanguage.first()
+        val result = RobustLyricsTranslator(lyricsCanvasRepository).translate(lyricsForAi, language)
+        val data = result.data
+        if (result is Resource.Success && data != null) {
+            Logger.d(tag, "Get AI Translate Lyrics Success")
+            lyricsCanvasRepository.insertTranslatedLyrics(
+                TranslatedLyricsEntity(
+                    videoId = videoId,
+                    language = language,
+                    error = false,
+                    lines = data.lines,
+                    syncType = data.syncType,
+                ),
+            )
+            updateLyrics(
+                videoId,
+                0,
+                data,
+                true,
+                LyricsProvider.AI,
+            )
+            return true
+        }
+        Logger.w(tag, "Get AI Translate Lyrics Error: ${result.message}")
+        return false
+    }
+
+    // BEATLAND (D-031): every AI translation (the automatic one and "Regenerate") goes through one queue.
+    // `lazy`: translations are requested from lyrics code that may run while this class is still being built.
+    private val translationQueue by lazy {
+        TranslationQueue(
+            scope = viewModelScope,
+            playingVideoId = { _nowPlayingState.value?.songEntity?.videoId },
+            execute = { job -> runTranslationJob(job) },
+        )
+    }
+
+    /** VideoIds being translated or waiting for their turn; the menu uses it to show "Regenerating…". */
+    val translationsInProgress: StateFlow<Set<String>> get() = translationQueue.inProgress
+
+    /**
+     * BEATLAND (D-028, D-031): asks for the AI translation of the song that is playing to be redone. The request goes
+     * to the queue: a song already running or waiting is ignored, and several songs run one after another — the
+     * playing one first, otherwise in the order they were requested. Nothing here suspends before the request is
+     * queued, so two quick taps cannot both start one.
+     */
+    fun regenerateAiTranslation() {
+        val videoId = _nowPlayingState.value?.songEntity?.videoId
+        val lyrics = _nowPlayingScreenData.value.lyricsData?.lyrics
+        if (videoId.isNullOrBlank() || lyrics == null || lyrics.lines.isNullOrEmpty()) {
+            makeToast(getString(Res.string.bl_translation_no_lyrics))
+            return
+        }
+        val result =
+            translationQueue.enqueue(
+                videoId,
+                lyrics,
+                TranslationQueue.Kind.REGENERATE,
+                _nowPlayingScreenData.value.nowPlayingTitle,
+            )
+        when (result) {
+            TranslationQueue.Result.StartedNow -> Unit // the job announces itself when it starts
+            TranslationQueue.Result.AlreadyInProgress -> makeToast(getString(Res.string.bl_translation_already_running))
+            TranslationQueue.Result.QueueFull -> makeToast(getString(Res.string.bl_translation_queue_full))
+            is TranslationQueue.Result.Queued ->
+                viewModelScope.launch {
+                    makeToast(
+                        org.jetbrains.compose.resources
+                            .getString(Res.string.bl_translation_queued, result.ahead.toString()),
+                    )
+                }
+        }
+    }
+
+    /** One job of the queue. An automatic one just translates; a regenerate also swaps the saved translation. */
+    private suspend fun runTranslationJob(job: TranslationQueue.Job) {
+        if (job.kind == TranslationQueue.Kind.AUTO) {
+            translateWithAi(job.videoId, job.lyrics)
+            return
+        }
+        // Say which song when it is not the one playing (the user may have skipped while it waited).
+        val prefix = if (job.videoId == _nowPlayingState.value?.songEntity?.videoId || job.label.isBlank()) "" else "“${job.label}”: "
+        if (!isAiTranslationAvailable()) {
+            makeToast(prefix + getString(Res.string.bl_translation_needs_ai))
+            return
+        }
+        makeToast(prefix + getString(Res.string.bl_translation_regenerating))
+        val language = dataStoreManager.translationLanguage.first()
+        val previous = lyricsCanvasRepository.getSavedTranslatedLyrics(job.videoId, language).firstOrNull()
+        lyricsCanvasRepository.removeTranslatedLyrics(job.videoId, language)
+        val ok = translateWithAi(job.videoId, job.lyrics)
+        if (!ok && previous != null) {
+            // Keep what the user had instead of leaving the song without a translation.
+            lyricsCanvasRepository.insertTranslatedLyrics(previous)
+        }
+        makeToast(prefix + getString(if (ok) Res.string.bl_translation_regenerated else Res.string.bl_translation_failed))
     }
 
     private fun getSpotifyLyrics(

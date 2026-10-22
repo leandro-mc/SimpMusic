@@ -25,4 +25,13 @@
     <string name="bl_add_songs_hint">Pick songs from your history or search for new ones</string>
     <string name="bl_picker_preview">Play preview</string>
     <string name="bl_picker_pause">Pause</string>
+    <string name="bl_regenerate_translation">Regenerate translation</string>
+    <string name="bl_translation_regenerating">Regenerating translation…</string>
+    <string name="bl_translation_regenerated">Translation regenerated</string>
+    <string name="bl_translation_failed">Could not regenerate the translation. The previous one was kept.</string>
+    <string name="bl_translation_needs_ai">Turn on AI translation in Settings first</string>
+    <string name="bl_translation_no_lyrics">This song has no lyrics to translate</string>
+    <string name="bl_translation_already_running">This song is already being translated</string>
+    <string name="bl_translation_queued">Added to the translation queue (%1$s ahead)</string>
+    <string name="bl_translation_queue_full">The translation queue is full. Try again in a moment</string>
 </resources>

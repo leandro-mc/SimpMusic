@@ -208,6 +208,8 @@ import simpmusic.composeapp.generated.resources.artists
 import simpmusic.composeapp.generated.resources.baseline_favorite_24
 import simpmusic.composeapp.generated.resources.better_lyrics
 import simpmusic.composeapp.generated.resources.bitrate
+import simpmusic.composeapp.generated.resources.bl_regenerate_translation
+import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.bpm
 import simpmusic.composeapp.generated.resources.can_not_be_empty
 import simpmusic.composeapp.generated.resources.cancel
@@ -1367,6 +1369,8 @@ fun NowPlayingBottomSheet(
     /** Called with the videoId of the track this sheet shows. */
     onYouTubeDislike: (videoId: String) -> Unit = {},
     dataStoreManager: DataStoreManager = koinInject<DataStoreManager>(),
+    // BEATLAND (D-028): used by the "Regenerate translation" action.
+    sharedViewModel: SharedViewModel = koinInject(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
@@ -1858,6 +1862,28 @@ fun NowPlayingBottomSheet(
                             ) {
                                 mainLyricsProvider = true
                             }
+                        }
+                    }
+                    // BEATLAND (D-028): ask the AI to translate the lyrics of the song that is playing again.
+                    val aiTranslationOn by dataStoreManager.useAITranslation
+                        .map { it == DataStoreManager.TRUE }
+                        .collectAsState(false)
+                    if (changeMainLyricsProviderEnable && aiTranslationOn) {
+                        // BEATLAND (D-031): this song is being translated (or waiting its turn): say so, and a tap does nothing new.
+                        val translating by sharedViewModel.translationsInProgress.collectAsState()
+                        val busy = song?.videoId?.let { translating.contains(it) } == true
+                        ActionButton(
+                            icon = SimpIcons.Sync,
+                            textString =
+                                stringResource(
+                                    if (busy) Res.string.bl_translation_regenerating else Res.string.bl_regenerate_translation,
+                                ),
+                            text = null,
+                            textColor = if (busy) seed else null,
+                            iconColor = if (busy) seed else Color.Unspecified,
+                        ) {
+                            sharedViewModel.regenerateAiTranslation()
+                            hideModalBottomSheet()
                         }
                     }
                     Crossfade(targetState = setSleepTimerEnable) {

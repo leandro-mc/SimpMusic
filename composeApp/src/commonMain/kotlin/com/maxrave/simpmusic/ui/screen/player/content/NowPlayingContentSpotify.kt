@@ -111,6 +111,7 @@ import com.kmpalette.rememberPaletteState
 import com.maxrave.common.Config.MAIN_PLAYER
 import com.maxrave.domain.mediaservice.handler.RepeatState
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.lyrics.beatlandSubtitleTranslationStyle
 import com.maxrave.simpmusic.expect.ui.MediaPlayerView
 import com.maxrave.simpmusic.expect.ui.MediaPlayerViewWithSubtitle
 import com.maxrave.simpmusic.expect.ui.toImageBitmap
@@ -124,6 +125,7 @@ import com.maxrave.simpmusic.extension.isElementVisible
 import com.maxrave.simpmusic.extension.parseTimestampToMilliseconds
 import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.ui.component.AppleMusicTranslatedColor
 import com.maxrave.simpmusic.ui.component.LyricText
 import com.maxrave.simpmusic.ui.component.AIBadge
 import com.maxrave.simpmusic.ui.component.DescriptionView
@@ -1274,8 +1276,9 @@ fun NowPlayingContentSpotify(
                                                                         ).focusable(),
                                                                 text = translatedLineText,
                                                                 alignmentText = lineText,
-                                                                style = typo().bodyMedium,
-                                                                color = Color.Yellow,
+                                                                // BEATLAND (D-030): the app's translation tone, a notch smaller than the original line.
+                                                                style = beatlandSubtitleTranslationStyle(),
+                                                                color = AppleMusicTranslatedColor,
                                                                 maxLines = 1,
                                                             )
                                                         }
