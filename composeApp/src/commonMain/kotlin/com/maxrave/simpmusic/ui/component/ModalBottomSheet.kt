@@ -209,6 +209,7 @@ import simpmusic.composeapp.generated.resources.baseline_favorite_24
 import simpmusic.composeapp.generated.resources.better_lyrics
 import simpmusic.composeapp.generated.resources.bitrate
 import simpmusic.composeapp.generated.resources.bl_regenerate_translation
+import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.bpm
 import simpmusic.composeapp.generated.resources.can_not_be_empty
 import simpmusic.composeapp.generated.resources.cancel
@@ -1868,9 +1869,18 @@ fun NowPlayingBottomSheet(
                         .map { it == DataStoreManager.TRUE }
                         .collectAsState(false)
                     if (changeMainLyricsProviderEnable && aiTranslationOn) {
+                        // BEATLAND (D-031): this song is being translated (or waiting its turn): say so, and a tap does nothing new.
+                        val translating by sharedViewModel.translationsInProgress.collectAsState()
+                        val busy = song?.videoId?.let { translating.contains(it) } == true
                         ActionButton(
                             icon = SimpIcons.Sync,
-                            text = Res.string.bl_regenerate_translation,
+                            textString =
+                                stringResource(
+                                    if (busy) Res.string.bl_translation_regenerating else Res.string.bl_regenerate_translation,
+                                ),
+                            text = null,
+                            textColor = if (busy) seed else null,
+                            iconColor = if (busy) seed else Color.Unspecified,
                         ) {
                             sharedViewModel.regenerateAiTranslation()
                             hideModalBottomSheet()

@@ -34,6 +34,10 @@ import kotlin.coroutines.cancellation.CancellationException
  *    and if it still fails the result is [Resource.Error] and nothing is saved;
  *  - any later failed call just leaves its lines untranslated (blank) — it never discards the rest;
  *  - the result is kept when at least [MIN_TRANSLATED_PERCENT] % of the translatable lines really got a translation.
+ *
+ * COST: ceil(translatable lines / [CHUNK_SIZE]) requests, plus ceil(untranslated real sentences / [REPAIR_SIZE]) for the
+ * repair pass, plus one repeat for each request that fails; never more than [MAX_CALLS] per song. A 60-line song is
+ * about 3 requests (the original single-request approach was 1).
  */
 class RobustLyricsTranslator(
     private val lyricsCanvasRepository: LyricsCanvasRepository,

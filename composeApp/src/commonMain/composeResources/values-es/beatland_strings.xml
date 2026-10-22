@@ -29,4 +29,7 @@
     <string name="bl_translation_failed">No se pudo regenerar la traducción. Se conservó la anterior.</string>
     <string name="bl_translation_needs_ai">Activa primero la traducción con IA en Ajustes</string>
     <string name="bl_translation_no_lyrics">Esta canción no tiene letra para traducir</string>
+    <string name="bl_translation_already_running">Esta canción ya se está traduciendo</string>
+    <string name="bl_translation_queued">Añadida a la cola de traducción (%1$s por delante)</string>
+    <string name="bl_translation_queue_full">La cola de traducción está llena. Inténtalo en un momento</string>
 </resources>

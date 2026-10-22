@@ -72,9 +72,12 @@ esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y 
   la traducción con IA está activada. Muestra avisos al empezar y al terminar; si falla, se conserva la traducción anterior.
 - **Aspecto:** la traducción usa un celeste suave (derivado del color base de la app), la misma tipografía que la original y un tamaño menor (~0,65-0,7).
   El tono está en un solo valor (`BeatlandTranslationColor`) por si se quiere cambiar.
+- **Cola (D-031):** solo se traduce una canción a la vez, y cada canción una sola vez; pulsar Regenerar de nuevo mientras se traduce no hace nada (avisa).
+  Si pides varias canciones, esperan en cola: primero la que suena y, si no, por orden de petición. El menú muestra "Regenerando traducción…".
+- **Coste en llamadas a la IA por canción** = ⌈líneas traducibles ÷ 20⌉ + ⌈frases que el modelo dejó sin traducir ÷ 12⌉ (la antigua versión hacía 1). Una llamada que falla se repite una vez. Tope duro: 40. Ejemplos: 30 líneas ≈ 2, 60 líneas ≈ 3, 100 líneas ≈ 5, más 0-3 de reparación si el modelo se saltó frases.
 - Las traducciones ya guardadas con el método anterior no se corrigen solas: hay que usar **Regenerar** en cada canción.
 
-**Archivos propios (nuevos):** `composeApp/.../beatland/translation/RobustLyricsTranslator.kt` y `.../beatland/lyrics/LyricsTranslationStyle.kt`.
+**Archivos propios (nuevos):** `composeApp/.../beatland/translation/{RobustLyricsTranslator,TranslationQueue}.kt` y `.../beatland/lyrics/LyricsTranslationStyle.kt`.
 **Ganchos en upstream:** `SharedViewModel.kt` (traducción y `regenerateAiTranslation`), `ModalBottomSheet.kt` (acción del menú),
 `LyricsView.kt`, `AppleMusicLyricsLines.kt`, `NowPlayingContentSpotify.kt`, `NowPlayingContentM3Expressive.kt`, `AppleMusicShared.kt` (estilo y líneas en blanco).
 **Dependencias de upstream:** `LyricsCanvasRepository.{getAITranslationLyrics,getSavedTranslatedLyrics,insertTranslatedLyrics,removeTranslatedLyrics}`,
