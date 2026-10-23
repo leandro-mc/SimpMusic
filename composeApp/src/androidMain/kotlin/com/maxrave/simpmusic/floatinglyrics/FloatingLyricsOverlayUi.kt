@@ -15,24 +15,10 @@ package com.maxrave.simpmusic.floatinglyrics
  * own `LyricsView` / `RichSyncLyricsLineItem` — this file only supplies the chrome around them.
  */
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -173,66 +159,53 @@ fun FloatingLyricsOverlayRoot(
         val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
         val tint = rememberNowPlayingGlowTint(screenData.thumbnailURL)
 
-        AnimatedContent(
-            targetState = mode,
-            transitionSpec = {
-                if (targetState == FloatingLyricsMode.EXPANDED) {
-                    // Entering EXPANDED means LyricsView is composing for the first time -- real
-                    // work (scroll state, rich-sync timers, romanization) that no animation can
-                    // stay smooth alongside, so this one direction snaps instead of easing.
-                    EnterTransition.None togetherWith ExitTransition.None
-                } else {
-                    (fadeIn(tween(200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(200)))
-                        .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
-                }
-            },
-            label = "floating_lyrics_mode",
-        ) { current ->
-            when (current) {
-                FloatingLyricsMode.BUBBLE -> {
-                    BubbleContent(
+        // BEATLAND (D-033): the three modes swap INSTANTLY. The window used to fade/scale between them while its width
+        // was resized frame by frame and the heavy lyrics list was being composed for the first time, which is what made
+        // opening, expanding and minimizing look like it loaded frame by frame. An instant swap does the same work once.
+        when (mode) {
+            FloatingLyricsMode.BUBBLE -> {
+                BubbleContent(
+                    screenData = screenData,
+                    tint = tint,
+                    isPlaying = controllerState.isPlaying,
+                    dismissZoneActive = dismissZoneActive,
+                    onTap = onRequestRestoreFromBubble,
+                    onDrag = onBubbleDrag,
+                    onDragEnd = onBubbleDragEnd,
+                )
+            }
+            FloatingLyricsMode.MINI -> {
+                FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.miniWidth) {
+                    MiniLyricsContent(
                         screenData = screenData,
-                        tint = tint,
-                        isPlaying = controllerState.isPlaying,
-                        dismissZoneActive = dismissZoneActive,
-                        onTap = onRequestRestoreFromBubble,
-                        onDrag = onBubbleDrag,
-                        onDragEnd = onBubbleDragEnd,
+                        timeline = timeline,
+                        locked = locked,
+                        onDrag = onFreeDrag,
+                        onExpand = onRequestExpand,
+                        onMinimize = onRequestMinimize,
                     )
                 }
-                FloatingLyricsMode.MINI -> {
-                    FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.miniWidth) {
-                        MiniLyricsContent(
-                            screenData = screenData,
-                            timeline = timeline,
-                            locked = locked,
-                            onDrag = onFreeDrag,
-                            onExpand = onRequestExpand,
-                            onMinimize = onRequestMinimize,
-                        )
-                    }
-                }
-                FloatingLyricsMode.EXPANDED -> {
-                    FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.expandedWidth) {
-                        ExpandedLyricsContent(
-                            sharedViewModel = sharedViewModel,
-                            screenData = screenData,
-                            timeline = timeline,
-                            locked = locked,
-                            opacity = opacity,
-                            autoCollapseWhenPaused = autoCollapseWhenPaused,
-                            onDrag = onFreeDrag,
-                            onCollapse = onRequestCollapseToMini,
-                            onMinimize = onRequestMinimize,
-                            onOpacityChange = onOpacityChange,
-                            onLockedChange = onLockedChange,
-                            onAutoCollapseChange = onAutoCollapseChange,
-                            isPlaying = controllerState.isPlaying,
-                            speed = speed,
-                            onSpeedChange = onSpeedChange,
-                            onSpeedReset = onSpeedReset,
-                        )
-                    }
+            }
+            FloatingLyricsMode.EXPANDED -> {
+                FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.expandedWidth) {
+                    ExpandedLyricsContent(
+                        sharedViewModel = sharedViewModel,
+                        screenData = screenData,
+                        timeline = timeline,
+                        locked = locked,
+                        opacity = opacity,
+                        autoCollapseWhenPaused = autoCollapseWhenPaused,
+                        onDrag = onFreeDrag,
+                        onCollapse = onRequestCollapseToMini,
+                        onMinimize = onRequestMinimize,
+                        onOpacityChange = onOpacityChange,
+                        onLockedChange = onLockedChange,
+                        onAutoCollapseChange = onAutoCollapseChange,
+                        isPlaying = controllerState.isPlaying,
+                        speed = speed,
+                        onSpeedChange = onSpeedChange,
+                        onSpeedReset = onSpeedReset,
+                    )
                 }
             }
         }
@@ -291,14 +264,8 @@ private fun BubbleContent(
     val ringColor by animateColorAsState(if (dismissZoneActive) dismissColor else accent, tween(180), label = "bubbleRing")
     val scale by animateFloatAsState(if (dismissZoneActive) 1.22f else 1f, tween(180), label = "bubbleScale")
 
-    val infinite = rememberInfiniteTransition(label = "bubblePulse")
-    val pulse by
-        infinite.animateFloat(
-            initialValue = 0.25f,
-            targetValue = 0.55f,
-            animationSpec = infiniteRepeatable(tween(1400, easing = LinearEasing), RepeatMode.Reverse),
-            label = "pulseAlpha",
-        )
+    // BEATLAND (D-033): a still halo; the old endless pulse kept the screen redrawing every frame for as long as the bubble was shown.
+    val pulse = 0.32f
 
     Box(
         modifier = Modifier.size(FloatingLyricsSizes.bubbleSize + 14.dp),
@@ -622,12 +589,13 @@ private fun ExpandedLyricsContent(
             MiniProgressLine(timeline = timeline, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
             SpeedChip(speed = speed, expanded = showSpeed) { showSpeed = !showSpeed }
         }
-        AnimatedVisibility(visible = showSpeed) {
+        if (showSpeed) {
             SpeedStepper(speed = speed, onChange = onSpeedChange, onReset = onSpeedReset)
         }
 
-        AnimatedContent(targetState = showSettings, modifier = Modifier.weight(1f), label = "expanded_body") { settingsShown ->
-            if (settingsShown) {
+        // BEATLAND (D-033): no cross-fade between the lyrics and the settings panel either.
+        Box(modifier = Modifier.weight(1f)) {
+            if (showSettings) {
                 SettingsPanel(
                     opacity = opacity,
                     locked = locked,

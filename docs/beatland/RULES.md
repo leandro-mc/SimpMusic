@@ -43,6 +43,11 @@ Reglas:
 7. **Si no hay componente equivalente**, créalo con los mismos tokens y deja anotado en `CHANGES.md` qué patrón imita.
 8. El dueño valida el aspecto en su teléfono. En el aviso de entrega indica qué componentes de la app reutilizaste y qué revisar visualmente.
 
+## Rendimiento de la letra flotante
+
+- **El tamaño de la ventana flotante nunca se anima** (D-033): cada cambio de tamaño de una ventana overlay obliga al sistema a recalcular su superficie. Los cambios de modo y de panel son instantáneos.
+- Nada de animaciones infinitas en la ventana (mantienen la pantalla redibujando sin parar).
+
 ## Diseño
 
 - **Prohibido el color morado y derivados** (violeta, índigo, magenta, lila, púrpura) en todo lo nuevo o

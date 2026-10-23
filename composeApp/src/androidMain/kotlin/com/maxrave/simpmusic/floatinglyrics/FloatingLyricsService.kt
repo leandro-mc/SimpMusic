@@ -240,21 +240,15 @@ class FloatingLyricsService :
                 },
             ).apply()
 
-        if (newMode == FloatingLyricsMode.EXPANDED) {
-            // Entering EXPANDED means LyricsView is composing for the very first time (its own
-            // scroll state, rich-sync word timers, romanization lookups, ...) -- real,
-            // unavoidable main-thread work. Animating the window around that at the same time
-            // just reads as dropped frames, so this one transition snaps instead of easing; every
-            // other transition still animates smoothly since none of them carry that cost.
-            animationJob?.cancel()
-            params.x = targetX
-            params.y = targetY
-            params.width = newWidthPx
-            runCatching { windowManager.updateViewLayout(view, params) }
-            savePosition(targetX, targetY)
-        } else {
-            animateWindowTo(targetX, targetY, newWidthPx)
-        }
+        // BEATLAND (D-033): every mode change snaps, with ONE window update. Easing the window's width over ~200 ms meant a
+        // relayout and surface resize on each display frame (the expensive part of an overlay) while the new content was
+        // also composing for the first time; that is the frame-by-frame look. Rule: the window SIZE is never animated.
+        animationJob?.cancel()
+        params.x = targetX
+        params.y = targetY
+        params.width = newWidthPx
+        runCatching { windowManager.updateViewLayout(view, params) }
+        savePosition(targetX, targetY)
     }
 
     // ───────────────────────────── drag handling ─────────────────────────────
@@ -472,7 +466,9 @@ class FloatingLyricsService :
         params.y = clamped.second
     }
 
-    /** Eases the window's x/y/width to a target over [durationMs] instead of an instant jump.
+    /** Eases the window's POSITION to a target over [durationMs] instead of an instant jump. Only used for the small
+     *  bubble snapping to the screen edge after a drag (its size does not change, so each frame is just a move);
+     *  never use it to change the size (see D-033).
      *  Runs on the real display frame clock (see [AndroidUiDispatcher.Main] on [serviceScope]) —
      *  a fixed-step delay() loop was tried first and looked choppy (~10 discrete updates over
      *  the whole animation, regardless of the device's actual refresh rate); this ticks every

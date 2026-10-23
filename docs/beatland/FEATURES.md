@@ -19,6 +19,8 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 
 **Disponibilidad:** `isFloatingLyricsAvailable()` es `true` solo si el `applicationId` contiene `.beatland`.
 
+**Rendimiento (D-033):** los cambios de modo y de panel son **instantáneos** (sin fundidos ni redimensionado animado) y la burbuja no tiene animación infinita; la ventana solo anima su *posición* al engancharse al borde tras arrastrarla. Regla para futuros cambios: no animar el tamaño de la ventana.
+
 **Cómo se abre (D-032):** desde Ajustes → "Floating lyrics", **o** desde el menú de tres puntos de la canción en reproducción (y de la letra expandida) → "Letra flotante" / "Cerrar letra flotante". `floatingLyricsWindowShowing()` es el estado único que leen ambos.
 
 **Vista expandida (D-032):** bajo la cabecera hay una franja fina con ⏯, ⏭, una línea de progreso y la pastilla de velocidad. Tocar la pastilla abre un selector
