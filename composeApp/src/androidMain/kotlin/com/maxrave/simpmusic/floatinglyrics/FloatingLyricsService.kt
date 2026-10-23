@@ -224,6 +224,19 @@ class FloatingLyricsService :
         val clampedPoint = clampPoint(targetX, targetY, newWidthPx, newHeightPx, metrics)
         targetX = clampedPoint.first
         targetY = clampedPoint.second
+        if (newMode == FloatingLyricsMode.BUBBLE) {
+            // BEATLAND (D-034): minimizing must not leave the bubble floating in the middle of the screen, where the card
+            // used to be. Dock it on the nearest side edge, with the same margin and the same rule as when a dragged
+            // bubble is released (see onBubbleDragEnd), keeping its height.
+            val edgeMargin = (BUBBLE_EDGE_MARGIN_DP * metrics.density).roundToInt()
+            targetX =
+                if (centerX < metrics.widthPixels / 2) {
+                    edgeMargin
+                } else {
+                    metrics.widthPixels - newWidthPx - edgeMargin
+                }
+            targetY = targetY.coerceIn(edgeMargin, (metrics.heightPixels - newHeightPx - edgeMargin).coerceAtLeast(edgeMargin))
+        }
 
         if (newMode != FloatingLyricsMode.BUBBLE) {
             lastExpandedMode = newMode

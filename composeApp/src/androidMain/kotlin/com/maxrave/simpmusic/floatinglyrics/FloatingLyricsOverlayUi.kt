@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -699,22 +698,24 @@ private fun SpeedStepper(
             style = typo().bodyMedium,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(min = 48.dp),
+            // Fixed width: the value changing must never push − and + around.
+            modifier = Modifier.width(48.dp),
         )
         MiniIconButton(icon = SimpIcons.Add, contentDescription = "Faster") { onChange(speed + 0.1f) }
-        if (speed != 1f) {
-            Spacer(Modifier.width(10.dp))
-            Text(
-                text = "Reset",
-                style = typo().labelSmall,
-                color = Color.White.copy(alpha = 0.85f),
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onReset)
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
-            )
-        }
+        // BEATLAND (D-034): Reset is ALWAYS here (dimmed and inactive at normal speed). Showing it only when the speed
+        // had changed shifted − and + to the left at the first tap and made the next tap land on Reset by mistake.
+        val canReset = speed != 1f
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = "Reset",
+            style = typo().labelSmall,
+            color = Color.White.copy(alpha = if (canReset) 0.85f else 0.3f),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(enabled = canReset, onClick = onReset)
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+        )
     }
 }
 
