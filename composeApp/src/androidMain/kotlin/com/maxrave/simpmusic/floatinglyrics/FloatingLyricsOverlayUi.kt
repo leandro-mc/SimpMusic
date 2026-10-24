@@ -15,25 +15,13 @@ package com.maxrave.simpmusic.floatinglyrics
  * own `LyricsView` / `RichSyncLyricsLineItem` — this file only supplies the chrome around them.
  */
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +29,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -91,14 +80,19 @@ import com.maxrave.simpmusic.extension.rgbFactor
 import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.RichSyncLyricsLineItem
 import com.maxrave.simpmusic.ui.component.rememberNowPlayingGlowTint
+import com.maxrave.simpmusic.ui.icon.Add
 import com.maxrave.simpmusic.ui.icon.Album
 import com.maxrave.simpmusic.ui.icon.Close
 import com.maxrave.simpmusic.ui.icon.Delete
 import com.maxrave.simpmusic.ui.icon.DragHandle
 import com.maxrave.simpmusic.ui.icon.Fullscreen
 import com.maxrave.simpmusic.ui.icon.FullscreenExit
+import com.maxrave.simpmusic.ui.icon.Pause
+import com.maxrave.simpmusic.ui.icon.PlayArrow
+import com.maxrave.simpmusic.ui.icon.Remove
 import com.maxrave.simpmusic.ui.icon.Settings
 import com.maxrave.simpmusic.ui.icon.SimpIcons
+import com.maxrave.simpmusic.ui.icon.SkipNext
 import com.maxrave.simpmusic.ui.theme.AppTheme
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.NowPlayingScreenData
@@ -154,6 +148,9 @@ fun FloatingLyricsOverlayRoot(
     onOpacityChange: (Float) -> Unit,
     onLockedChange: (Boolean) -> Unit,
     onAutoCollapseChange: (Boolean) -> Unit,
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    onSpeedReset: () -> Unit,
 ) {
     AppTheme(themeMode = DataStoreManager.THEME_MODE_DARK) {
         val screenData by sharedViewModel.nowPlayingScreenData.collectAsStateWithLifecycle()
@@ -161,62 +158,53 @@ fun FloatingLyricsOverlayRoot(
         val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
         val tint = rememberNowPlayingGlowTint(screenData.thumbnailURL)
 
-        AnimatedContent(
-            targetState = mode,
-            transitionSpec = {
-                if (targetState == FloatingLyricsMode.EXPANDED) {
-                    // Entering EXPANDED means LyricsView is composing for the first time -- real
-                    // work (scroll state, rich-sync timers, romanization) that no animation can
-                    // stay smooth alongside, so this one direction snaps instead of easing.
-                    EnterTransition.None togetherWith ExitTransition.None
-                } else {
-                    (fadeIn(tween(200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(200)))
-                        .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
-                }
-            },
-            label = "floating_lyrics_mode",
-        ) { current ->
-            when (current) {
-                FloatingLyricsMode.BUBBLE -> {
-                    BubbleContent(
+        // BEATLAND (D-033): the three modes swap INSTANTLY. The window used to fade/scale between them while its width
+        // was resized frame by frame and the heavy lyrics list was being composed for the first time, which is what made
+        // opening, expanding and minimizing look like it loaded frame by frame. An instant swap does the same work once.
+        when (mode) {
+            FloatingLyricsMode.BUBBLE -> {
+                BubbleContent(
+                    screenData = screenData,
+                    tint = tint,
+                    isPlaying = controllerState.isPlaying,
+                    dismissZoneActive = dismissZoneActive,
+                    onTap = onRequestRestoreFromBubble,
+                    onDrag = onBubbleDrag,
+                    onDragEnd = onBubbleDragEnd,
+                )
+            }
+            FloatingLyricsMode.MINI -> {
+                FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.miniWidth) {
+                    MiniLyricsContent(
                         screenData = screenData,
-                        tint = tint,
-                        isPlaying = controllerState.isPlaying,
-                        dismissZoneActive = dismissZoneActive,
-                        onTap = onRequestRestoreFromBubble,
-                        onDrag = onBubbleDrag,
-                        onDragEnd = onBubbleDragEnd,
+                        timeline = timeline,
+                        locked = locked,
+                        onDrag = onFreeDrag,
+                        onExpand = onRequestExpand,
+                        onMinimize = onRequestMinimize,
                     )
                 }
-                FloatingLyricsMode.MINI -> {
-                    FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.miniWidth) {
-                        MiniLyricsContent(
-                            screenData = screenData,
-                            timeline = timeline,
-                            locked = locked,
-                            onDrag = onFreeDrag,
-                            onExpand = onRequestExpand,
-                            onMinimize = onRequestMinimize,
-                        )
-                    }
-                }
-                FloatingLyricsMode.EXPANDED -> {
-                    FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.expandedWidth) {
-                        ExpandedLyricsContent(
-                            sharedViewModel = sharedViewModel,
-                            screenData = screenData,
-                            timeline = timeline,
-                            locked = locked,
-                            opacity = opacity,
-                            autoCollapseWhenPaused = autoCollapseWhenPaused,
-                            onDrag = onFreeDrag,
-                            onCollapse = onRequestCollapseToMini,
-                            onMinimize = onRequestMinimize,
-                            onOpacityChange = onOpacityChange,
-                            onLockedChange = onLockedChange,
-                            onAutoCollapseChange = onAutoCollapseChange,
-                        )
-                    }
+            }
+            FloatingLyricsMode.EXPANDED -> {
+                FloatingCard(tint = tint, opacity = opacity, width = FloatingLyricsSizes.expandedWidth) {
+                    ExpandedLyricsContent(
+                        sharedViewModel = sharedViewModel,
+                        screenData = screenData,
+                        timeline = timeline,
+                        locked = locked,
+                        opacity = opacity,
+                        autoCollapseWhenPaused = autoCollapseWhenPaused,
+                        onDrag = onFreeDrag,
+                        onCollapse = onRequestCollapseToMini,
+                        onMinimize = onRequestMinimize,
+                        onOpacityChange = onOpacityChange,
+                        onLockedChange = onLockedChange,
+                        onAutoCollapseChange = onAutoCollapseChange,
+                        isPlaying = controllerState.isPlaying,
+                        speed = speed,
+                        onSpeedChange = onSpeedChange,
+                        onSpeedReset = onSpeedReset,
+                    )
                 }
             }
         }
@@ -275,14 +263,8 @@ private fun BubbleContent(
     val ringColor by animateColorAsState(if (dismissZoneActive) dismissColor else accent, tween(180), label = "bubbleRing")
     val scale by animateFloatAsState(if (dismissZoneActive) 1.22f else 1f, tween(180), label = "bubbleScale")
 
-    val infinite = rememberInfiniteTransition(label = "bubblePulse")
-    val pulse by
-        infinite.animateFloat(
-            initialValue = 0.25f,
-            targetValue = 0.55f,
-            animationSpec = infiniteRepeatable(tween(1400, easing = LinearEasing), RepeatMode.Reverse),
-            label = "pulseAlpha",
-        )
+    // BEATLAND (D-033): a still halo; the old endless pulse kept the screen redrawing every frame for as long as the bubble was shown.
+    val pulse = 0.32f
 
     Box(
         modifier = Modifier.size(FloatingLyricsSizes.bubbleSize + 14.dp),
@@ -538,8 +520,13 @@ private fun ExpandedLyricsContent(
     onOpacityChange: (Float) -> Unit,
     onLockedChange: (Boolean) -> Unit,
     onAutoCollapseChange: (Boolean) -> Unit,
+    isPlaying: Boolean,
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    onSpeedReset: () -> Unit,
 ) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showSpeed by rememberSaveable { mutableStateOf(false) } // BEATLAND (D-032)
 
     Column(modifier = Modifier.fillMaxWidth().height(FloatingLyricsSizes.expandedHeight)) {
         Row(
@@ -586,8 +573,28 @@ private fun ExpandedLyricsContent(
             MiniIconButton(icon = SimpIcons.Close, contentDescription = "Minimize", onClick = onMinimize)
         }
 
-        AnimatedContent(targetState = showSettings, modifier = Modifier.weight(1f), label = "expanded_body") { settingsShown ->
-            if (settingsShown) {
+        // BEATLAND (D-032): a slim mini player that belongs to the header: pause/resume, next, a thin progress line and
+        // the playback speed. Same 24dp round buttons and white tones as the window buttons above it.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MiniIconButton(
+                icon = if (isPlaying) SimpIcons.Pause else SimpIcons.PlayArrow,
+                contentDescription = if (isPlaying) "Pause" else "Play",
+            ) { sharedViewModel.onUIEvent(UIEvent.PlayPause) }
+            Spacer(Modifier.width(6.dp))
+            MiniIconButton(icon = SimpIcons.SkipNext, contentDescription = "Next song") { sharedViewModel.onUIEvent(UIEvent.Next) }
+            MiniProgressLine(timeline = timeline, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
+            SpeedChip(speed = speed, expanded = showSpeed) { showSpeed = !showSpeed }
+        }
+        if (showSpeed) {
+            SpeedStepper(speed = speed, onChange = onSpeedChange, onReset = onSpeedReset)
+        }
+
+        // BEATLAND (D-033): no cross-fade between the lyrics and the settings panel either.
+        Box(modifier = Modifier.weight(1f)) {
+            if (showSettings) {
                 SettingsPanel(
                     opacity = opacity,
                     locked = locked,
@@ -619,6 +626,96 @@ private fun ExpandedLyricsContent(
                 }
             }
         }
+    }
+}
+
+/** Thin read-only progress line of the song (tapping a lyric line already seeks). */
+@Composable
+private fun MiniProgressLine(
+    timeline: TimeLine,
+    modifier: Modifier = Modifier,
+) {
+    val fraction =
+        if (timeline.isLive || timeline.total <= 0L) 0f else (timeline.current.toFloat() / timeline.total).coerceIn(0f, 1f)
+    Box(
+        modifier =
+            modifier
+                .height(3.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.14f)),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth(fraction)
+                    .fillMaxHeight()
+                    .background(Color.White.copy(alpha = 0.7f)),
+        )
+    }
+}
+
+/** The current speed as a small pill in the same style as [SyncBadge]; brighter while it is not normal. */
+@Composable
+private fun SpeedChip(
+    speed: Float,
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    val changed = speed != 1f
+    Box(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = if (changed || expanded) 0.22f else 0.12f))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = "${String.format("%.1f", speed)}×",
+            style = typo().labelSmall,
+            color = Color.White.copy(alpha = if (changed) 0.95f else 0.75f),
+        )
+    }
+}
+
+/** Slower / faster in steps of 0.1 and a way back to normal. Only on screen after tapping the speed pill. */
+@Composable
+private fun SpeedStepper(
+    speed: Float,
+    onChange: (Float) -> Unit,
+    onReset: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(text = "Playback speed", style = typo().labelSmall, color = Color.White.copy(alpha = 0.6f))
+        Spacer(Modifier.width(12.dp))
+        MiniIconButton(icon = SimpIcons.Remove, contentDescription = "Slower") { onChange(speed - 0.1f) }
+        Text(
+            text = "${String.format("%.1f", speed)}×",
+            style = typo().bodyMedium,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            // Fixed width: the value changing must never push − and + around.
+            modifier = Modifier.width(48.dp),
+        )
+        MiniIconButton(icon = SimpIcons.Add, contentDescription = "Faster") { onChange(speed + 0.1f) }
+        // BEATLAND (D-034): Reset is ALWAYS here (dimmed and inactive at normal speed). Showing it only when the speed
+        // had changed shifted − and + to the left at the first tap and made the next tap land on Reset by mistake.
+        val canReset = speed != 1f
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = "Reset",
+            style = typo().labelSmall,
+            color = Color.White.copy(alpha = if (canReset) 0.85f else 0.3f),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(enabled = canReset, onClick = onReset)
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+        )
     }
 }
 

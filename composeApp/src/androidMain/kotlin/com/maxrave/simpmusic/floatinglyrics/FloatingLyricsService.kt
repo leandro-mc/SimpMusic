@@ -21,12 +21,15 @@ import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -52,6 +55,7 @@ class FloatingLyricsService :
     Service(),
     KoinComponent {
     private val sharedViewModel: SharedViewModel by inject()
+    private val dataStoreManager: DataStoreManager by inject()
 
     private lateinit var windowManager: WindowManager
     private var composeView: ComposeView? = null
@@ -73,6 +77,10 @@ class FloatingLyricsService :
     private val lockedState = mutableStateOf(false)
     private val autoCollapseState = mutableStateOf(false)
     private val dismissZoneActiveState = mutableStateOf(false)
+
+    // BEATLAND (D-032): the playback speed shown in the window. It mirrors the app's own setting (the same value the
+    // "Playback speed & pitch" sheet edits), so both always agree.
+    private val speedState = mutableFloatStateOf(1f)
 
     /** What BUBBLE taps back into — whichever of MINI/EXPANDED was last actually shown. */
     private var lastExpandedMode = FloatingLyricsMode.MINI
@@ -100,6 +108,8 @@ class FloatingLyricsService :
         startForegroundWithNotification()
         addOverlayWindow()
         observePlaybackForAutoCollapse()
+        observePlaybackSpeed()
+        _running.value = true
     }
 
     override fun onStartCommand(
@@ -114,6 +124,10 @@ class FloatingLyricsService :
     }
 
     override fun onDestroy() {
+        // BEATLAND (D-032): however the window ends (dragged onto the trash, the Settings switch, the notification's
+        // Stop, the menu), a speed set from it must not outlive it: back to normal.
+        resetPlaybackSpeed()
+        _running.value = false
         hideTrashZone()
         removeOverlayWindow()
         serviceJob.cancel()
@@ -148,6 +162,9 @@ class FloatingLyricsService :
                         onOpacityChange = ::onOpacityChange,
                         onLockedChange = ::onLockedChange,
                         onAutoCollapseChange = ::onAutoCollapseChange,
+                        speed = speedState.floatValue,
+                        onSpeedChange = ::onSpeedChange,
+                        onSpeedReset = ::resetPlaybackSpeed,
                     )
                 }
             }
@@ -207,6 +224,19 @@ class FloatingLyricsService :
         val clampedPoint = clampPoint(targetX, targetY, newWidthPx, newHeightPx, metrics)
         targetX = clampedPoint.first
         targetY = clampedPoint.second
+        if (newMode == FloatingLyricsMode.BUBBLE) {
+            // BEATLAND (D-034): minimizing must not leave the bubble floating in the middle of the screen, where the card
+            // used to be. Dock it on the nearest side edge, with the same margin and the same rule as when a dragged
+            // bubble is released (see onBubbleDragEnd), keeping its height.
+            val edgeMargin = (BUBBLE_EDGE_MARGIN_DP * metrics.density).roundToInt()
+            targetX =
+                if (centerX < metrics.widthPixels / 2) {
+                    edgeMargin
+                } else {
+                    metrics.widthPixels - newWidthPx - edgeMargin
+                }
+            targetY = targetY.coerceIn(edgeMargin, (metrics.heightPixels - newHeightPx - edgeMargin).coerceAtLeast(edgeMargin))
+        }
 
         if (newMode != FloatingLyricsMode.BUBBLE) {
             lastExpandedMode = newMode
@@ -223,21 +253,15 @@ class FloatingLyricsService :
                 },
             ).apply()
 
-        if (newMode == FloatingLyricsMode.EXPANDED) {
-            // Entering EXPANDED means LyricsView is composing for the very first time (its own
-            // scroll state, rich-sync word timers, romanization lookups, ...) -- real,
-            // unavoidable main-thread work. Animating the window around that at the same time
-            // just reads as dropped frames, so this one transition snaps instead of easing; every
-            // other transition still animates smoothly since none of them carry that cost.
-            animationJob?.cancel()
-            params.x = targetX
-            params.y = targetY
-            params.width = newWidthPx
-            runCatching { windowManager.updateViewLayout(view, params) }
-            savePosition(targetX, targetY)
-        } else {
-            animateWindowTo(targetX, targetY, newWidthPx)
-        }
+        // BEATLAND (D-033): every mode change snaps, with ONE window update. Easing the window's width over ~200 ms meant a
+        // relayout and surface resize on each display frame (the expensive part of an overlay) while the new content was
+        // also composing for the first time; that is the frame-by-frame look. Rule: the window SIZE is never animated.
+        animationJob?.cancel()
+        params.x = targetX
+        params.y = targetY
+        params.width = newWidthPx
+        runCatching { windowManager.updateViewLayout(view, params) }
+        savePosition(targetX, targetY)
     }
 
     // ───────────────────────────── drag handling ─────────────────────────────
@@ -357,6 +381,27 @@ class FloatingLyricsService :
         prefs.edit().putBoolean(KEY_AUTO_COLLAPSE, value).apply()
     }
 
+    // ───────────────────────────── playback speed (D-032) ─────────────────────────────
+
+    private fun observePlaybackSpeed() {
+        serviceScope.launch {
+            dataStoreManager.playbackSpeed.collect { speedState.floatValue = it }
+        }
+    }
+
+    /** Sets the speed to [target], rounded to a tenth and kept inside the range the app's own speed sheet allows. */
+    private fun onSpeedChange(target: Float) {
+        val tenths = (target * 10f).roundToInt().coerceIn(MIN_SPEED_TENTHS, MAX_SPEED_TENTHS)
+        dataStoreManager.setPlaybackSpeed(tenths / 10f)
+    }
+
+    private fun resetPlaybackSpeed() {
+        if (speedState.floatValue != 1f) {
+            speedState.floatValue = 1f
+            dataStoreManager.setPlaybackSpeed(1f)
+        }
+    }
+
     private fun observePlaybackForAutoCollapse() {
         serviceScope.launch {
             sharedViewModel.controllerState
@@ -434,7 +479,9 @@ class FloatingLyricsService :
         params.y = clamped.second
     }
 
-    /** Eases the window's x/y/width to a target over [durationMs] instead of an instant jump.
+    /** Eases the window's POSITION to a target over [durationMs] instead of an instant jump. Only used for the small
+     *  bubble snapping to the screen edge after a drag (its size does not change, so each frame is just a move);
+     *  never use it to change the size (see D-033).
      *  Runs on the real display frame clock (see [AndroidUiDispatcher.Main] on [serviceScope]) —
      *  a fixed-step delay() loop was tried first and looked choppy (~10 discrete updates over
      *  the whole animation, regardless of the device's actual refresh rate); this ticks every
@@ -529,6 +576,15 @@ class FloatingLyricsService :
     }
 
     companion object {
+        // BEATLAND (D-032): same limits as the app's "Playback speed & pitch" sheet (0.2x to 2.0x, steps of 0.1).
+        private const val MIN_SPEED_TENTHS = 2
+        private const val MAX_SPEED_TENTHS = 20
+
+        private val _running = MutableStateFlow(false)
+
+        /** True while the window exists. Settings and the now-playing menu read it to show the right state. */
+        val running: StateFlow<Boolean> = _running
+
         private const val CHANNEL_ID = "beatland_floating_lyrics"
         private const val NOTIFICATION_ID = 4271
         const val ACTION_STOP = "com.maxrave.simpmusic.floatinglyrics.ACTION_STOP"

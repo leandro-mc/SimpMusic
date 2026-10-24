@@ -58,6 +58,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -111,6 +112,7 @@ import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
 import com.maxrave.simpmusic.brand.ForkPolicy
+import com.maxrave.simpmusic.expect.floatinglyrics.floatingLyricsWindowShowing
 import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
 import com.maxrave.simpmusic.expect.floatinglyrics.isFloatingLyricsAvailable
 import com.maxrave.simpmusic.expect.floatinglyrics.requestFloatingLyricsOverlayPermission
@@ -2189,7 +2191,9 @@ fun SettingScreen(
         if (isFloatingLyricsAvailable()) {
             item(key = "floating_lyrics") {
                 var permissionGranted by remember { mutableStateOf(hasFloatingLyricsOverlayPermission()) }
-                var windowShowing by rememberSaveable { mutableStateOf(false) }
+                // BEATLAND (D-032): the real state of the window, not a local guess — it can also be opened from the
+                // now-playing menu and closed by dragging it onto the trash or from its notification.
+                val windowShowing by floatingLyricsWindowShowing().collectAsState()
                 SettingGroup(title = "Floating lyrics") {
                     SettingItem(
                         title = "Show floating lyrics window",
@@ -2209,14 +2213,11 @@ fun SettingScreen(
                                         permissionGranted = hasFloatingLyricsOverlayPermission()
                                         if (!permissionGranted) {
                                             requestFloatingLyricsOverlayPermission()
-                                            windowShowing = false
                                         } else {
                                             startFloatingLyricsWindow()
-                                            windowShowing = true
                                         }
                                     } else {
                                         stopFloatingLyricsWindow()
-                                        windowShowing = false
                                     }
                                 }
                             ),

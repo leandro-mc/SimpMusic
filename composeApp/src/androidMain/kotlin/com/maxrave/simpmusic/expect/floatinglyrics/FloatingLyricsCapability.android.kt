@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.maxrave.simpmusic.floatinglyrics.FloatingLyricsPermission
 import com.maxrave.simpmusic.floatinglyrics.FloatingLyricsService
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -41,3 +42,5 @@ actual fun startFloatingLyricsWindow() {
 actual fun stopFloatingLyricsWindow() {
     FloatingLyricsService.stop(FloatingLyricsAndroidBridge.context)
 }
+
+actual fun floatingLyricsWindowShowing(): StateFlow<Boolean> = FloatingLyricsService.running

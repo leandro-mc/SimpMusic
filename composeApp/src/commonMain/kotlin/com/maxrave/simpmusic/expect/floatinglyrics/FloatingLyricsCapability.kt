@@ -1,5 +1,7 @@
 package com.maxrave.simpmusic.expect.floatinglyrics
 
+import kotlinx.coroutines.flow.StateFlow
+
 /**
  * Floating lyrics bubble — a personal-fork feature (Beatland), not part of upstream SimpMusic.
  *
@@ -26,3 +28,10 @@ expect fun startFloatingLyricsWindow()
 
 /** Stops the floating lyrics window. */
 expect fun stopFloatingLyricsWindow()
+
+/**
+ * Whether the floating lyrics window is on screen right now. It is the single source of truth for every place that
+ * shows a switch or a menu entry for it (Settings, the now-playing menu), so they stay right even when the window
+ * is closed some other way (dragged onto the trash, the notification's Stop, the system).
+ */
+expect fun floatingLyricsWindowShowing(): StateFlow<Boolean>
