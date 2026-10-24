@@ -29,7 +29,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Actualizaciones** | Verificador de actualizaciones **desactivado** y sus 3 ajustes ocultos (apuntaban a releases de upstream). | D-009 |
 | **Chequeo de "build no oficial"** | Se omite en el flavor `beatland` (`BuildConfig.IS_PERSONAL_FORK`); upstream bloquearía el `applicationId` propio. | D-010, D-018 |
 | **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado). | D-016, D-022, D-019, D-012 |
-| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. | D-005, D-011 |
+| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. Instalador de Windows `.msi` (por usuario, con actualización en el sitio), compilable en GitHub Actions o con un script; logo de créditos de Beatland. | D-005, D-011, D-035 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -52,6 +52,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` (además) | El interruptor de la letra flotante lee `floatingLyricsWindowShowing()` (D-032) |
+| `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
 | `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |
@@ -81,6 +82,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
+| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*` (D-035) |
+| `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa) (D-035) |
 | `AGENTS.md`, `docs/beatland/*` | Documentación para agentes y para ti |
 
 ## 4. Cosas del zip de Sonara que NO integramos

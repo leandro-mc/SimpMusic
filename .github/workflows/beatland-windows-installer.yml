@@ -1,0 +1,104 @@
+name: Beatland - Windows installer (.msi)
+
+# Builds the Windows installer of Beatland on a GitHub Windows machine, so nothing has to be installed on your PC.
+#
+# HOW TO RUN IT (see docs/beatland/DESKTOP.md):
+#   Easiest: GitHub > Releases > "Draft a new release" > create a NEW tag named beatland-desktop-v1 (v2, v3...) with
+#            target = myapp > Publish. The workflow starts by itself and, when it ends, attaches the .msi to that release.
+#   Or:      push a tag from your PC:  git tag beatland-desktop-v1 myapp  &&  git push origin beatland-desktop-v1
+#   Or:      Actions > this workflow > "Run workflow" (only listed if the file is on the repository's default branch).
+#
+# This file is Beatland's own (D-035). It is a separate workflow on purpose: the upstream desktop workflow builds with
+# Conveyor and signing secrets this fork does not have.
+
+on:
+  push:
+    tags:
+      - 'beatland-desktop-*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-msi:
+    name: Build Windows installer (.msi)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout (with the core submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'microsoft'
+          cache: 'gradle'
+
+      # jpackage builds .msi files with WiX Toolset 3 (candle.exe + light.exe). Use the one on the runner, or install it.
+      - name: Make sure WiX Toolset 3 is available
+        shell: pwsh
+        run: |
+          function Find-Wix { Get-ChildItem 'C:\Program Files (x86)' -Directory -Filter 'WiX Toolset v3*' -ErrorAction SilentlyContinue | Select-Object -First 1 }
+          $wix = Find-Wix
+          if (-not $wix) {
+            choco install wixtoolset --no-progress -y
+            $wix = Find-Wix
+          }
+          if (-not $wix) { throw 'WiX Toolset 3 could not be found or installed' }
+          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $wix.FullName 'bin')
+          Write-Host "WiX: $($wix.FullName)"
+
+      # A fork build ships no Sentry / Last.fm secrets: isFullBuild=false (what the Android build uses as well).
+      - name: Licenses list for the About screen
+        run: ./gradlew exportLibraryDefinitions -PisFullBuild=false --no-configuration-cache
+
+      - name: Download the native player libraries (libmpv)
+        run: ./gradlew :composeApp:mpvSetupAll -PisFullBuild=false --no-configuration-cache
+
+      - name: Build the installer
+        run: ./gradlew :desktopApp:packageMsi -PisFullBuild=false --no-configuration-cache
+
+      - name: Name the installer
+        id: msi
+        run: |
+          set -e
+          SRC=$(ls desktopApp/build/compose/binaries/main/msi/*.msi | head -n 1)
+          VERSION=$(grep -m1 '^version-name' gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          OUT="Beatland-${VERSION}-windows-x64.msi"
+          cp "$SRC" "$OUT"
+          echo "file=$OUT" >> "$GITHUB_OUTPUT"
+          ls -lh "$OUT"
+
+      - name: Upload the installer (Actions artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beatland-Windows-MSI
+          path: ${{ steps.msi.outputs.file }}
+          if-no-files-found: error
+
+      - name: Attach the installer to the release of this tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.msi.outputs.file }}
+          name: Beatland desktop ${{ github.ref_name }}
+          body: |
+            Beatland for Windows (x64). Unsigned installer: Windows SmartScreen will warn once
+            ("More info" > "Run anyway"). Instructions: docs/beatland/DESKTOP.md
+
+      - name: Keep the build reports if something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            **/build/reports/**
+            build/reports/**
+          if-no-files-found: ignore

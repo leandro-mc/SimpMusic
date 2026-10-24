@@ -12,8 +12,9 @@ contradice al original, **gana esta carpeta**.
 4. `BRANDING.md` — cómo funciona el nombre Beatland y el script `apply_brand.py`.
 5. `CHANGES.md` — **lista concisa de en qué difiere Beatland del original** (archivos de upstream tocados y archivos propios).
 6. `FEATURES.md` — funcionalidades propias y los archivos que las componen.
-7. `BUILD.md` — cómo compila el dueño del proyecto.
-8. `PENDING.md` — trabajo pendiente y ramas planificadas.
+7. `BUILD.md` — cómo compila el dueño del proyecto (Android).
+8. `DESKTOP.md` — **versión de Windows**: cómo generar e instalar el instalador `.msi`.
+9. `PENDING.md` — trabajo pendiente y ramas planificadas.
 
 ## Modelo de ramas
 

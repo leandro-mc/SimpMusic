@@ -6,6 +6,8 @@
 
 ## Notas abiertas
 
+- **Escritorio sin compilar:** la versión de Windows no se ha compilado nunca con los cambios de Beatland. Primer paso: generar el instalador (`DESKTOP.md`) y pasar el registro si falla.
+
 - `myapp` compila (confirmado por el dueño tras corregir AGP y `vivoAndroidApp`).
 - Verificar en el teléfono, con el APK `beatland`, que aparecen "Floating lyrics" en Ajustes y el nombre Beatland en el launcher (ver `BUILD.md` para comprobar la variante instalada).
 - Escritorio/`conveyor`: `vcs-url` ya apunta al fork; probar el empaquetado cuando convenga.

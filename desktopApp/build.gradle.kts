@@ -183,6 +183,10 @@ compose.desktop {
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")
             packageName = beatlandBrandName
+            // BEATLAND (D-035): what Windows shows for the installed app (Settings > Apps) and in the installer.
+            description = "$beatlandBrandName - FOSS YouTube Music client"
+            vendor = beatlandBrandName
+            copyright = "Based on SimpMusic by maxrave-dev - GPL-3.0"
             macOS {
                 val formatedDate =
                     Instant.now().let {
@@ -229,6 +233,14 @@ compose.desktop {
                         .get()
                         .removeSuffix("-hf")
                 iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.ico"))
+                // BEATLAND (D-035): Windows installer (.msi) settings.
+                menuGroup = beatlandBrandName // Start menu folder
+                shortcut = true // desktop shortcut
+                dirChooser = true // let the user pick the install folder
+                perUserInstall = true // installs for the current user only: no administrator rights needed
+                // A FIXED id: the installer uses it to recognise an older Beatland and upgrade it in place instead of
+                // installing a second copy. Never change it.
+                upgradeUuid = "484ce1b1-f766-4b4c-ad5b-759c7567bdd1"
             }
             linux {
                 includeAllModules = true
