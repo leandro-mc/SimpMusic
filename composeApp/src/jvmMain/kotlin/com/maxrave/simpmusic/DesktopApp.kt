@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -508,7 +509,20 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
                     onOpenDesktopNotificationSettings =
                         desktopNotificationManager::openNotificationSettings,
                 )
-                ToastHost()
+                // BEATLAND (D-036): ToastHost used to be composed in the very first composition of the window. On some
+                // launches (seen once on Windows, gone on the next start) its internal state was read before the snapshot
+                // that created it had been applied: "Reading a state that was created after the snapshot was taken" and the
+                // app died at start-up. It is only a notification layer, so it joins two frames later, when the first
+                // composition is over.
+                var toastHostReady by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    withFrameNanos { }
+                    withFrameNanos { }
+                    toastHostReady = true
+                }
+                if (toastHostReady) {
+                    ToastHost()
+                }
             }
         }
 

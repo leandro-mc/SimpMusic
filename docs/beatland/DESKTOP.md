@@ -71,6 +71,11 @@ Cada vez que sincronizas `dev` con el original, GitHub ejecuta en tu fork los wo
 secretos que tu fork no tiene y **fallarán** (no afecta a tu app). Para evitar el ruido: pestaña **Actions** → elige cada uno de esos workflows → menú **⋯ → Disable workflow**.
 **No** desactives "Beatland - Windows installer (.msi)".
 
+## Si algo falla al abrir
+
+- **Ventana de error al arrancar:** ciérrala y vuelve a abrir la app. Una vez ocurrió un fallo intermitente de arranque (`Reading a state that was created after the snapshot was taken…`, dentro de la capa de avisos) que desapareció al reabrir; desde la versión `beatland-desktop-v2` esa capa se carga un instante después para evitarlo (D-036). Si reaparece, copia el texto completo del error y anota qué estabas haciendo.
+- **Registro de la app:** exporta el registro desde la app y pásalo junto con el error. Es normal que contenga errores como: *canciones importadas de Spotify que no existen en YouTube Music*; un **429** del servicio de letras (límite temporal de peticiones); un **403** en una canción concreta que YouTube no deja reproducir; o un **503 "high demand"** de Gemini al traducir (el proveedor de IA saturado: reintenta más tarde).
+
 ## Lista de comprobación tras instalar
 
 1. La app abre y dice **Beatland** (ventana, bandeja, menú Inicio).
