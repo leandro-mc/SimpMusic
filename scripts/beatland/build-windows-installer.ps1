@@ -33,7 +33,10 @@ if (-not $candle) { Fail "WiX Toolset 3 was not found (candle.exe). Install it: 
 Write-Host "WiX: $candle"
 
 # --- build -----------------------------------------------------------------------------------------------------------
-$flags = @('-PisFullBuild=false', '--no-configuration-cache')
+# The installer version's third number is the number of commits (only grows), so Windows can upgrade in place. D-037.
+$build = (git rev-list --count HEAD).Trim()
+Write-Host "Beatland build number: $build"
+$flags = @('-PisFullBuild=false', "-PbeatlandBuild=$build", '--no-configuration-cache')
 Write-Host "`n[1/3] Licenses list..." -ForegroundColor Cyan
 & .\gradlew.bat exportLibraryDefinitions @flags; if ($LASTEXITCODE -ne 0) { Fail "exportLibraryDefinitions failed" }
 

@@ -25,7 +25,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `ModalBottomSheet.kt`, `SettingScreen.kt` (letra flotante) | Conservar la acción "Letra flotante" del menú de la canción en reproducción y el interruptor basado en `floatingLyricsWindowShowing()` (D-032). |
 | `SharedViewModel.kt` (traducción), `ModalBottomSheet.kt`, `LyricsView.kt`, `AppleMusicLyricsLines.kt`, `NowPlayingContentSpotify.kt`, `NowPlayingContentM3Expressive.kt`, `AppleMusicShared.kt` | Conservar `RobustLyricsTranslator` en `translateWithAi`, `TranslationQueue` (`translationQueue`, `runTranslationJob`), `regenerateAiTranslation`, la acción del menú, los estilos de traducción (`AppleMusicTranslatedColor` ahora vale `BeatlandTranslationColor`, `beatlandTranslationStyle`) y el filtro de traducciones en blanco (D-028 a D-030). |
 | `DesktopApp.kt` | Conservar el `ToastHost` diferido (`toastHostReady`) (D-036); el resto de cambios de marca ya se reaplican con `apply_brand.py`. |
-| `desktopApp/build.gradle.kts` (bloque `windows {}`, `description`/`vendor`) | Conservar los metadatos del MSI y **el `upgradeUuid` fijo** (D-035). |
+| `desktopApp/build.gradle.kts` (bloque `windows {}`, `description`/`vendor`) | Conservar los metadatos del MSI, **el `upgradeUuid` fijo** (D-035) y `beatlandWindowsVersion` / `msiPackageVersion` (D-037). |
 | `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
 | `vivoAndroidApp/build.gradle.kts` | Conservar `IS_PERSONAL_FORK` (D-018). |
 | `CLAUDE.md` | Tomar upstream y volver a poner la línea de cabecera que apunta a `docs/beatland/README.md`. |

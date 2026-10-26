@@ -130,15 +130,23 @@ class PlaylistCollageManager(
             return false
         }
 
-        val uri =
-            composePlaylistCollage(urls)?.let { persistPickedImage(it, fileName) }
+        Logger.i(TAG, "Building the collage of playlist ${playlist.id} from ${urls.size} cover(s)")
+        val bytes = composePlaylistCollage(urls)
+        val uri = bytes?.let { persistPickedImage(it, fileName) }
         if (uri == null) {
+            // D-038: this used to retry in silence; say why, so a platform that cannot build it shows in the log.
+            Logger.w(
+                TAG,
+                "Collage of playlist ${playlist.id} not built (" +
+                    (if (bytes == null) "no cover could be loaded" else "the file could not be saved") + "); retrying later",
+            )
             state.retryInPolls = RETRY_POLLS // no connection or a bad image: try again in a while
             return true
         }
         localPlaylistRepository.updateThumbnailLocalPlaylist(playlist.id, uri, "").lastOrNull()
         if (ours && current != null) deleteCollageFile(current)
         state.handled = true
+        Logger.i(TAG, "Collage saved for playlist ${playlist.id}")
         PlaylistCollageEvents.notifyUpdated(playlist.id)
         return true
     }

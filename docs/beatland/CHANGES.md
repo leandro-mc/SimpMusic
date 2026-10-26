@@ -53,6 +53,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` (además) | El interruptor de la letra flotante lee `floatingLyricsWindowShowing()` (D-032) |
 | `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
+| `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |

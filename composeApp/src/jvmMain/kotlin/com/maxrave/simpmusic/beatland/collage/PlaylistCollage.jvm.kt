@@ -3,10 +3,13 @@ package com.maxrave.simpmusic.beatland.collage
 import com.maxrave.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
 import java.awt.Color
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.URI
@@ -90,13 +93,28 @@ private fun drawCenterCrop(
 
 private fun download(url: String): BufferedImage? {
     if (!url.startsWith("http")) return null
-    return runCatching {
-        val connection =
-            URL(url).openConnection().apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = TIMEOUT_MS
-                setRequestProperty("User-Agent", "Mozilla/5.0")
-            }
-        connection.getInputStream().use { ImageIO.read(it) }
-    }.onFailure { Logger.w(TAG, "Could not load $url: ${it.message}") }.getOrNull()
+    val bytes =
+        runCatching {
+            val connection =
+                URL(url).openConnection().apply {
+                    connectTimeout = TIMEOUT_MS
+                    readTimeout = TIMEOUT_MS
+                    setRequestProperty("User-Agent", "Mozilla/5.0")
+                }
+            connection.getInputStream().use { it.readBytes() }
+        }.onFailure { Logger.w(TAG, "Could not download $url: ${it.message}") }.getOrNull() ?: return null
+
+    // BEATLAND (D-038): decode with Skia, the engine the app itself draws with, which reads every format the cover art
+    // comes in (JPEG, PNG and WebP). Java's ImageIO cannot read WebP and then returns null WITHOUT any error, which left
+    // the collage silently empty on Windows while Android (BitmapFactory reads WebP) worked. ImageIO stays as a fallback.
+    val viaSkia =
+        runCatching {
+            // Skia decodes whatever it was given; re-encoded as PNG, Java can read it for sure.
+            val png = Image.makeFromEncoded(bytes).encodeToData(EncodedImageFormat.PNG)?.bytes
+            png?.let { ImageIO.read(ByteArrayInputStream(it)) }
+        }.getOrNull()
+    if (viaSkia != null) return viaSkia
+    val viaImageIo = runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
+    if (viaImageIo == null) Logger.w(TAG, "Unsupported image format from $url (${bytes.size} bytes)")
+    return viaImageIo
 }

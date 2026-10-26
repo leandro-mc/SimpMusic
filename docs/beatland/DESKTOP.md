@@ -33,7 +33,9 @@ El repositorio es público, así que las "Actions" de GitHub son gratis. Una má
 2. **SmartScreen:** si aparece *"Windows protegió su PC"*, pulsa **Más información → Ejecutar de todas formas**. Pasa porque el instalador no está firmado.
 3. El asistente deja elegir la carpeta. **No pide permisos de administrador**: se instala solo para tu usuario.
 4. Crea un acceso directo en el escritorio y una carpeta **Beatland** en el menú Inicio.
-5. **Actualizar** a una versión nueva: ejecuta el `.msi` nuevo; reemplaza a la anterior (usa un identificador fijo, `upgradeUuid`, nunca debe cambiarse).
+5. **Actualizar** a una versión nueva: ejecuta el `.msi` nuevo; reemplaza a la anterior sin desinstalar. Para que Windows lo acepte, cada instalador lleva una versión **mayor** que la anterior: `2.3.<n>`, donde `n` es el número de commits del proyecto (sube solo; D-037). Windows lo mostrará, por ejemplo, como `2.3.1660`; no es el número de SimpMusic aunque empiece igual. Además se usa un identificador fijo (`upgradeUuid`) que nunca debe cambiarse.
+   - Si ves *"Ya está instalada otra versión de este producto"*, el instalador nuevo tenía la **misma** versión que el instalado (pasa si compilas dos veces el mismo commit, o con las primeras versiones `beatland-desktop-v1`/`v2`, que eran ambas `2.3.0`). Desinstala una vez y vuelve a instalar; a partir de ahí se actualiza en el sitio.
+   - Un instalador **más antiguo** que el instalado tampoco se instala encima (Windows lo trata como un retroceso).
 6. **Desinstalar:** Configuración → Aplicaciones → Beatland.
 
 ## Opción B: compilarlo tú en tu PC (solo si la A no te sirve)
@@ -55,7 +57,7 @@ Descarga las librerías del reproductor (libmpv), compila y deja el instalador e
 
 - Nombre **Beatland** en la ventana, la bandeja del sistema, el ejecutable (`Beatland.exe`), el menú Inicio, el instalador y "Aplicaciones".
 - Ícono Beatland en el ejecutable, la ventana, la bandeja y la pantalla de créditos (antes seguía el logo de SimpMusic ahí, también en Android).
-- Funcionan en escritorio: selector de canciones para playlists, collage de miniaturas, traducción de letras con IA fiable + regenerar, y el estilo de traducción.
+- Funcionan en escritorio: selector de canciones para playlists, collage de miniaturas (en Windows lee las carátulas con Skia, incluidas las WebP; D-038), traducción de letras con IA fiable + regenerar, y el estilo de traducción.
 - **No existe en escritorio:** la letra flotante (es una función solo de Android).
 
 ## Datos y cosas a saber

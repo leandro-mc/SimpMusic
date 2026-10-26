@@ -18,6 +18,29 @@ val beatlandBrandName: String =
         .getProperty("brand.name")
         .trim()
 
+// BEATLAND (D-037): version of the Windows installer (.msi). Windows Installer only upgrades an installed app when the
+// new installer has a HIGHER version, and it compares just three numbers (major.minor.build; the MSI format and jpackage
+// do not accept a fourth). Upstream's version (2.3.0) does not change between Beatland builds, so two installers would
+// look identical and Windows refuses the second one ("another version of this product is already installed").
+// So: keep upstream's major.minor and use the third number as the Beatland BUILD number, passed with
+// -PbeatlandBuild=<n> (the workflow and the PowerShell script pass the number of commits in the history, which only grows).
+// Without that property the plain upstream version is used (e.g. a quick local test).
+val beatlandWindowsVersion: String =
+    run {
+        val base =
+            libs.versions.version.name
+                .get()
+                .removeSuffix("-hf")
+        val build =
+            providers
+                .gradleProperty("beatlandBuild")
+                .orNull
+                ?.trim()
+                ?.toIntOrNull()
+        val parts = base.split(".")
+        if (build != null && build in 1..65535 && parts.size >= 2) "${parts[0]}.${parts[1]}.$build" else base
+    }
+
 // desktopApp — JVM application module for SimpMusic Desktop (Beatland fork).
 //
 // Per JetBrains 2026 KMP guidance (AGP 9 + new default structure), the
@@ -232,6 +255,7 @@ compose.desktop {
                     libs.versions.version.name
                         .get()
                         .removeSuffix("-hf")
+                msiPackageVersion = beatlandWindowsVersion // BEATLAND (D-037): see the comment at the top of this file
                 iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.ico"))
                 // BEATLAND (D-035): Windows installer (.msi) settings.
                 menuGroup = beatlandBrandName // Start menu folder

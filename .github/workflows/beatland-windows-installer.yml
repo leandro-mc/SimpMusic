@@ -33,6 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+          fetch-depth: 0 # full history: the installer version uses the number of commits (D-037)
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -62,16 +63,19 @@ jobs:
       - name: Download the native player libraries (libmpv)
         run: ./gradlew :composeApp:mpvSetupAll -PisFullBuild=false --no-configuration-cache
 
+      # D-037: Windows only upgrades to a HIGHER installer version. The third number is the commit count, which only grows.
       - name: Build the installer
-        run: ./gradlew :desktopApp:packageMsi -PisFullBuild=false --no-configuration-cache
+        run: |
+          BUILD=$(git rev-list --count HEAD)
+          echo "Beatland build number: $BUILD"
+          ./gradlew :desktopApp:packageMsi -PisFullBuild=false -PbeatlandBuild=$BUILD --no-configuration-cache
 
       - name: Name the installer
         id: msi
         run: |
           set -e
           SRC=$(ls desktopApp/build/compose/binaries/main/msi/*.msi | head -n 1)
-          VERSION=$(grep -m1 '^version-name' gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/')
-          OUT="Beatland-${VERSION}-windows-x64.msi"
+          OUT="$(basename "$SRC" .msi)-windows-x64.msi" # e.g. Beatland-2.3.1650-windows-x64.msi
           cp "$SRC" "$OUT"
           echo "file=$OUT" >> "$GITHUB_OUTPUT"
           ls -lh "$OUT"
