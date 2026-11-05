@@ -46,6 +46,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache` |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
+| `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |

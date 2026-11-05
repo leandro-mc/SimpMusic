@@ -78,6 +78,13 @@ secretos que tu fork no tiene y **fallarán** (no afecta a tu app). Para evitar 
 - **Ventana de error al arrancar:** ciérrala y vuelve a abrir la app. Una vez ocurrió un fallo intermitente de arranque (`Reading a state that was created after the snapshot was taken…`, dentro de la capa de avisos) que desapareció al reabrir; desde la versión `beatland-desktop-v2` esa capa se carga un instante después para evitarlo (D-036). Si reaparece, copia el texto completo del error y anota qué estabas haciendo.
 - **Registro de la app:** exporta el registro desde la app y pásalo junto con el error. Es normal que contenga errores como: *canciones importadas de Spotify que no existen en YouTube Music*; un **429** del servicio de letras (límite temporal de peticiones); un **403** en una canción concreta que YouTube no deja reproducir; o un **503 "high demand"** de Gemini al traducir (el proveedor de IA saturado: reintenta más tarde).
 
+## Si el collage de una playlist no aparece
+
+Normalmente aparece **1-3 segundos** después de pulsar "Añadir N canciones" en el selector (hasta ~15 s si las canciones se añadieron por otro camino). Si pasa más tiempo, abre y cierra la Biblioteca para forzar una comprobación.
+Si aun así no aparece, exporta el log de la app y busca las líneas `PlaylistCollage`:
+`Building…` → `Collage of playlist N: 600x600, … bytes` → `Collage saved…` significan que se generó bien y el fallo estaría al **mostrarla**;
+un aviso `not built` o `cannot be decoded` indica el motivo. Pasa esas líneas.
+
 ## Lista de comprobación tras instalar
 
 1. La app abre y dice **Beatland** (ventana, bandeja, menú Inicio).

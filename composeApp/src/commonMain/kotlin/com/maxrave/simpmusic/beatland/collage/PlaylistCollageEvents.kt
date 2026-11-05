@@ -1,7 +1,9 @@
 package com.maxrave.simpmusic.beatland.collage
 
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Beatland fork (D-027): tells the screens that a playlist's collage thumbnail was just written.
@@ -20,13 +22,20 @@ object PlaylistCollageEvents {
         _updated.tryEmit(playlistId)
     }
 
-    private val _wake = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    // A conflated channel instead of a SharedFlow: a request that arrives while the manager is busy is KEPT and the next
+    // wait returns at once. The SharedFlow version dropped requests that came when nobody was waiting, so on Windows the
+    // collage waited for the next scheduled check (about 15 s) instead of appearing right after adding songs.
+    private val wakeChannel = Channel<Boolean>(Channel.CONFLATED)
 
-    /** Emits when something that surely changed a playlist's songs happened: the manager checks right away. */
-    val wake: SharedFlow<Unit> = _wake
-
-    /** Ask the collage manager to look at the playlists now instead of waiting for its next scheduled check. */
-    fun requestCheck() {
-        _wake.tryEmit(Unit)
+    /**
+     * Ask the collage manager to look at the playlists now instead of waiting for its next scheduled check.
+     * [songsAreFinal] = true when every song of the change is already in the playlist (the song picker, once it has
+     * added them all), so the manager can build the collage at once instead of waiting for further changes.
+     */
+    fun requestCheck(songsAreFinal: Boolean = true) {
+        wakeChannel.trySend(songsAreFinal)
     }
+
+    /** Waits up to [timeoutMs] for [requestCheck]. Returns its `songsAreFinal` flag, or false when it just timed out. */
+    suspend fun awaitCheckRequest(timeoutMs: Long): Boolean = withTimeoutOrNull(timeoutMs) { wakeChannel.receive() } ?: false
 }
