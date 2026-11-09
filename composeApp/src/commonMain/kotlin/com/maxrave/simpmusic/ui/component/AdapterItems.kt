@@ -106,6 +106,7 @@ import com.maxrave.domain.utils.toListName
 import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.collage.PlaylistCoverDiagnostics
 import com.maxrave.simpmusic.expect.ui.HorizontalScrollBar
 import com.maxrave.simpmusic.extension.getStringBlocking
 import com.maxrave.simpmusic.getPlatform
@@ -656,6 +657,15 @@ fun HomeItemContentPlaylist(
                         },
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    // BEATLAND (D-043): report how the cover of a local playlist loaded (log only, no behaviour change).
+                    onSuccess = { state ->
+                        if (data is LocalPlaylistEntity) {
+                            PlaylistCoverDiagnostics.loaded(data.id, thumb, state.result.image.width, state.result.image.height)
+                        }
+                    },
+                    onError = { state ->
+                        if (data is LocalPlaylistEntity) PlaylistCoverDiagnostics.failed(data.id, thumb, state.result.throwable)
+                    },
                     modifier =
                         (if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier.size(thumbSize))
                             .aspectRatio(1f)

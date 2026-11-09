@@ -46,6 +46,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache`; `mpvSlicesToSetup` (propiedad opcional `-PmpvSlices`, la verificación SHA-256 se mantiene) y suma de `linux-x64` igual a la de upstream (D-040) |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
+| `composeApp/.../ui/component/AdapterItems.kt` | `HomeItemContentPlaylist`: dos *callbacks* `onSuccess`/`onError` del `AsyncImage` + 1 import, solo para escribir en el log cómo se dibujó la portada de una playlist local (D-043) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
@@ -81,7 +82,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/translation/RobustLyricsTranslator.kt` | Traducción de letras con IA fiable (D-028) |
 | `composeApp/.../beatland/translation/TranslationQueue.kt` | Cola de traducciones: una a la vez, una por canción, prioridad a la que suena (D-031) |
 | `composeApp/.../beatland/lyrics/LyricsTranslationStyle.kt` | Color, tipografía y tamaño de la traducción en todas las vistas de letra (D-030) |
-| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (5 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
+| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (6 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma; `PlaylistCoverDiagnostics` (log de cómo se dibuja la portada, D-043) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
