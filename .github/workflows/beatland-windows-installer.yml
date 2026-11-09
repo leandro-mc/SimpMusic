@@ -57,14 +57,22 @@ jobs:
           Write-Host "WiX: $($wix.FullName)"
 
       # A fork build ships no Sentry / Last.fm secrets: isFullBuild=false (what the Android build uses as well).
+      # D-042: the Gradle wrapper downloads Gradle from GitHub Releases with a single attempt, and that download failed on
+      # the runner three times in a row. Fetch it here with retries and a SHA-256 check; the wrapper then finds the zip in
+      # place and downloads nothing. It only warns (never fails) if it cannot, so it cannot break a build that would pass.
+      - name: Fetch the Gradle distribution (with retries)
+        run: bash scripts/beatland/prefetch-gradle.sh
+
+      # D-042: every Gradle step goes through ci-gradle.sh, which is plain ./gradlew plus a "::error::" annotation with
+      # Gradle's "What went wrong" block when it fails (readable through the GitHub API, unlike the raw log).
       - name: Licenses list for the About screen
-        run: ./gradlew exportLibraryDefinitions -PisFullBuild=false --no-configuration-cache
+        run: bash scripts/beatland/ci-gradle.sh exportLibraryDefinitions -PisFullBuild=false --no-configuration-cache
 
       # D-040: only the Windows x64 slice is downloaded (and still SHA-256 verified). The other four slices are not needed
       # by this installer, and a re-published slice of another platform must not be able to break it.
       - name: Download the native player libraries (libmpv)
         run: |
-          ./gradlew :composeApp:mpvSetupAll -PisFullBuild=false -PmpvSlices=windows-x64 --no-configuration-cache
+          bash scripts/beatland/ci-gradle.sh :composeApp:mpvSetupAll -PisFullBuild=false -PmpvSlices=windows-x64 --no-configuration-cache
           ls -la mpv-natives/windows-x64
           # Without libmpv the installer would still build, but it could not play anything: fail here instead.
           test -f mpv-natives/windows-x64/libmpv-2.dll || { echo "libmpv-2.dll is missing from mpv-natives/windows-x64"; exit 1; }
@@ -74,7 +82,7 @@ jobs:
         run: |
           BUILD=$(git rev-list --count HEAD)
           echo "Beatland build number: $BUILD"
-          ./gradlew :desktopApp:packageMsi -PisFullBuild=false -PmpvSlices=windows-x64 -PbeatlandBuild=$BUILD --no-configuration-cache
+          bash scripts/beatland/ci-gradle.sh :desktopApp:packageMsi -PisFullBuild=false -PmpvSlices=windows-x64 -PbeatlandBuild=$BUILD --no-configuration-cache
 
       - name: Name the installer
         id: msi

@@ -25,6 +25,10 @@ El repositorio es público, así que las "Actions" de GitHub son gratis. Una má
 
 **Si la ejecución sale en rojo ❌:** ábrela, entra al paso que falló (marcado en rojo), copia las últimas ~60 líneas del registro y pásalas. Con eso se corrige.
 
+> **Si el paso que falla es el de Gradle y el error menciona `gradle-distributions` o `gradle-9.x-bin.zip`:** es la descarga de Gradle desde GitHub, que a veces falla.
+> Desde D-042 un paso previo la hace con reintentos; si aun así cae, basta con **Re-run failed jobs**. Los errores de Gradle también quedan como anotación roja ("Gradle failed")
+> en la página del run, además del registro.
+>
 > **Error `Checksum mismatch for mpv-natives-<plataforma>.tar.gz` (paso "Download the native player libraries"):** el proyecto original volvió a publicar ese archivo
 > de libmpv bajo la misma etiqueta y la suma fijada en el código ya no coincide (pasó con `linux-x64` en la v4). **Nunca pegues el valor "actual" del error en el código**: eso
 > desactiva la comprobación de integridad. La suma buena es la que fija el original en su rama `dev` (`composeApp/build.gradle.kts`, `mpvNativesChecksums`); si esa rama

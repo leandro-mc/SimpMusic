@@ -85,7 +85,9 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
-| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64` y comprueba que `libmpv-2.dll` quedó en su sitio (D-035, D-040) |
+| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |
+| `scripts/beatland/prefetch-gradle.sh` | Descarga Gradle con reintentos y SHA-256 antes de que lo haga el *wrapper* (solo CI; D-042) |
+| `scripts/beatland/ci-gradle.sh` | Ejecuta Gradle en el CI y publica sus errores como anotaciones legibles por la API (D-042) |
 | `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa); solo descarga la libmpv de `windows-x64` (D-035, D-040) |
 | `AGENTS.md`, `docs/beatland/*` | Documentación para agentes y para ti |
 
