@@ -37,6 +37,7 @@ import com.maxrave.domain.mediaservice.handler.ToastType
 import com.maxrave.domain.notification.DesktopNotificationManager
 import com.maxrave.data.io.getHomeFolderPath
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.collage.DriveLetterFileUriMapper
 import com.maxrave.simpmusic.di.viewModelModule
 import com.maxrave.simpmusic.extension.DesktopWindowChrome
 import com.maxrave.simpmusic.ui.component.CustomTitleBar
@@ -479,6 +480,9 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
                         ImageLoader
                             .Builder(context)
                             .components {
+                                // BEATLAND (D-044): Coil 3.6.3 cannot read file:/C:/... (the drive-letter colon is taken
+                                // for a second scheme), so automatic collages and picked covers never showed on Windows.
+                                add(DriveLetterFileUriMapper())
                                 add(NetworkFirstInterceptor { imageLoader })
                                 add(
                                     OkHttpNetworkFetcherFactory(
