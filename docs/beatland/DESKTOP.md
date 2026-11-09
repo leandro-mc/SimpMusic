@@ -3,8 +3,8 @@
 Beatland de escritorio se instala con un archivo **`.msi`** (instalador normal de Windows). Funciona en **Windows 10/11 de 64 bits**.
 Es **un instalador sin firmar** (no hay certificado de pago): Windows SmartScreen avisará una vez, ver el paso 4.
 
-> **Estado honesto:** la versión de escritorio de este fork **todavía no se ha compilado nunca** con los cambios de Beatland (el agente de IA no puede
-> compilar). Es probable que la primera vez aparezca algún error de compilación. Si pasa, copia el texto del error (instrucciones más abajo) y se corrige.
+> **Estado honesto:** el agente de IA no puede compilar. Los instaladores `beatland-desktop-v1` a `v3` se compilaron, instalaron y actualizaron en el sitio;
+> los cambios posteriores (D-039 y D-040) solo se comprueban cuando GitHub compila uno nuevo. Si falla, copia el texto del error (instrucciones más abajo) y se corrige.
 
 ## Opción A (recomendada): que GitHub lo compile, sin instalar nada en tu PC
 
@@ -24,6 +24,12 @@ El repositorio es público, así que las "Actions" de GitHub son gratis. Una má
    (También queda como "Artifact" dentro de la ejecución, durante 90 días.)
 
 **Si la ejecución sale en rojo ❌:** ábrela, entra al paso que falló (marcado en rojo), copia las últimas ~60 líneas del registro y pásalas. Con eso se corrige.
+
+> **Error `Checksum mismatch for mpv-natives-<plataforma>.tar.gz` (paso "Download the native player libraries"):** el proyecto original volvió a publicar ese archivo
+> de libmpv bajo la misma etiqueta y la suma fijada en el código ya no coincide (pasó con `linux-x64` en la v4). **Nunca pegues el valor "actual" del error en el código**: eso
+> desactiva la comprobación de integridad. La suma buena es la que fija el original en su rama `dev` (`composeApp/build.gradle.kts`, `mpvNativesChecksums`); si esa rama
+> no la ha actualizado, avisa antes de aceptar nada. Desde D-040 el instalador de Windows solo descarga y verifica la rebanada `windows-x64`, así que un cambio en las demás
+> plataformas ya no lo rompe.
 
 > Alternativa por consola, si prefieres: `git tag beatland-desktop-v1 myapp` y luego `git push origin beatland-desktop-v1`.
 

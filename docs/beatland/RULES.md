@@ -83,6 +83,7 @@ Reglas:
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.
 - Íconos generados por `scripts/beatland/generate_icon.py` (D-020), que **sobrescribe** `drawable-v24/ic_launcher_*.xml`, los `mipmap-*` del flavor y `beatland_app_icon.*`; sus referencias en escritorio también. No editar esos archivos a mano.
 - Los `notCompatibleWithConfigurationCache` de `mpvSetupAll` y `writeConveyorConfig`.
+- El filtro `-PmpvSlices` de `mpvSetupAll` (`mpvSlicesToSetup`) y que el workflow/script de Windows lo pasen (D-040). Las sumas de `mpvNativesChecksums` solo se aceptan si coinciden con las de `upstream/dev`: **nunca pegar el valor "actual" de un error de checksum** (eso desactiva la verificación).
 
 ## Nunca traer / nunca restaurar
 

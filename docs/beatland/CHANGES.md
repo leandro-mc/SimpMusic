@@ -28,8 +28,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Promos del autor original** | Diálogos de reseña/"star en GitHub", blog y footguns **desactivados** (`ForkPolicy`). | D-007 |
 | **Actualizaciones** | Verificador de actualizaciones **desactivado** y sus 3 ajustes ocultos (apuntaban a releases de upstream). | D-009 |
 | **Chequeo de "build no oficial"** | Se omite en el flavor `beatland` (`BuildConfig.IS_PERSONAL_FORK`); upstream bloquearía el `applicationId` propio. | D-010, D-018 |
-| **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado). | D-016, D-022, D-019, D-012 |
-| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. Instalador de Windows `.msi` (por usuario, con actualización en el sitio), compilable en GitHub Actions o con un script; logo de créditos de Beatland. | D-005, D-011, D-035 |
+| **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado); `mpvSetupAll` acepta `-PmpvSlices=<rebanadas>` para descargar (y verificar) solo las necesarias, y la suma de `linux-x64` sigue a la de upstream. | D-016, D-022, D-019, D-012, D-040 |
+| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. Instalador de Windows `.msi` (por usuario, con actualización en el sitio), compilable en GitHub Actions o con un script (que solo descarga la libmpv de `windows-x64`); logo de créditos de Beatland. | D-005, D-011, D-035, D-040 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -43,7 +43,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `vivoAndroidApp/build.gradle.kts` | Campo `IS_PERSONAL_FORK = false` (comparte `MainActivity`) |
 | `build.gradle.kts` (raíz) | Desactiva `lintVital*` en todos los módulos |
 | `gradle/libs.versions.toml` | AGP `9.3.0` |
-| `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache` |
+| `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache`; `mpvSlicesToSetup` (propiedad opcional `-PmpvSlices`, la verificación SHA-256 se mantiene) y suma de `linux-x64` igual a la de upstream (D-040) |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
 | `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
@@ -85,8 +85,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
-| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*` (D-035) |
-| `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa) (D-035) |
+| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64` y comprueba que `libmpv-2.dll` quedó en su sitio (D-035, D-040) |
+| `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa); solo descarga la libmpv de `windows-x64` (D-035, D-040) |
 | `AGENTS.md`, `docs/beatland/*` | Documentación para agentes y para ti |
 
 ## 4. Cosas del zip de Sonara que NO integramos

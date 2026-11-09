@@ -60,15 +60,21 @@ jobs:
       - name: Licenses list for the About screen
         run: ./gradlew exportLibraryDefinitions -PisFullBuild=false --no-configuration-cache
 
+      # D-040: only the Windows x64 slice is downloaded (and still SHA-256 verified). The other four slices are not needed
+      # by this installer, and a re-published slice of another platform must not be able to break it.
       - name: Download the native player libraries (libmpv)
-        run: ./gradlew :composeApp:mpvSetupAll -PisFullBuild=false --no-configuration-cache
+        run: |
+          ./gradlew :composeApp:mpvSetupAll -PisFullBuild=false -PmpvSlices=windows-x64 --no-configuration-cache
+          ls -la mpv-natives/windows-x64
+          # Without libmpv the installer would still build, but it could not play anything: fail here instead.
+          test -f mpv-natives/windows-x64/libmpv-2.dll || { echo "libmpv-2.dll is missing from mpv-natives/windows-x64"; exit 1; }
 
       # D-037: Windows only upgrades to a HIGHER installer version. The third number is the commit count, which only grows.
       - name: Build the installer
         run: |
           BUILD=$(git rev-list --count HEAD)
           echo "Beatland build number: $BUILD"
-          ./gradlew :desktopApp:packageMsi -PisFullBuild=false -PbeatlandBuild=$BUILD --no-configuration-cache
+          ./gradlew :desktopApp:packageMsi -PisFullBuild=false -PmpvSlices=windows-x64 -PbeatlandBuild=$BUILD --no-configuration-cache
 
       - name: Name the installer
         id: msi
