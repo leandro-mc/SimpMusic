@@ -53,6 +53,7 @@ import com.maxrave.domain.mediaservice.handler.SleepTimerState
 import com.maxrave.domain.mediaservice.handler.addToQueueBlock
 import com.maxrave.domain.repository.AlbumRepository
 import com.maxrave.domain.repository.CacheRepository
+import com.maxrave.domain.repository.DiscordRepository
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.LyricsCanvasRepository
 import com.maxrave.domain.repository.PlaylistRepository
@@ -78,7 +79,9 @@ import com.maxrave.simpmusic.expect.getDownloadFolderPath
 import com.maxrave.simpmusic.expect.isOnUnmeteredNetwork
 import com.maxrave.simpmusic.expect.ui.toByteArray
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.utils.LyricsPromo
 import com.maxrave.simpmusic.utils.VersionManager
+import com.maxrave.simpmusic.utils.decodeLyricsPromos
 import com.maxrave.simpmusic.utils.decodePromos
 import com.maxrave.simpmusic.utils.shownPromoIds
 import com.maxrave.simpmusic.utils.withShownPromo
@@ -113,6 +116,7 @@ import org.jetbrains.compose.resources.getString
 import org.koin.core.component.inject
 import org.simpmusic.lastfm.completeLogin
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.added_local_playlist
 import simpmusic.composeapp.generated.resources.added_to_queue
 import simpmusic.composeapp.generated.resources.added_to_youtube_liked
 import simpmusic.composeapp.generated.resources.bl_translation_already_running
@@ -125,6 +129,7 @@ import simpmusic.composeapp.generated.resources.bl_translation_regenerated
 import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.disliked
 import simpmusic.composeapp.generated.resources.error
+import simpmusic.composeapp.generated.resources.discord_login_failed
 import simpmusic.composeapp.generated.resources.lastfm_login_failed
 import simpmusic.composeapp.generated.resources.login_success
 import simpmusic.composeapp.generated.resources.play_next
@@ -153,6 +158,7 @@ class SharedViewModel(
     private val playlistRepository: PlaylistRepository,
     private val lyricsCanvasRepository: LyricsCanvasRepository,
     private val cacheRepository: CacheRepository,
+    private val discordRepository: DiscordRepository,
 ) : BaseViewModel() {
     var isFirstLiked: Boolean = false
     var isFirstMiniplayer: Boolean = false
@@ -640,6 +646,20 @@ class SharedViewModel(
         }
     }
 
+    /**
+     * Finishes a Discord login from the `simpmusic://discord-auth` redirect (Full builds). Like the
+     * Last.fm callback, the login screen is already open and closes itself once a login is stored.
+     */
+    fun completeDiscordLogin(callbackUrl: String) {
+        viewModelScope.launch {
+            if (discordRepository.completeLogin(callbackUrl)) {
+                makeToast(getString(Res.string.login_success))
+            } else {
+                makeToast(getString(Res.string.discord_login_failed))
+            }
+        }
+    }
+
     fun showNotificationPermissionDialog() {
         _showNotificationPermissionDialog.value = true
     }
@@ -746,12 +766,22 @@ class SharedViewModel(
             .distinctUntilChanged()
             .map(::decodePromos)
 
+    /** The same block's entries placed under the lyrics, as it changes. */
+    fun cachedLyricsPromos(): Flow<List<LyricsPromo>> =
+        dataStoreManager
+            .getString(Promo.cacheKey(appIdentity.isDevBuild))
+            .distinctUntilChanged()
+            .map(::decodeLyricsPromos)
+
     /** The ids of the launch banners this app version has already shown. */
-    suspend fun shownPromos(): Set<String> =
-        shownPromoIds(
-            stored = dataStoreManager.getString(Promo.shownKey(appIdentity.isDevBuild)).first(),
-            appVersion = VersionManager.getVersionName(),
-        )
+    suspend fun shownPromos(): Set<String> = shownPromosFlow().first()
+
+    /** The same ids as they change: the lyrics line stays on screen, and on two pages at once. */
+    fun shownPromosFlow(): Flow<Set<String>> =
+        dataStoreManager
+            .getString(Promo.shownKey(appIdentity.isDevBuild))
+            .distinctUntilChanged()
+            .map { shownPromoIds(stored = it, appVersion = VersionManager.getVersionName()) }
 
     /** Each banner once per app version, however it was closed. */
     fun markPromoShown(id: String) {
@@ -771,6 +801,15 @@ class SharedViewModel(
 
     fun requestLibraryTab(tab: LibraryChipType?) {
         _libraryTabRequest.value = tab
+    }
+
+    // The song recognition sheet asked for from outside Search (simpmusic://recognize, the Quick
+    // Settings tile); Search opens it the next time it composes and clears the request.
+    private val _songRecognitionRequest = MutableStateFlow(false)
+    val songRecognitionRequest: StateFlow<Boolean> = _songRecognitionRequest.asStateFlow()
+
+    fun requestSongRecognition(requested: Boolean) {
+        _songRecognitionRequest.value = requested
     }
 
     fun putString(
@@ -883,9 +922,27 @@ class SharedViewModel(
                         track.videoId,
                         lyricsData,
                     )
+                } else if (_nowPlayingState.value?.songEntity?.videoId == track.videoId) {
+                    // The end of every provider and of the offline cache: the one place the app
+                    // knows this song has no lyrics, which is what offers Add lyrics.
+                    _nowPlayingScreenData.update { it.copy(lyricsNotFound = true) }
                 }
             }
         }
+    }
+
+    /**
+     * Lyrics typed into Add lyrics take the offline lyrics' path: [updateLyrics] caches and shows
+     * them, and contributes them when Help build lyrics database is on. The cache write of its own
+     * keeps them for a song that ended while they were being typed, which [updateLyrics] skips.
+     */
+    fun saveUserLyrics(
+        videoId: String,
+        lyrics: Lyrics,
+    ) {
+        updateLyrics(videoId, (timeline.value.total / 1000).toInt(), lyrics, false, LyricsProvider.OFFLINE)
+        insertLyrics(lyrics.toLyricsEntity(videoId))
+        viewModelScope.launch { getAITranslationLyrics(videoId, lyrics) }
     }
 
     fun loadSharedMediaItem(videoId: String) {
@@ -1282,6 +1339,41 @@ class SharedViewModel(
         onUIEvent(UIEvent.Stop)
     }
 
+    fun createLocalPlaylist(title: String) {
+        viewModelScope.launch {
+            localPlaylistRepository
+                .insertLocalPlaylist(
+                    LocalPlaylistEntity(title = title),
+                    getString(Res.string.added_local_playlist),
+                ).lastOrNull()
+            makeToast(getString(Res.string.added_local_playlist))
+        }
+    }
+
+    /**
+     * BEATLAND (D-024, D-045): same as [createLocalPlaylist] but reports the new playlist's id, so the UI can offer to
+     * fill it right away (the Home "Create" button). `insertLocalPlaylist` only returns a message, so the id is found by
+     * diffing the playlist list, as `LibraryViewModel.createPlaylistAndPickSongs` does.
+     */
+    fun createLocalPlaylistAndPickSongs(
+        title: String,
+        onCreated: (Long) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val before = localPlaylistRepository.getAllLocalPlaylists().first().map { it.id }.toSet()
+            localPlaylistRepository
+                .insertLocalPlaylist(
+                    LocalPlaylistEntity(title = title),
+                    getString(Res.string.added_local_playlist),
+                ).lastOrNull()
+            makeToast(getString(Res.string.added_local_playlist))
+            val created = localPlaylistRepository.getAllLocalPlaylists().first().firstOrNull { it.id !in before }
+            if (created != null) {
+                onCreated(created.id)
+            }
+        }
+    }
+
     private fun loadPlaylistOrAlbum(index: Int? = null) {
         mediaPlayerHandler.loadPlaylistOrAlbum(index)
     }
@@ -1526,6 +1618,9 @@ class SharedViewModel(
         // A live broadcast has nothing to sync lyrics to — the "duration" mpv reports for it is only
         // its seek window — so no provider is asked. Every caller comes through here.
         if (LiveStreamRegistry.isLive(song.videoId)) return
+        // A fetch in flight is not "no lyrics": switching the provider re-fetches the same song, and
+        // Add lyrics offered meanwhile could be saved over the lyrics the new provider finds.
+        _nowPlayingScreenData.update { it.copy(lyricsNotFound = false) }
         viewModelScope.launch {
             val videoId = song.videoId
             log("Get Lyrics From Format for $videoId", LogLevel.WARN)
@@ -2436,6 +2531,8 @@ data class NowPlayingScreenData(
     val thumbnailURL: String?,
     val canvasData: CanvasData? = null,
     val lyricsData: LyricsData? = null,
+    /** Every provider and the offline cache came back empty for this song; offers Add lyrics. */
+    val lyricsNotFound: Boolean = false,
     val songInfoData: SongInfoEntity? = null,
     val bitmap: ImageBitmap? = null,
 ) {

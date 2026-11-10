@@ -114,6 +114,9 @@ private val LinkColor = Color(0xFF00B0FF)
  * Reading needs no account. Writing (post, reply, like, dislike) needs YouTube: signed out, every
  * one of them asks to log in instead. Comment text is handled the way a description is: a
  * timestamp seeks the track, a link opens normally.
+ *
+ * [initialDraft] starts the comment box with text already in it (the SoundCloud style's emoji), for
+ * the video the sheet opened on only.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,8 +126,10 @@ fun CommentsBottomSheet(
     onTimestamp: (String) -> Unit,
     onLogIn: () -> Unit,
     onDismiss: () -> Unit,
+    initialDraft: String = "",
     viewModel: CommentsViewModel = koinViewModel(),
 ) {
+    val draftVideoId = remember { videoId }
     val colors = rememberSurfaceDarkColors()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val scope = rememberCoroutineScope()
@@ -209,18 +214,6 @@ fun CommentsBottomSheet(
                                 Icon(imageVector = SimpIcons.Close, contentDescription = null, tint = colors.content)
                             }
                         }
-                        // Top / Newest, in YouTube's own words.
-                        val topLabel = uiState.header?.topLabel
-                        val newestLabel = uiState.header?.newestLabel
-                        if (uiState.status == CommentsStatus.LOADED && topLabel != null && newestLabel != null) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 12.dp),
-                            ) {
-                                Chip(isSelected = !uiState.newest, text = topLabel) { viewModel.setNewest(false) }
-                                Chip(isSelected = uiState.newest, text = newestLabel) { viewModel.setNewest(true) }
-                            }
-                        }
                         HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), thickness = 1.dp)
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             CommentsBody(
@@ -247,6 +240,7 @@ fun CommentsBottomSheet(
                                 onFocus = { scope.launch { sheetState.expand() } },
                                 onPost = { text, clear -> viewModel.post(text, clear) },
                                 onLogIn = { showLogIn = true },
+                                initialDraft = if (uiState.videoId == draftVideoId) initialDraft else "",
                                 modifier =
                                     Modifier
                                         .align(Alignment.BottomCenter)
@@ -297,7 +291,7 @@ private fun CommentsBody(
     bottomPadding: Dp,
 ) {
     when {
-        uiState.status == CommentsStatus.LOADING || uiState.sorting -> {
+        uiState.status == CommentsStatus.LOADING -> {
             Box(Modifier.fillMaxSize().padding(top = 48.dp), contentAlignment = Alignment.TopCenter) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = colors.content, strokeWidth = 3.dp)
             }
@@ -538,6 +532,7 @@ private fun CommentInput(
     onFocus: () -> Unit,
     onPost: (text: String, clear: () -> Unit) -> Unit,
     onLogIn: () -> Unit,
+    initialDraft: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -576,6 +571,7 @@ private fun CommentInput(
                 onCancelReply = onCancelReply,
                 onFocus = onFocus,
                 onPost = onPost,
+                initialDraft = initialDraft,
             )
         }
     }
@@ -591,8 +587,9 @@ private fun SignedInInput(
     onCancelReply: () -> Unit,
     onFocus: () -> Unit,
     onPost: (text: String, clear: () -> Unit) -> Unit,
+    initialDraft: String,
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf(initialDraft) }
     Column(Modifier.fillMaxWidth()) {
         if (replyingTo != null) {
             Row(

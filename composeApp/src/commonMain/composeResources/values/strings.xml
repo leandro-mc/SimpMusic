@@ -128,6 +128,8 @@
     <string name="downloaded_cache">Downloaded Cache</string>
     <string name="cached">Cached</string>
     <string name="remove_from_cache">Remove from cache</string>
+    <string name="remove_download">Remove download</string>
+    <string name="cancel_download">Cancel download</string>
     <string name="thumbnail_cache">Thumbnail Cache</string>
     <string name="backup">Backup</string>
     <string name="backup_your_data">Backup Your Data</string>
@@ -441,6 +443,7 @@
     <string name="now_playing_style_spotify">Classic</string>
     <string name="now_playing_style_m3_expressive" translatable="false">Material 3 Expressive</string>
     <string name="now_playing_style_apple_music" translatable="false">Apple Music</string>
+    <string name="now_playing_style_soundcloud" translatable="false">SoundCloud</string>
     <string name="ai_translated">AI translated</string>
     <string name="lyrics_style">Lyrics style</string>
     <string name="lyrics_style_classic">Classic</string>
@@ -665,6 +668,10 @@
     <string name="lastfm_paste_callback_title">Did not come back automatically?</string>
     <string name="lastfm_paste_callback_hint">Paste the link your browser was redirected to</string>
     <string name="lastfm_paste_callback_confirm">Continue with this link</string>
+    <string name="discord_login_step_1">Open Discord and allow Beatland to show what you're listening to.</string>
+    <string name="discord_login_step_2">Beatland opens again on its own once you have allowed it.</string>
+    <string name="discord_open_authorize_page">Open Discord</string>
+    <string name="discord_login_failed">Could not log in to Discord. Please try again.</string>
     <string name="logged_in_as">Logged in as %1$s</string>
     <string name="youtube_liked_music">YouTube Liked Music</string>
     <string name="keep_your_youtube_playlist_offline">Keep showing your YouTube playlist when offline</string>
@@ -1021,4 +1028,64 @@
     <string name="comments_load_error">Couldn't load comments</string>
     <string name="comment_post_error">Couldn't post your comment</string>
     <string name="comments_need_channel">Create a YouTube channel to comment</string>
+    <string name="comment_placeholder">Comment…</string>
+    <string name="local_playlist">Local playlist</string>
+    <string name="create_playlist_description">Build a playlist on this device</string>
+    <string name="create_room_description">Start or join a room</string>
+    <string name="create_room_live">Your room is live</string>
+    <string name="create_new_queue_and_play">Create a new queue and add to play</string>
+    <string name="artist">Artist</string>
+    <string name="podcast">Podcast</string>
+    <string name="recents">Recents</string>
+    <string name="alphabetical">Alphabetical</string>
+    <string name="search_in_your_library">Search in Your library</string>
+    <string name="collapse_your_library">Collapse Your library</string>
+    <string name="expand_your_library">Expand Your library</string>
+    <string name="add_lyrics">Add lyrics</string>
+    <string name="add_lyrics_placeholder">[00:12.30] First line</string>
+    <string name="add_lyrics_hint"><![CDATA[Start each line with a time like [01:23.45]. Put <01:23.45> before each word to sync it word by word.]]></string>
+    <plurals name="add_lyrics_lines">
+        <item quantity="one">%1$d line</item>
+        <item quantity="other">%1$d lines</item>
+    </plurals>
+    <plurals name="add_lyrics_problems">
+        <item quantity="one">%1$d problem</item>
+        <item quantity="other">%1$d problems</item>
+    </plurals>
+    <string name="add_lyrics_line">Line %1$d</string>
+    <string name="add_lyrics_no_time">Add a time like [01:23.45] at the start</string>
+    <string name="add_lyrics_bad_time">%1$s is not a valid time</string>
+    <string name="add_lyrics_bad_word_time">%1$s is not a valid word time</string>
+    <string name="add_lyrics_word_time_backwards">Word times go backwards at %1$s</string>
+    <string name="add_lyrics_repeated_word_line">A line with word times can only have one line time</string>
+    <string name="add_lyrics_bad_offset">Offset must be whole milliseconds, like [offset:+250]</string>
+    <string name="add_lyrics_no_timed_lines">Add at least one timed line</string>
+    <string name="recognize_song">Recognize song</string>
+    <string name="recognize_listening">Listening…</string>
+    <string name="recognize_listening_hint">Hold your phone near the music</string>
+    <string name="recognize_identifying">Identifying…</string>
+    <string name="recognize_find">Find in Beatland</string>
+    <string name="recognize_listen_again">Listen again</string>
+    <string name="recognize_no_match">No match found</string>
+    <string name="recognize_no_match_hint">Try again closer to the music</string>
+    <string name="recognize_failed">Couldn't recognize the song</string>
+    <string name="recognize_failed_hint">Check your connection and try again</string>
+    <string name="recognize_try_again">Try again</string>
+    <string name="recognize_mic_needed">Microphone access needed</string>
+    <string name="recognize_mic_hint">Beatland listens for a few seconds to find the song playing near you</string>
+    <string name="recognize_allow_mic">Allow microphone</string>
+    <string name="browser_login_youtube">YouTube</string>
+    <string name="browser_login_description">Choose a browser profile to import its %1$s sign-in. Only %1$s cookies are imported; your browser is not changed.</string>
+    <string name="browser_login_found">%1$s sign-in cookies found</string>
+    <string name="browser_login_missing">No %1$s sign-in cookies found. Sign in in this browser profile, then refresh.</string>
+    <string name="browser_login_permission">Permission is required to read this profile. Allow access, then try again.</string>
+    <string name="browser_login_full_disk_access">Allow Beatland in Privacy &amp; Security → Full Disk Access. Use + to add the app if it is not listed, then return here.</string>
+    <string name="browser_login_open_settings">Open System Settings</string>
+    <string name="browser_login_unreadable">This profile could not be read. Try again, or close the browser and refresh.</string>
+    <string name="browser_login_unsupported">This profile uses unsupported cookie encryption. Use manual sign-in or send sign-ins from your phone.</string>
+    <string name="browser_login_importing">Importing sign-in… Approve browser storage access if your system asks.</string>
+    <string name="browser_login_key_unavailable">The browser storage key is unavailable. Unlock your keyring and try again, or use manual sign-in.</string>
+    <string name="browser_login_busy">The browser data changed while it was being read. Close the browser and try again.</string>
+    <string name="browser_login_rejected">Sign-in could not be verified. Check your connection, or sign in again in this browser profile and refresh.</string>
+    <string name="browser_login_refresh">Refresh browser profiles</string>
 </resources>

@@ -50,7 +50,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/AdapterItems.kt` | `HomeItemContentPlaylist`: dos *callbacks* `onSuccess`/`onError` del `AsyncImage` + 1 import, solo para escribir en el log cómo se dibujó la portada de una playlist local (D-043) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
-| `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
+| `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()`; `createLocalPlaylistAndPickSongs` (D-045) |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
@@ -58,9 +58,11 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
 | `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
-| `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
+| `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
+| `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
+| `composeApp/.../ui/component/CreateSheet.kt` | El botón "Crear" del Home ofrece el selector de canciones tras crear una playlist (D-045) |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
-| `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |
+| `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist (sobre el `CreateLocalPlaylistSheet` compartido de upstream, D-045) |
 | `composeApp/.../ui/screen/library/LocalPlaylistScreen.kt` | Fila "Añadir canciones" + selector |
 | `composeApp/.../ui/component/selection/SongSelectionState.kt` | `MAX_SONG_SELECTION = 500` |
 | `composeApp/.../values*/strings.xml` (31 idiomas) | "SimpMusic" → Beatland (lo hace `apply_brand.py`; se conservan "SimpMusic Lyrics" y 4 textos promo) |
@@ -73,6 +75,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | Ruta | Para qué |
 |---|---|
 | `beatland.properties` | Nombre de la marca (fuente única) |
+| `conveyor.conf` (además) | El ícono de macOS de `mac { icons }` apunta al de Beatland (D-045) |
 | `scripts/beatland/apply_brand.py` | Aplica la marca a strings, `Brand.kt`, `app_name.xml`, `conveyor.conf`; `--check` busca "SimpMusic" visibles |
 | `scripts/beatland/generate_icon.py` | Genera todo el ícono (vectores + PNG/ICO/ICNS) |
 | `composeApp/.../brand/Brand.kt` | `Brand.NAME` (**generado** por `apply_brand.py`) |

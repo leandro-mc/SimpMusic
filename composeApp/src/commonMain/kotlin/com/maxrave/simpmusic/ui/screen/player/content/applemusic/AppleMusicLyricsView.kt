@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -47,6 +48,7 @@ import com.maxrave.simpmusic.expect.ui.DeviceVolumeController
 import com.maxrave.simpmusic.expect.ui.isLyricsBlurSupported
 import com.maxrave.simpmusic.ui.component.AppleMusicLyricPaddingX
 import com.maxrave.simpmusic.ui.component.LyricsOffsetFloatingControl
+import com.maxrave.simpmusic.ui.component.LyricsPromoLine
 import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.hasTiming
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsSheet
@@ -96,6 +98,11 @@ internal fun AppleMusicLyricsView(
     outputName: String?,
     onOpenOutput: () -> Unit,
     modifier: Modifier = Modifier,
+    // The SoundCloud style borrows this page without the bottom cluster (owner's call): it has its
+    // own transport on its card, so it returns there through a back button in the header instead of
+    // the Lyrics pill.
+    showBottomCluster: Boolean = true,
+    onBack: (() -> Unit)? = null,
     dataStoreManager: DataStoreManager = koinInject(),
 ) {
     val localDensity = LocalDensity.current
@@ -155,7 +162,7 @@ internal fun AppleMusicLyricsView(
                     with(localDensity) { WindowInsets.statusBars.getTop(localDensity).toDp() } + 20.dp,
                 ),
         )
-        AppleMusicCompactHeader(state = state, actions = actions, typography = typography)
+        AppleMusicCompactHeader(state = state, actions = actions, typography = typography, onBack = onBack)
 
         Box(
             modifier =
@@ -243,6 +250,20 @@ internal fun AppleMusicLyricsView(
                         }
                     },
                 )
+                // Bottom-start, beside the floating buttons and in their flat style, coming and going
+                // with them. Shows only what the remote config places under the lyrics.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showCluster,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomStart),
+                ) {
+                    LyricsPromoLine(
+                        backdrop = null,
+                        height = 38.dp,
+                        modifier = Modifier.padding(start = 20.dp, end = 70.dp, bottom = 16.dp),
+                    )
+                }
                 // Bottom-end, inside the list's own bottom fade so they sit over the dimmest
                 // lyrics rather than over a bright active line.
                 androidx.compose.animation.AnimatedVisibility(
@@ -297,11 +318,15 @@ internal fun AppleMusicLyricsView(
             )
         }
 
+        // Without the cluster, only the gesture bar's room is kept under the lyrics.
+        if (!showBottomCluster) {
+            Spacer(modifier = Modifier.height(with(localDensity) { WindowInsets.systemBars.getBottom(localDensity).toDp() }))
+        }
         // expand/shrink, not just fade: the Box above holds weight(1f), so removing the cluster
         // from the layout is what lets the lyrics grow into the freed space — a fade alone would
         // leave an empty band where the transport used to be.
         androidx.compose.animation.AnimatedVisibility(
-            visible = showCluster,
+            visible = showCluster && showBottomCluster,
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut(),
         ) {
@@ -326,7 +351,7 @@ internal fun AppleMusicLyricsView(
 private const val CLUSTER_AUTO_HIDE_MS = 8_000L
 
 @Composable
-private fun AppleMusicFloatingCircleButton(
+internal fun AppleMusicFloatingCircleButton(
     icon: ImageVector,
     onClick: () -> Unit,
 ) {

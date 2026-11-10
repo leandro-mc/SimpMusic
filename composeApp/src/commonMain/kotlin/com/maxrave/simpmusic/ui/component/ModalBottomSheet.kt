@@ -205,6 +205,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.add_lyrics
 import simpmusic.composeapp.generated.resources.add_to_a_playlist
 import simpmusic.composeapp.generated.resources.add_to_queue
 import simpmusic.composeapp.generated.resources.add_to_queue_disabled_endless
@@ -222,9 +223,11 @@ import simpmusic.composeapp.generated.resources.bl_translation_regenerating
 import simpmusic.composeapp.generated.resources.bpm
 import simpmusic.composeapp.generated.resources.can_not_be_empty
 import simpmusic.composeapp.generated.resources.cancel
+import simpmusic.composeapp.generated.resources.cancel_download
 import simpmusic.composeapp.generated.resources.crop_cover
 import simpmusic.composeapp.generated.resources.codec
 import simpmusic.composeapp.generated.resources.copied_to_clipboard
+import simpmusic.composeapp.generated.resources.create_new_queue_and_play
 import simpmusic.composeapp.generated.resources.delete
 import simpmusic.composeapp.generated.resources.delete_playlist
 import simpmusic.composeapp.generated.resources.delete_song_from_playlist
@@ -276,6 +279,7 @@ import simpmusic.composeapp.generated.resources.plays
 import simpmusic.composeapp.generated.resources.processing
 import simpmusic.composeapp.generated.resources.queue
 import simpmusic.composeapp.generated.resources.radio
+import simpmusic.composeapp.generated.resources.remove_download
 import simpmusic.composeapp.generated.resources.remove_from_cache
 import simpmusic.composeapp.generated.resources.save
 import simpmusic.composeapp.generated.resources.save_to_local_playlist
@@ -1368,6 +1372,8 @@ fun NowPlayingBottomSheet(
     onLibraryDelete: (() -> Unit)? = null,
     /** Set when opened from the "Cached" list: adds a row that drops the song from the player cache. */
     onRemoveFromCache: (() -> Unit)? = null,
+    /** Set while the song playing has no lyrics: adds Add lyrics under Main Lyrics Provider. */
+    onAddLyrics: (() -> Unit)? = null,
     /** Set when opened from a queue row: adds that row's move and delete actions at the top. */
     queuePosition: QueuePosition? = null,
     /**
@@ -1777,15 +1783,18 @@ fun NowPlayingBottomSheet(
                             } else {
                                 Color.Unspecified
                             },
+                        // The row names what a tap does rather than the state: the icon already
+                        // shows the state, and a label that only repeated it hid the one place a
+                        // single download could be removed (#2176).
                         text =
                             if (downloadBlockedAsLive) {
                                 Res.string.download_disabled_live
                             } else {
                                 when (uiState.songUIState.downloadState) {
                                     DownloadState.STATE_NOT_DOWNLOADED -> Res.string.download
-                                    DownloadState.STATE_DOWNLOADING -> Res.string.downloading
-                                    DownloadState.STATE_DOWNLOADED -> Res.string.downloaded
-                                    DownloadState.STATE_PREPARING -> Res.string.downloading
+                                    DownloadState.STATE_DOWNLOADING -> Res.string.cancel_download
+                                    DownloadState.STATE_DOWNLOADED -> Res.string.remove_download
+                                    DownloadState.STATE_PREPARING -> Res.string.cancel_download
                                     else -> Res.string.download
                                 }
                             },
@@ -1871,6 +1880,15 @@ fun NowPlayingBottomSheet(
                             ) {
                                 mainLyricsProvider = true
                             }
+                        }
+                    }
+                    if (onAddLyrics != null) {
+                        ActionButton(
+                            icon = SimpIcons.Edit,
+                            text = Res.string.add_lyrics,
+                        ) {
+                            hideModalBottomSheet()
+                            onAddLyrics()
                         }
                     }
                     // BEATLAND (D-032): open (or close) the floating lyrics window from the song that is playing, not only
@@ -1995,13 +2013,19 @@ fun rememberAddToQueueBlock(): AddToQueueBlock? {
     return queueData.addToQueueBlock(endlessQueue)
 }
 
-/** The Add to queue label, with the reason in brackets while it is blocked. */
-fun AddToQueueBlock?.addToQueueLabel(): StringResource =
-    when (this) {
-        null -> Res.string.add_to_queue
+/**
+ * The Add to queue label, with the reason in brackets while it is blocked. With nothing queued it
+ * reads "Create a new queue and add to play", since adding there starts a new queue and plays it (#2596).
+ */
+@Composable
+fun AddToQueueBlock?.addToQueueLabel(): StringResource {
+    val queueData by koinInject<MediaPlayerHandler>().queueData.collectAsState()
+    return when (this) {
+        null -> if (queueData?.data?.listTracks.isNullOrEmpty()) Res.string.create_new_queue_and_play else Res.string.add_to_queue
         AddToQueueBlock.RADIO -> Res.string.add_to_queue_disabled_radio
         AddToQueueBlock.ENDLESS_QUEUE -> Res.string.add_to_queue_disabled_endless
     }
+}
 
 @Composable
 fun ActionButton(

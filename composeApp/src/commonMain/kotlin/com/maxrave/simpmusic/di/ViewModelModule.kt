@@ -8,10 +8,13 @@ import com.maxrave.simpmusic.viewModel.ListenTogetherSettingsViewModel
 import com.maxrave.simpmusic.viewModel.ListenTogetherViewModel
 import com.maxrave.simpmusic.viewModel.ArtistViewModel
 import com.maxrave.simpmusic.viewModel.BrowseViewModel
+import com.maxrave.simpmusic.viewModel.BrowserLoginViewModel
 import com.maxrave.simpmusic.viewModel.CommentsViewModel
+import com.maxrave.simpmusic.viewModel.SoundCloudPlayerViewModel
 import com.maxrave.simpmusic.viewModel.HomeViewModel
 import com.maxrave.simpmusic.viewModel.ImportViewModel
 import com.maxrave.simpmusic.viewModel.LibraryDynamicPlaylistViewModel
+import com.maxrave.simpmusic.viewModel.LibrarySidebarViewModel
 import com.maxrave.simpmusic.viewModel.LibraryViewModel
 import com.maxrave.simpmusic.viewModel.LocalPlaylistViewModel
 import com.maxrave.simpmusic.viewModel.LogInViewModel
@@ -46,6 +49,7 @@ val viewModelModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
         single {
@@ -67,7 +71,9 @@ val viewModelModule =
         // sender. Koin resolves dependencies when a ViewModel is created, not when it is declared.
         viewModel { LoginSyncHostViewModel(get()) }
         viewModel { LoginSyncSenderViewModel(get()) }
+        viewModel { BrowserLoginViewModel(get()) }
         viewModel { CommentsViewModel(get(), get()) }
+        viewModel { SoundCloudPlayerViewModel(get()) }
         viewModel {
             NowPlayingBottomSheetViewModel(
                 get(),
@@ -129,6 +135,7 @@ val viewModelModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
         viewModel {
@@ -148,6 +155,7 @@ val viewModelModule =
         viewModel {
             LogInViewModel(
                 get(),
+                get(),
             )
         }
         viewModel {
@@ -162,6 +170,17 @@ val viewModelModule =
         }
         viewModel {
             BrowseViewModel(
+                get(),
+            )
+        }
+        viewModel {
+            LibrarySidebarViewModel(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
                 get(),
             )
         }

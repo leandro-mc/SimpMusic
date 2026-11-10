@@ -78,6 +78,7 @@ import com.maxrave.simpmusic.extension.hsvToColor
 import com.maxrave.simpmusic.extension.parseTimestampToMilliseconds
 import com.maxrave.simpmusic.extension.rememberIsInPipMode
 import com.maxrave.simpmusic.getPlatform
+import com.maxrave.simpmusic.ui.component.AddLyricsSheet
 import com.maxrave.simpmusic.ui.component.AddToPlaylistModalBottomSheet
 import com.maxrave.simpmusic.ui.component.FullscreenLyricsContent
 import com.maxrave.simpmusic.ui.component.FullscreenLyricsSheet
@@ -99,6 +100,7 @@ import com.maxrave.simpmusic.ui.navigation.destination.login.LoginDestination
 import com.maxrave.simpmusic.ui.navigation.destination.player.FullscreenDestination
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentActions
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentAppleMusic
+import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentSoundCloud
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentM3Expressive
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentSpotify
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentState
@@ -406,6 +408,10 @@ fun NowPlayingScreenContent(
     // A queue row's ⋯ in the Apple Music style, whose queue is a tab of this screen rather than a
     // sheet: its position and the track that was there. The other styles' queue sheet hosts its own.
     var queueMoreFor by remember { mutableStateOf<Pair<Int, Track>?>(null) }
+    // The song Add lyrics was opened for, as its id, title and artist. Typing a song's lyrics by hand
+    // can outlast the song, and Save must still go to this one; saveable, because a rotation or a
+    // theme change recreates the activity mid-typing.
+    var addLyricsFor by rememberSaveable { mutableStateOf<List<String>?>(null) }
 
     var showInfoBottomSheet by rememberSaveable {
         mutableStateOf(false)
@@ -414,6 +420,7 @@ fun NowPlayingScreenContent(
     var showCommentsSheet by rememberSaveable {
         mutableStateOf(false)
     }
+    var commentDraft by rememberSaveable { mutableStateOf("") }
 
     var showVoteDialog by rememberSaveable {
         mutableStateOf(false)
@@ -657,6 +664,7 @@ fun NowPlayingScreenContent(
             audioQualityLabel = formatState.toAudioQualityLabel(),
             lyricsOffsetMs = lyricsOffsetMs.toLong(),
             videoAspectRatio = rememberVideoAspectRatio(MAIN_PLAYER) ?: 16f / 9,
+            videoId = commentsVideoId,
         )
     val actions =
         NowPlayingContentActions(
@@ -702,7 +710,14 @@ fun NowPlayingScreenContent(
             onShowQueue = { showQueueBottomSheet = true },
             onShowInfo = { showInfoBottomSheet = true },
             onShowAddToPlaylist = { showAddToPlaylistDirectly = true },
-            onShowComments = { showCommentsSheet = true },
+            onShowComments = {
+                commentDraft = ""
+                showCommentsSheet = true
+            },
+            onWriteComment = { draft ->
+                commentDraft = draft
+                showCommentsSheet = true
+            },
             onShowFullscreenLyrics = { showFullscreenLyrics = true },
             onShowVoteDialog = { showVoteDialog = true },
             onLyricsOffsetChange = { sharedViewModel.setLyricsOffsetMs(it) },
@@ -825,6 +840,14 @@ fun NowPlayingScreenContent(
             song = null, // Auto set now playing
             setSleepTimerEnable = true,
             changeMainLyricsProviderEnable = true,
+            // Offered only once every provider and the offline cache came back empty for this song.
+            onAddLyrics =
+                nowPlayingState
+                    ?.songEntity
+                    ?.takeIf { screenDataState.lyricsNotFound && screenDataState.lyricsData == null }
+                    ?.let { song ->
+                        { addLyricsFor = arrayListOf(song.videoId, song.title, song.artistName?.joinToString(", ").orEmpty()) }
+                    },
             youTubeDislike =
                 when {
                     !isUserLoggedIn -> null
@@ -890,8 +913,18 @@ fun NowPlayingScreenContent(
                     navController.navigate(LoginDestination)
                 },
                 onDismiss = { showCommentsSheet = false },
+                initialDraft = commentDraft,
             )
         }
+    }
+
+    addLyricsFor?.let { (videoId, title, artist) ->
+        AddLyricsSheet(
+            songTitle = title,
+            artist = artist,
+            onSave = { lyrics -> sharedViewModel.saveUserLyrics(videoId, lyrics) },
+            onDismiss = { addLyricsFor = null },
+        )
     }
 
     // NEW: Add to Playlist Bottom Sheet
@@ -961,6 +994,12 @@ fun NowPlayingScreenContent(
 
         DataStoreManager.NOW_PLAYING_STYLE_APPLE_MUSIC ->
             NowPlayingContentAppleMusic(
+                state = state,
+                actions = actions,
+            )
+
+        DataStoreManager.NOW_PLAYING_STYLE_SOUNDCLOUD ->
+            NowPlayingContentSoundCloud(
                 state = state,
                 actions = actions,
             )
