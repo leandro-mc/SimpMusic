@@ -312,6 +312,8 @@ class LibraryViewModel(
     }
 
     fun getLocalPlaylist() {
+        // BEATLAND (D-039): visiting the library is a good moment to look for playlists that still lack their collage.
+        PlaylistCollageEvents.requestCheck(songsAreFinal = false)
         _yourLocalPlaylist.value = LocalResource.Loading()
         viewModelScope.launch {
             localPlaylistRepository.getAllLocalPlaylists().collect { values ->

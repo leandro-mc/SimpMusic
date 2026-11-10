@@ -760,12 +760,26 @@ val mpvBundleAll by tasks.registering {
  */
 val mpvNativesChecksums =
     mapOf(
-        "linux-x64" to "f583c29531355f83579b9f5509424c659bed2a122624a03d47fb41682afb24c4",
+        "linux-x64" to "ab9957e812f6b27ef28d24b13d38a00b428a6529c87876c1c80d0427d8251d05",
         "macos-arm64" to "e527daac8f6cc196324ea6f0ce54d119d04450af9795ff2856c1891806c1d5e0",
         "macos-x64" to "95170ea54e1f637fdee148a9efd97993c305a92e233b8478d3764fbecce3eb02",
         "windows-x64" to "256f17cf402c7583b8684d5a7cf585ad1b59695469219671f4887b9d8d272a99",
         "windows-arm64" to "30e04a117de0b7d6abc5f86d4231e9b4bffa3637f282ff9efe3dc66e6cc4fcba",
     )
+
+// BEATLAND (D-040): optional `-PmpvSlices=windows-x64[,other,...]` limits which slices `mpvSetupAll` downloads and unpacks.
+// Default (property absent or blank) = every slice in `mpvSlices`, exactly as upstream. Each selected slice is still
+// downloaded AND verified against `mpvNativesChecksums`; the filter only decides which ones are touched. Used by the
+// Windows installer build, so that a re-published slice of another platform cannot break it.
+val mpvSlicesToSetup: List<String> =
+    providers
+        .gradleProperty("mpvSlices")
+        .orNull
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.takeIf { it.isNotEmpty() }
+        ?: mpvSlices
 
 val mpvSetupAll by tasks.registering {
     group = "mpv-multi"
@@ -775,6 +789,7 @@ val mpvSetupAll by tasks.registering {
     // the tag or the mpv version would silently keep shipping the previous natives.
     inputs.property("mpvNativesTag", mpvNativesTag)
     inputs.property("mpvNativesChecksums", mpvNativesChecksums)
+    inputs.property("mpvSlicesToSetup", mpvSlicesToSetup) // BEATLAND (D-040)
     outputs.dir(outputRoot)
     // BEATLAND: doLast calls build-script-level downloadIfMissing()/sha256() helpers, which the
     // configuration cache cannot serialize ("cannot serialize Gradle script object references").
@@ -785,7 +800,12 @@ val mpvSetupAll by tasks.registering {
     )
     doLast {
         val cache = mpvCacheDir.get().asFile
-        mpvSlices.forEach { slice ->
+        // BEATLAND (D-040): fail before downloading anything if -PmpvSlices names a slice that does not exist.
+        val unknownSlices = mpvSlicesToSetup.filter { it !in mpvSlices }
+        check(unknownSlices.isEmpty()) {
+            "Unknown slice(s) in -PmpvSlices: $unknownSlices. Valid slices: $mpvSlices"
+        }
+        mpvSlicesToSetup.forEach { slice ->
             // Cache key includes the tag, not just the version: re-publishing corrected natives
             // under a new tag at the same mpv version must not reuse the stale download.
             val archive = cache.resolve("mpv-natives-$slice-$mpvNativesTag.tar.gz")
@@ -829,7 +849,7 @@ val mpvSetupAll by tasks.registering {
                 logger.lifecycle("[mpv-multi] $slice: stripped ${appleDouble.size} AppleDouble sidecars")
             }
         }
-        logger.lifecycle("[mpv-multi] Unpacked ${mpvSlices.size} verified native slices into mpv-natives/")
+        logger.lifecycle("[mpv-multi] Unpacked ${mpvSlicesToSetup.size} verified native slices into mpv-natives/: $mpvSlicesToSetup")
     }
 }
 

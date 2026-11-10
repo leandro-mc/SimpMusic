@@ -76,12 +76,14 @@ Reglas:
 - `ignoredFlavors.set(setOf("foss", "beatland"))` de Sentry en `androidApp/build.gradle.kts`.
 - `androidApp/src/beatland/**` y `androidApp/src/beatlandDebug/**`.
 - Paquete `beatland/translation/` (traductor y cola) y los ganchos de D-028 a D-031.
+- `upgradeUuid` del MSI en `desktopApp/build.gradle.kts` y el workflow `beatland-windows-installer.yml` (D-035).
 - Paquetes `beatland/picker/` y `beatland/collage/`, `PlaylistCollageEffect()` en `App.kt` y `beatland_strings.xml` (D-024, D-026, D-027); `MAX_SONG_SELECTION = 500` (D-023).
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.
 - Íconos generados por `scripts/beatland/generate_icon.py` (D-020), que **sobrescribe** `drawable-v24/ic_launcher_*.xml`, los `mipmap-*` del flavor y `beatland_app_icon.*`; sus referencias en escritorio también. No editar esos archivos a mano.
 - Los `notCompatibleWithConfigurationCache` de `mpvSetupAll` y `writeConveyorConfig`.
+- El filtro `-PmpvSlices` de `mpvSetupAll` (`mpvSlicesToSetup`) y que el workflow/script de Windows lo pasen (D-040). Las sumas de `mpvNativesChecksums` solo se aceptan si coinciden con las de `upstream/dev`: **nunca pegar el valor "actual" de un error de checksum** (eso desactiva la verificación).
 
 ## Nunca traer / nunca restaurar
 

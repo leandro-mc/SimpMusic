@@ -1,6 +1,5 @@
 package com.maxrave.simpmusic.beatland.picker
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -348,7 +347,10 @@ fun PlaylistSongPickerSheet(
                 }
                 // Confirm bar: only exists while something is selected, so there is never a disabled
                 // (washed-out) button on screen.
-                AnimatedVisibility(visible = state.selected.isNotEmpty() || state.isAdding) {
+                // BEATLAND (D-039): it appears INSTANTLY. With the old expand/fade animation the button was still moving
+                // for a moment after the first song was ticked, and with a mouse (Windows) a quick click landed where it
+                // no longer was — the "needs a second click" the owner saw.
+                if (state.selected.isNotEmpty() || state.isAdding) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -356,7 +358,7 @@ fun PlaylistSongPickerSheet(
                         Button(
                             onClick = { viewModel.confirm { close() } },
                             enabled = !state.isAdding,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).height(52.dp), // a generous target for a mouse
                             shape = RoundedCornerShape(12.dp),
                             colors =
                                 ButtonDefaults.buttonColors(

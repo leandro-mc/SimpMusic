@@ -9,5 +9,5 @@ El agente **no puede compilar**. El dueño compila y pega los errores.
 - Usar `isFullBuild=false` (sin Firebase/Sentry de upstream; D-016).
 - La APK sale en `androidApp/build/outputs/apk/beatland/<tipo>/`.
 - `build_and_sign_apk.sh` y el CI de upstream asumen rutas sin flavor y **no están adaptados**; no los uses para Beatland.
-- Escritorio: ver `CLAUDE.md` del original; el nombre del paquete sale de `beatland.properties`.
+- Escritorio / Windows: ver **`DESKTOP.md`** (instalador `.msi` por GitHub Actions o con el script de PowerShell). El nombre sale de `beatland.properties`.
 - Tras clonar: `git submodule update --init`.

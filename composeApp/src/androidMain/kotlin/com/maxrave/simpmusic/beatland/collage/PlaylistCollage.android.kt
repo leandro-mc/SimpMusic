@@ -50,6 +50,12 @@ actual suspend fun deleteCollageFile(uri: String) {
     }
 }
 
+actual fun describeLocalFile(uri: String): String =
+    runCatching {
+        val file = File(URI(uri))
+        "path=${file.path} exists=${file.exists()} size=${if (file.exists()) file.length() else -1}"
+    }.getOrElse { "the uri cannot be read as a file (${it.message})" }
+
 private fun cellsFor(count: Int): List<Rect> {
     val half = SIZE / 2
     return when (count) {

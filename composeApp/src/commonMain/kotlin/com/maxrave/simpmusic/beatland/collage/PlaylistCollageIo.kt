@@ -12,3 +12,6 @@ expect suspend fun composePlaylistCollage(imageUrls: List<String>): ByteArray?
 
 /** Deletes a collage file previously written by the app. Ignores anything that is not a `collage_` file. */
 expect suspend fun deleteCollageFile(uri: String)
+
+/** One line describing the local file behind a `file:` uri (path, exists, size), for the log. Never throws (D-043). */
+expect fun describeLocalFile(uri: String): String

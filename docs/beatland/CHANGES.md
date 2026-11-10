@@ -28,8 +28,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Promos del autor original** | Diálogos de reseña/"star en GitHub", blog y footguns **desactivados** (`ForkPolicy`). | D-007 |
 | **Actualizaciones** | Verificador de actualizaciones **desactivado** y sus 3 ajustes ocultos (apuntaban a releases de upstream). | D-009 |
 | **Chequeo de "build no oficial"** | Se omite en el flavor `beatland` (`BuildConfig.IS_PERSONAL_FORK`); upstream bloquearía el `applicationId` propio. | D-010, D-018 |
-| **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado). | D-016, D-022, D-019, D-012 |
-| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. | D-005, D-011 |
+| **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado); `mpvSetupAll` acepta `-PmpvSlices=<rebanadas>` para descargar (y verificar) solo las necesarias, y la suma de `linux-x64` sigue a la de upstream. | D-016, D-022, D-019, D-012, D-040 |
+| **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. Instalador de Windows `.msi` (por usuario, con actualización en el sitio), compilable en GitHub Actions o con un script (que solo descarga la libmpv de `windows-x64`); logo de créditos de Beatland. | D-005, D-011, D-035, D-040 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -43,15 +43,21 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `vivoAndroidApp/build.gradle.kts` | Campo `IS_PERSONAL_FORK = false` (comparte `MainActivity`) |
 | `build.gradle.kts` (raíz) | Desactiva `lintVital*` en todos los módulos |
 | `gradle/libs.versions.toml` | AGP `9.3.0` |
-| `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache` |
+| `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache`; `mpvSlicesToSetup` (propiedad opcional `-PmpvSlices`, la verificación SHA-256 se mantiene) y suma de `linux-x64` igual a la de upstream (D-040) |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` | Nueva función `createPlaylistAndPickSongs` |
+| `composeApp/src/jvmMain/.../DesktopApp.kt` | Registra `DriveLetterFileUriMapper` en el `ImageLoader` de escritorio (import + `add(...)`, 4 líneas) para que Coil lea `file:/C:/…` en Windows (D-044) |
+| `composeApp/.../ui/component/AdapterItems.kt` | `HomeItemContentPlaylist`: dos *callbacks* `onSuccess`/`onError` del `AsyncImage` + 1 import, solo para escribir en el log cómo se dibujó la portada de una playlist local (D-043) |
+| `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
 | `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` (además) | El interruptor de la letra flotante lee `floatingLyricsWindowShowing()` (D-032) |
+| `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
+| `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
+| `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
 | `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |
@@ -77,10 +83,14 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/translation/RobustLyricsTranslator.kt` | Traducción de letras con IA fiable (D-028) |
 | `composeApp/.../beatland/translation/TranslationQueue.kt` | Cola de traducciones: una a la vez, una por canción, prioridad a la que suena (D-031) |
 | `composeApp/.../beatland/lyrics/LyricsTranslationStyle.kt` | Color, tipografía y tamaño de la traducción en todas las vistas de letra (D-030) |
-| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (5 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma |
+| `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (7 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma; `PlaylistCoverDiagnostics` (log de cómo se dibuja la portada, D-043); `DriveLetterFileUriMapper` (Coil en Windows, D-044) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
+| `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |
+| `scripts/beatland/prefetch-gradle.sh` | Descarga Gradle con reintentos y SHA-256 antes de que lo haga el *wrapper* (solo CI; D-042) |
+| `scripts/beatland/ci-gradle.sh` | Ejecuta Gradle en el CI y publica sus errores como anotaciones legibles por la API (D-042) |
+| `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa); solo descarga la libmpv de `windows-x64` (D-035, D-040) |
 | `AGENTS.md`, `docs/beatland/*` | Documentación para agentes y para ti |
 
 ## 4. Cosas del zip de Sonara que NO integramos

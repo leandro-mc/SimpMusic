@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -36,6 +37,7 @@ import com.maxrave.domain.mediaservice.handler.ToastType
 import com.maxrave.domain.notification.DesktopNotificationManager
 import com.maxrave.data.io.getHomeFolderPath
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.collage.DriveLetterFileUriMapper
 import com.maxrave.simpmusic.di.viewModelModule
 import com.maxrave.simpmusic.extension.DesktopWindowChrome
 import com.maxrave.simpmusic.ui.component.CustomTitleBar
@@ -478,6 +480,9 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
                         ImageLoader
                             .Builder(context)
                             .components {
+                                // BEATLAND (D-044): Coil 3.6.3 cannot read file:/C:/... (the drive-letter colon is taken
+                                // for a second scheme), so automatic collages and picked covers never showed on Windows.
+                                add(DriveLetterFileUriMapper())
                                 add(NetworkFirstInterceptor { imageLoader })
                                 add(
                                     OkHttpNetworkFetcherFactory(
@@ -508,7 +513,20 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
                     onOpenDesktopNotificationSettings =
                         desktopNotificationManager::openNotificationSettings,
                 )
-                ToastHost()
+                // BEATLAND (D-036): ToastHost used to be composed in the very first composition of the window. On some
+                // launches (seen once on Windows, gone on the next start) its internal state was read before the snapshot
+                // that created it had been applied: "Reading a state that was created after the snapshot was taken" and the
+                // app died at start-up. It is only a notification layer, so it joins two frames later, when the first
+                // composition is over.
+                var toastHostReady by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    withFrameNanos { }
+                    withFrameNanos { }
+                    toastHostReady = true
+                }
+                if (toastHostReady) {
+                    ToastHost()
+                }
             }
         }
 

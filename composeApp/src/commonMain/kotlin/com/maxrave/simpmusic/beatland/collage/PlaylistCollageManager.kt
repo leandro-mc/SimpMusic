@@ -6,10 +6,10 @@ import com.maxrave.domain.data.entities.LocalPlaylistEntity
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.SongRepository
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.expect.ui.decodeImageBitmap
 import com.maxrave.simpmusic.expect.ui.persistPickedImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.lastOrNull
-import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.compose.koinInject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -46,10 +46,11 @@ class PlaylistCollageManager(
 
     suspend fun run() {
         var quietPasses = 0
+        var songsAreFinal = false
         while (true) {
             var active = true
             try {
-                active = pass()
+                active = pass(songsAreFinal)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -58,19 +59,23 @@ class PlaylistCollageManager(
             quietPasses = if (active) 0 else quietPasses + 1
             val wait = if (quietPasses >= IDLE_AFTER_PASSES) IDLE_POLL_MS else POLL_MS
             // Sleeps for `wait`, or less if the picker (or anything else) asks for a check.
-            withTimeoutOrNull(wait) { PlaylistCollageEvents.wake.first() }
+            songsAreFinal = PlaylistCollageEvents.awaitCheckRequest(wait)
         }
     }
 
-    /** Returns true while something is changing or pending (so the next check should come soon). */
-    private suspend fun pass(): Boolean {
+    /**
+     * Returns true while something is changing or pending (so the next check should come soon).
+     * [songsAreFinal]: the check was requested by the song picker after it added everything, so a playlist whose songs
+     * changed is built right now instead of waiting one more check for the changes to settle.
+     */
+    private suspend fun pass(songsAreFinal: Boolean): Boolean {
         val playlists = localPlaylistRepository.getAllLocalPlaylists().first()
         val liveIds = playlists.mapTo(HashSet()) { it.id }
         states.keys.retainAll(liveIds)
         var anyActive = false
         playlists.forEach { playlist ->
             try {
-                if (refresh(playlist)) anyActive = true
+                if (refresh(playlist, songsAreFinal)) anyActive = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -82,7 +87,10 @@ class PlaylistCollageManager(
     }
 
     /** Returns true when this playlist is still being worked on (changed, settling, or waiting to retry). */
-    private suspend fun refresh(playlist: LocalPlaylistEntity): Boolean {
+    private suspend fun refresh(
+        playlist: LocalPlaylistEntity,
+        songsAreFinal: Boolean,
+    ): Boolean {
         if (!playlist.youtubePlaylistId.isNullOrBlank()) return false
         val current = playlist.thumbnail
         val ours = current?.contains(COLLAGE_MARKER) == true
@@ -97,12 +105,15 @@ class PlaylistCollageManager(
 
         val state = states.getOrPut(playlist.id) { State() }
         if (state.signature != signature) {
-            // The songs changed (or first sight): let a burst of additions finish before building anything.
             state.signature = signature
-            state.settled = false
             state.handled = false
             state.retryInPolls = 0
-            return true
+            if (!songsAreFinal) {
+                // The songs changed (or first sight): let a burst of additions finish before building anything.
+                state.settled = false
+                return true
+            }
+            // Requested by the song picker once everything is in: nothing more is coming, build now.
         }
         state.settled = true
         if (state.handled) return false
@@ -130,15 +141,32 @@ class PlaylistCollageManager(
             return false
         }
 
-        val uri =
-            composePlaylistCollage(urls)?.let { persistPickedImage(it, fileName) }
+        Logger.i(TAG, "Building the collage of playlist ${playlist.id} from ${urls.size} cover(s)")
+        val bytes = composePlaylistCollage(urls)
+        // D-039: prove that what is about to be saved is a picture the app itself can decode, and say so in the log.
+        if (bytes != null) {
+            val decoded = decodeImageBitmap(bytes)
+            if (decoded == null) {
+                Logger.w(TAG, "The collage of playlist ${playlist.id} (${bytes.size} bytes) cannot be decoded by this platform")
+            } else {
+                Logger.i(TAG, "Collage of playlist ${playlist.id}: ${decoded.width}x${decoded.height}, ${bytes.size} bytes")
+            }
+        }
+        val uri = bytes?.let { persistPickedImage(it, fileName) }
         if (uri == null) {
+            // D-038: this used to retry in silence; say why, so a platform that cannot build it shows in the log.
+            Logger.w(
+                TAG,
+                "Collage of playlist ${playlist.id} not built (" +
+                    (if (bytes == null) "no cover could be loaded" else "the file could not be saved") + "); retrying later",
+            )
             state.retryInPolls = RETRY_POLLS // no connection or a bad image: try again in a while
             return true
         }
         localPlaylistRepository.updateThumbnailLocalPlaylist(playlist.id, uri, "").lastOrNull()
         if (ours && current != null) deleteCollageFile(current)
         state.handled = true
+        Logger.i(TAG, "Collage saved for playlist ${playlist.id}")
         PlaylistCollageEvents.notifyUpdated(playlist.id)
         return true
     }
