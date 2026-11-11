@@ -60,5 +60,11 @@ subprojects {
         resolutionStrategy {
             force("com.github.TeamNewPipe:nanojson:c7a6c1c08d16b6d5ecded34758e6415e07be2166")
         }
+
+        // BEATLAND (D-046): the `core` submodule's lyrics parser uses io.heapy.kotaml:kotaml, a fork of kaml that ships the
+        // very same `com.charleskorn.kaml.*` classes. Another library in the graph still brings com.charleskorn.kaml:kaml,
+        // and AGP's checkBeatlandDebugDuplicateClasses fails with "Duplicate class com.charleskorn.kaml.Yaml found in
+        // modules kaml-jvm and kotaml-jvm". Keeping only kotaml leaves exactly one copy of those classes.
+        exclude(group = "com.charleskorn.kaml")
     }
 }
