@@ -74,6 +74,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,6 +94,8 @@ import com.maxrave.domain.data.model.searchResult.songs.Artist
 import com.maxrave.domain.mediaservice.handler.PlaylistType
 import com.maxrave.domain.mediaservice.handler.QueueData
 import com.maxrave.domain.utils.toSongEntity
+import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.expect.shareUrl
 import com.maxrave.simpmusic.expect.ui.MediaPlayerView
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
@@ -102,6 +105,7 @@ import com.maxrave.simpmusic.extension.artworkScrimBrush
 import com.maxrave.simpmusic.extension.barBlurStyle
 import com.maxrave.simpmusic.extension.getColorFromPalette
 import com.maxrave.simpmusic.extension.getScreenSizeInfo
+import com.maxrave.simpmusic.extension.mouseDragScroll
 import com.maxrave.simpmusic.extension.getStringBlocking
 import com.maxrave.simpmusic.extension.hexToColorOrNull
 import com.maxrave.simpmusic.extension.rgbFactor
@@ -149,6 +153,7 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
@@ -460,6 +465,7 @@ fun ArtistScreen(
                                                     .background(artworkScrimBrush(mutedPaletteBg)),
                                         )
                                         // Artist name (TEXT for now — logo image is roadmap) + subscriber · view
+                                        val nameHorizontalPadding = 20.dp
                                         Column(
                                             modifier =
                                                 Modifier
@@ -467,14 +473,14 @@ fun ArtistScreen(
                                                     // Lift the name + subtitle together with the action row.
                                                     .offset(y = (-36).dp)
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 20.dp)
+                                                    .padding(horizontal = nameHorizontalPadding)
                                                     .padding(bottom = 16.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                         ) {
                                             val logo = artistLogo
                                             // The name stays as text until the logo image has actually
-                                            // loaded, then the two cross-fade and the box eases to the
-                                            // logo's height. Swapping on the logo's url alone blanked the
+                                            // loaded, then the two cross-fade. Android also eases the
+                                            // box to the logo's height. Swapping on the logo's url alone blanked the
                                             // line until the image arrived and then popped it in. Saveable,
                                             // so coming back to the page shows the logo straight away.
                                             var logoLoaded by rememberSaveable(logo?.logoUrl) { mutableStateOf(false) }
@@ -484,7 +490,13 @@ fun ArtistScreen(
                                                 label = "artistNameLogo",
                                             )
                                             Box(
-                                                modifier = Modifier.fillMaxWidth().animateContentSize(),
+                                                modifier =
+                                                    Modifier.fillMaxWidth().then(
+                                                        // Desktop already receives animated widths from the
+                                                        // Now Playing panel. A second size animation lags
+                                                        // behind the image and makes it slide down.
+                                                        if (getPlatform() == Platform.Desktop) Modifier else Modifier.animateContentSize(),
+                                                    ),
                                                 contentAlignment = Alignment.Center,
                                             ) {
                                                 if (logoAlpha < 1f) {
@@ -507,6 +519,29 @@ fun ArtistScreen(
                                                         onSuccess = { logoLoaded = true },
                                                         modifier =
                                                             Modifier
+                                                                .then(
+                                                                    if (getPlatform() == Platform.Desktop) {
+                                                                        // Follow the panel's animated width in measure only;
+                                                                        // do not recompose the video/blur/glass header.
+                                                                        Modifier.layout { measurable, constraints ->
+                                                                            val panelWidth = constraints.maxWidth + (nameHorizontalPadding * 2).roundToPx()
+                                                                            val scale = (panelWidth.toFloat() / screenInfo.wPX.coerceAtLeast(1)).coerceIn(0f, 1f)
+                                                                            val maxHeight = minOf(constraints.maxHeight, (84.dp.toPx() * scale).roundToInt())
+                                                                            val placeable =
+                                                                                measurable.measure(
+                                                                                    constraints.copy(
+                                                                                        minHeight = constraints.minHeight.coerceAtMost(maxHeight),
+                                                                                        maxHeight = maxHeight,
+                                                                                    ),
+                                                                                )
+                                                                            layout(placeable.width, placeable.height) {
+                                                                                placeable.placeRelative(0, 0)
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        Modifier
+                                                                    },
+                                                                )
                                                                 .fillMaxWidth(0.7f)
                                                                 .heightIn(max = 84.dp)
                                                                 .graphicsLayer { alpha = logoAlpha },
@@ -956,7 +991,10 @@ private fun ArtistSections(
                         Text(stringResource(Res.string.more), style = typo().bodySmall)
                     }
                 }
+                val singlesRowState = rememberLazyListState()
                 LazyRow(
+                    modifier = Modifier.mouseDragScroll(singlesRowState),
+                    state = singlesRowState,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     item {
@@ -1024,7 +1062,10 @@ private fun ArtistSections(
                         Text(stringResource(Res.string.more), style = typo().bodySmall)
                     }
                 }
+                val albumsRowState = rememberLazyListState()
                 LazyRow(
+                    modifier = Modifier.mouseDragScroll(albumsRowState),
+                    state = albumsRowState,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     item {
@@ -1091,7 +1132,10 @@ private fun ArtistSections(
                         Text(stringResource(Res.string.more), style = typo().bodySmall)
                     }
                 }
+                val videosRowState = rememberLazyListState()
                 LazyRow(
+                    modifier = Modifier.mouseDragScroll(videosRowState),
+                    state = videosRowState,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     item {
@@ -1158,7 +1202,10 @@ private fun ArtistSections(
                                 .padding(vertical = 10.dp),
                     )
                 }
+                val featuredRowState = rememberLazyListState()
                 LazyRow(
+                    modifier = Modifier.mouseDragScroll(featuredRowState),
+                    state = featuredRowState,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     item {
@@ -1206,7 +1253,10 @@ private fun ArtistSections(
                                 .padding(vertical = 10.dp),
                     )
                 }
+                val relatedRowState = rememberLazyListState()
                 LazyRow(
+                    modifier = Modifier.mouseDragScroll(relatedRowState),
+                    state = relatedRowState,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     item {

@@ -14,12 +14,14 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | Archivo en conflicto | Qué hacer |
 |---|---|
 | `composeResources/values*/*.xml` | Tomar la versión de upstream y volver a correr `apply_brand.py` (paso 6). |
-| `conveyor.conf`, `desktopApp/build.gradle.kts` | Tomar upstream y reaplicar los puntos de `RULES.md` → "Mantener siempre". |
+| `conveyor.conf`, `desktopApp/build.gradle.kts` | Tomar upstream y reaplicar los puntos de `RULES.md` → "Mantener siempre". Los íconos (`iconFile`, `icons`, también el de `mac {}`) deben seguir apuntando a `beatland_app_icon.*`, no a `rounded_app_icon`/`circle_app_icon` (D-045). |
 | `androidApp/build.gradle.kts` | Conservar los bloques `productFlavors`, `IS_PERSONAL_FORK` y `ignoredFlavors … "beatland"`. |
 | `MainActivity.kt` | Conservar `!BuildConfig.IS_PERSONAL_FORK` en `checkOfficialBuild`. |
 | `SettingScreen.kt` | Conservar el bloque `floating_lyrics` y el `if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED)` que envuelve los ajustes de actualización; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar. |
-| `HomeScreen.kt`, `SharedViewModel.kt` | Conservar las guardas de `ForkPolicy` (promos y `checkForUpdate`). Si upstream añade un diálogo promocional nuevo, protegerlo igual. |
-| `build.gradle.kts` (raíz) | Conservar el bloque `lintVital` dentro de `subprojects` (D-022). |
+| `HomeScreen.kt`, `SharedViewModel.kt` | Conservar las guardas de `ForkPolicy` (promos, *launch banner* y `checkForUpdate`) y `createLocalPlaylistAndPickSongs`. Si upstream añade un diálogo o banner promocional nuevo, protegerlo igual. |
+| `LyricsPromoLine.kt` | Conservar el `return` inicial con `ForkPolicy.UPSTREAM_PROMOS_ENABLED` (D-045). |
+| `CreateSheet.kt` | Conservar el estado y la hoja del selector (`PlaylistSongPickerSheet`) y el `onCreate` que usa `createLocalPlaylistAndPickSongs` (D-045). |
+| `build.gradle.kts` (raíz) | Conservar el bloque `lintVital` dentro de `subprojects` (D-022) y el `exclude(group = "com.charleskorn.kaml")` de `configurations.all` (D-046; revisar si upstream ya resolvió el choque `kaml`/`kotaml` de otra forma). |
 | `ViewModelModule.kt`, `LibraryViewModel.kt`, `LibraryScreen.kt`, `LocalPlaylistScreen.kt`, `SongSelectionState.kt` | Conservar los ganchos del selector de playlists (marcados `BEATLAND (D-023/D-024)`); ver `FEATURES.md`. |
 | `App.kt` | Conservar `PlaylistCollageEffect()` (D-027). |
 | `ModalBottomSheet.kt`, `SettingScreen.kt` (letra flotante) | Conservar la acción "Letra flotante" del menú de la canción en reproducción y el interruptor basado en `floatingLyricsWindowShowing()` (D-032). |

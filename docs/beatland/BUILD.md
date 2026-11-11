@@ -11,3 +11,4 @@ El agente **no puede compilar**. El dueño compila y pega los errores.
 - `build_and_sign_apk.sh` y el CI de upstream asumen rutas sin flavor y **no están adaptados**; no los uses para Beatland.
 - Escritorio / Windows: ver **`DESKTOP.md`** (instalador `.msi` por GitHub Actions o con el script de PowerShell). El nombre sale de `beatland.properties`.
 - Tras clonar: `git submodule update --init`.
+- **Comprobar Android sin compilar en tu PC (D-046):** crea una etiqueta `beatland-android-check-<n>` ("Draft a new release", Target = la rama a comprobar) y mira la ejecución en Actions: compila `beatlandDebug` con `isFullBuild` `false` y `true` y deja la APK de depuración como artefacto (`Beatland-debug-apk-full-…`, 14 días) para instalarla directamente.

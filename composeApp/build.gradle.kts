@@ -138,6 +138,8 @@ kotlin {
             } else {
                 api(projects.lastfmEmpty)
             }
+            // `api` for the same reason: :androidApp hands it the Discord application id at startup.
+            api(projects.discord)
 
             // Navigation Compose
             implementation(libs.navigation.compose)
@@ -198,6 +200,8 @@ kotlin {
             implementation(libs.native.tray)
             implementation(libs.nucleus.core.runtime)
             implementation(projects.mediaJvmUi)
+            // macOS: hand window drags to the Window Server (ui/component/MacWindowDrag.kt)
+            implementation(libs.jna)
             // Login sync QR code
             implementation(libs.zxing.core)
         }
@@ -887,11 +891,17 @@ buildkonfig {
                     "lastfmSecret",
                     properties.getProperty("LASTFM_SECRET") ?: "",
                 )
+                buildConfigField(
+                    STRING,
+                    "discordClientId",
+                    properties.getProperty("DISCORD_CLIENT_ID") ?: "",
+                )
             } catch (e: Exception) {
                 println("Failed to load secrets from local.properties: ${e.message}")
                 buildConfigField(STRING, "sentryDsn", "")
                 buildConfigField(STRING, "lastfmApiKey", "")
                 buildConfigField(STRING, "lastfmSecret", "")
+                buildConfigField(STRING, "discordClientId", "")
             }
         } else {
             buildConfigField(STRING, "sentryDsn", "")
@@ -899,6 +909,8 @@ buildkonfig {
             // the feature hides itself. The stub module is linked in this flavour anyway.
             buildConfigField(STRING, "lastfmApiKey", "")
             buildConfigField(STRING, "lastfmSecret", "")
+            // No Discord application either, so Rich Presence keeps going through kizzy.
+            buildConfigField(STRING, "discordClientId", "")
         }
     }
 }

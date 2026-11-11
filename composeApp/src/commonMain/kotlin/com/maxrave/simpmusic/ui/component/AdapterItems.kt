@@ -109,6 +109,7 @@ import com.maxrave.simpmusic.Platform
 import com.maxrave.simpmusic.beatland.collage.PlaylistCoverDiagnostics
 import com.maxrave.simpmusic.expect.ui.HorizontalScrollBar
 import com.maxrave.simpmusic.extension.getStringBlocking
+import com.maxrave.simpmusic.extension.mouseDragScroll
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
@@ -161,6 +162,7 @@ fun HomeItem(
     Column {
         HomeSectionHeader(data = data, navController = navController, onPlayAll = { homeViewModel.playAll(data) })
         LazyRow(
+            modifier = Modifier.mouseDragScroll(lazyListState, snapperFlingBehavior),
             state = lazyListState,
             flingBehavior = snapperFlingBehavior,
         ) {
@@ -244,8 +246,11 @@ fun HomeSectionHeader(
                 contentDescription = "",
                 placeholder = rememberHolderPainter(),
                 error = rememberHolderPainter(),
+                // The gap belongs to the picture: a shelf without one starts its title on the
+                // section's edge, where Quick picks and the other headers start theirs.
                 modifier =
                     Modifier
+                        .padding(end = 10.dp)
                         .size(36.dp)
                         .clip(
                             CircleShape,
@@ -254,8 +259,7 @@ fun HomeSectionHeader(
         }
         Column(
             Modifier
-                .weight(1f)
-                .padding(start = 10.dp),
+                .weight(1f),
         ) {
             AnimatedVisibility(visible = (data.subtitle != null && data.subtitle != "")) {
                 Text(
@@ -426,6 +430,23 @@ internal fun rememberCardHover(enabled: Boolean): Pair<Modifier, Boolean> {
             .hoverable(source)
             .drawBehind { drawRoundRect(color = tint, cornerRadius = CornerRadius(8.dp.toPx())) }
     return modifier to active
+}
+
+/**
+ * Zooms a hovered Home card's artwork inside its own frame. It goes after the frame's clip, so the
+ * picture grows while the frame stays put and never spills onto the next card in the row.
+ */
+@Composable
+internal fun Modifier.hoverZoom(active: Boolean): Modifier {
+    val scale by animateFloatAsState(
+        targetValue = if (active) 1.06f else 1f,
+        animationSpec = tween(200),
+        label = "hoverZoom",
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }
 
 /** The theme-coloured play button of a hovered Home card, rising onto the artwork's corner. */
@@ -671,7 +692,7 @@ fun HomeItemContentPlaylist(
                             .aspectRatio(1f)
                             .clip(
                                 RoundedCornerShape(10.dp),
-                            ),
+                            ).hoverZoom(hovered),
                 )
                 if (onPlay != null) HoverPlayButton(visible = hovered, onClick = onPlay)
             }
@@ -872,7 +893,12 @@ fun QuickPicksItem(
                                 velocity = 25.dp,
                             ),
                 )
-                LazyRow(verticalAlignment = Alignment.CenterVertically) {
+                val subtitleRowState = rememberLazyListState()
+                LazyRow(
+                    modifier = Modifier.mouseDragScroll(subtitleRowState),
+                    state = subtitleRowState,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     item {
                         androidx.compose.animation.AnimatedVisibility(visible = data.isExplicit == true) {
                             ExplicitBadge(
@@ -969,7 +995,7 @@ fun HomeItemSong(
                             .then(if (fillMaxWidth) Modifier.fillMaxWidth().aspectRatio(1f) else Modifier.size(160.dp))
                             .clip(
                                 RoundedCornerShape(10.dp),
-                            ),
+                            ).hoverZoom(hovered),
                 )
                 if (onPlay != null) HoverPlayButton(visible = hovered, onClick = onPlay)
             }
@@ -1064,8 +1090,8 @@ fun HomeItemVideo(
                             .diskCacheKey(thumb)
                             .crossfade(550)
                             .build(),
-                    placeholder = rememberHolderPainter(isVideo = true),
-                    error = rememberHolderPainter(isVideo = true),
+                    placeholder = rememberHolderPainter(),
+                    error = rememberHolderPainter(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier =
@@ -1074,7 +1100,7 @@ fun HomeItemVideo(
                             .aspectRatio(16f / 9f)
                             .clip(
                                 RoundedCornerShape(10.dp),
-                            ),
+                            ).hoverZoom(hovered),
                 )
                 if (onPlay != null) HoverPlayButton(visible = hovered, onClick = onPlay)
             }
@@ -1299,8 +1325,8 @@ fun ItemVideoChart(
                         .diskCacheKey(thumb)
                         .crossfade(550)
                         .build(),
-                placeholder = rememberHolderPainter(isVideo = true),
-                error = rememberHolderPainter(isVideo = true),
+                placeholder = rememberHolderPainter(),
+                error = rememberHolderPainter(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier =
@@ -1600,11 +1626,14 @@ fun MoodAndGenresContentItem(
                         horizontal = 15.dp,
                     ).fillMaxWidth(),
         )
+        val rowState = rememberLazyListState()
         LazyRow(
             modifier =
-                Modifier.padding(
-                    10.dp,
-                ),
+                Modifier
+                    .padding(
+                        10.dp,
+                    ).mouseDragScroll(rowState),
+            state = rowState,
         ) {
             val itemList =
                 when (data) {

@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -119,6 +120,7 @@ import com.maxrave.simpmusic.extension.LeftToRight
 import com.maxrave.simpmusic.extension.elapsedLabel
 import com.maxrave.simpmusic.extension.formatDuration
 import com.maxrave.simpmusic.extension.lengthLabel
+import com.maxrave.simpmusic.extension.mouseDragScroll
 import com.maxrave.simpmusic.extension.getColorFromPalette
 import com.maxrave.simpmusic.extension.getScreenSizeInfo
 import com.maxrave.simpmusic.extension.isElementVisible
@@ -1511,8 +1513,8 @@ fun NowPlayingContentSpotify(
                                                     .diskCacheKey(thumb)
                                                     .crossfade(550)
                                                     .build(),
-                                            placeholder = rememberHolderPainter(isVideo = true),
-                                            error = rememberHolderPainter(isVideo = true),
+                                            placeholder = rememberHolderPainter(),
+                                            error = rememberHolderPainter(),
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
                                             // No explicit clip: the ElevatedCard already clips to
@@ -1706,7 +1708,12 @@ fun NowPlayingContentSpotify(
                                                 animationMode = MarqueeAnimationMode.Immediately,
                                             ).focusable(),
                                 )
-                                LazyRow(verticalAlignment = Alignment.CenterVertically) {
+                                val artistRowState = rememberLazyListState()
+                                LazyRow(
+                                    modifier = Modifier.mouseDragScroll(artistRowState),
+                                    state = artistRowState,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
                                     item {
                                         AnimatedVisibility(visible = state.screenData.isExplicit) {
                                             ExplicitBadge(
@@ -1838,8 +1845,8 @@ internal fun NowPlayingTrackInfoRow(
                         .diskCacheKey(state.screenData.thumbnailURL + "BIGGER")
                         .crossfade(true)
                         .build(),
-                placeholder = rememberHolderPainter(),
-                error = rememberHolderPainter(),
+                placeholder = rememberHolderPainter(square = true),
+                error = rememberHolderPainter(square = true),
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth,
                 modifier =
@@ -1869,8 +1876,10 @@ internal fun NowPlayingTrackInfoRow(
                         ).focusable(),
             )
             Spacer(modifier = Modifier.height(3.dp))
+            val artistRowState = rememberLazyListState()
             LazyRow(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().mouseDragScroll(artistRowState),
+                state = artistRowState,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 item(state.screenData.isExplicit) {

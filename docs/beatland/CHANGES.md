@@ -41,7 +41,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `androidApp/.../MainActivity.kt` | `checkOfficialBuild` solo si `!IS_PERSONAL_FORK` |
 | `androidApp/.../backup/AutoBackupWorker.kt` | Carpeta `Download/${Brand.NAME}` |
 | `vivoAndroidApp/build.gradle.kts` | Campo `IS_PERSONAL_FORK = false` (comparte `MainActivity`) |
-| `build.gradle.kts` (raíz) | Desactiva `lintVital*` en todos los módulos |
+| `build.gradle.kts` (raíz) | Desactiva `lintVital*` en todos los módulos; excluye `com.charleskorn.kaml` (queda `kotaml`, D-046) |
 | `gradle/libs.versions.toml` | AGP `9.3.0` |
 | `composeApp/build.gradle.kts` | `mpvSetupAll` marcado `notCompatibleWithConfigurationCache`; `mpvSlicesToSetup` (propiedad opcional `-PmpvSlices`, la verificación SHA-256 se mantiene) y suma de `linux-x64` igual a la de upstream (D-040) |
 | `composeApp/.../di/ViewModelModule.kt` | Registro de `PlaylistSongPickerViewModel` (1 línea) |
@@ -50,7 +50,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/AdapterItems.kt` | `HomeItemContentPlaylist`: dos *callbacks* `onSuccess`/`onError` del `AsyncImage` + 1 import, solo para escribir en el log cómo se dibujó la portada de una playlist local (D-043) |
 | `composeApp/.../viewModel/LibraryViewModel.kt` (además) | `getLocalPlaylist()` pide una comprobación del collage (D-039) |
 | `composeApp/.../viewModel/LocalPlaylistViewModel.kt`, `LibraryViewModel.kt` | Se recargan al recibir `PlaylistCollageEvents` para mostrar el collage sin salir de la pantalla (D-027) |
-| `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()` |
+| `composeApp/.../viewModel/SharedViewModel.kt` | `checkForUpdate()` sale de inmediato (`ForkPolicy`); traducción con IA vía `RobustLyricsTranslator`, `TranslationQueue` y `regenerateAiTranslation()`; `createLocalPlaylistAndPickSongs` (D-045) |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` | Ajuste "Floating lyrics"; oculta los 3 ajustes de actualización |
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
@@ -58,9 +58,11 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
 | `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
-| `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales |
+| `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
+| `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
+| `composeApp/.../ui/component/CreateSheet.kt` | El botón "Crear" del Home ofrece el selector de canciones tras crear una playlist (D-045) |
 | `composeApp/.../App.kt` | Inicia `PlaylistCollageEffect()` (1 línea) |
-| `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist |
+| `composeApp/.../ui/screen/library/LibraryScreen.kt` | Abre el selector tras crear una playlist (sobre el `CreateLocalPlaylistSheet` compartido de upstream, D-045) |
 | `composeApp/.../ui/screen/library/LocalPlaylistScreen.kt` | Fila "Añadir canciones" + selector |
 | `composeApp/.../ui/component/selection/SongSelectionState.kt` | `MAX_SONG_SELECTION = 500` |
 | `composeApp/.../values*/strings.xml` (31 idiomas) | "SimpMusic" → Beatland (lo hace `apply_brand.py`; se conservan "SimpMusic Lyrics" y 4 textos promo) |
@@ -73,6 +75,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | Ruta | Para qué |
 |---|---|
 | `beatland.properties` | Nombre de la marca (fuente única) |
+| `conveyor.conf` (además) | El ícono de macOS de `mac { icons }` apunta al de Beatland (D-045) |
 | `scripts/beatland/apply_brand.py` | Aplica la marca a strings, `Brand.kt`, `app_name.xml`, `conveyor.conf`; `--check` busca "SimpMusic" visibles |
 | `scripts/beatland/generate_icon.py` | Genera todo el ícono (vectores + PNG/ICO/ICNS) |
 | `composeApp/.../brand/Brand.kt` | `Brand.NAME` (**generado** por `apply_brand.py`) |
@@ -88,6 +91,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
 | `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |
+| `.github/workflows/beatland-android-check.yml` | Compila `beatlandDebug` en GitHub (`isFullBuild` false y true) y sube la APK como artefacto; se dispara con una etiqueta `beatland-android-check-*` (D-046) |
 | `scripts/beatland/prefetch-gradle.sh` | Descarga Gradle con reintentos y SHA-256 antes de que lo haga el *wrapper* (solo CI; D-042) |
 | `scripts/beatland/ci-gradle.sh` | Ejecuta Gradle en el CI y publica sus errores como anotaciones legibles por la API (D-042) |
 | `scripts/beatland/build-windows-installer.ps1` | Compila el instalador de Windows en tu PC (alternativa); solo descarga la libmpv de `windows-x64` (D-035, D-040) |
