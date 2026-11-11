@@ -3,6 +3,7 @@
 | Fecha | Qué | Notas |
 |---|---|---|
 | 2026-10-19 | Creación de `myapp` desde `dev` e integración inicial del zip "Sonara-delta" | Ver `DECISIONS.md` D-008, D-010, D-013 para lo que NO se portó o cambió respecto al zip. |
+| 2026-11-10 | **`sync/dev-2026-11-09` fusionada en `myapp`** (`--no-ff`) tras confirmar el dueño que compila y funciona en Windows y en Android; rama de sync borrada. Queda fuera `b7dd4d66` de upstream (2026-11-10) | D-045, D-046. |
 | 2026-11-09 | `sync/dev-2026-11-09`: la compilación de Android del dueño falló por clases duplicadas `kaml`/`kotaml` (el `core` nuevo añade `kotaml`); se excluye `kaml` y se añade un workflow que compila Android en CI | D-046. |
 | 2026-11-09 | **Sincronización `sync/dev-2026-11-09`** (`dev` en `fbdba0da`, 51 commits, `core` → `164e89e0`; versión 2.5.0). 9 conflictos: 5 `strings.xml` (upstream + marca), `ModalBottomSheet.kt` (3 botones), `LibraryScreen.kt` (hoja compartida + selector), `desktopApp/build.gradle.kts` (ícono Beatland), `libs.versions.toml` (AGP 9.3.0, Kotlin 2.4.21). Guardas nuevas de `ForkPolicy` (launch banner, `LyricsPromoLine`) y selector también en el botón Crear del Home. Pendiente: compilar `beatlandDebug` y probar | D-045. |
 | 2026-11-09 | `feature/desktop-beatland-installer`: el collage se guardaba pero no se veía en Windows; el diagnóstico (D-043) mostró que Coil 3.6.3 no parsea `file:/C:/…`; se añade un *mapper* en el `ImageLoader` de escritorio (D-044) | D-043, D-044. |
