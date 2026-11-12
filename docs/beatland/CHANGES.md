@@ -30,6 +30,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Chequeo de "build no oficial"** | Se omite en el flavor `beatland` (`BuildConfig.IS_PERSONAL_FORK`); upstream bloquearía el `applicationId` propio. | D-010, D-018 |
 | **Build** | Sentry ignorado en `beatland`; `lintVital*` desactivado en todos los módulos; AGP fijado en 9.3.0; `mpvSetupAll` y `writeConveyorConfig` incompatibles con configuration cache (marcado); `mpvSetupAll` acepta `-PmpvSlices=<rebanadas>` para descargar (y verificar) solo las necesarias, y la suma de `linux-x64` sigue a la de upstream. | D-016, D-022, D-019, D-012, D-040 |
 | **Escritorio** | Nombre/íconos/título de ventana/protocolo de Windows/Conveyor con la marca; `vcs-url` apunta al fork. Instalador de Windows `.msi` (por usuario, con actualización en el sitio), compilable en GitHub Actions o con un script (que solo descarga la libmpv de `windows-x64`); logo de créditos de Beatland. | D-005, D-011, D-035, D-040 |
+| **Descargas masivas en escritorio** | Cola propia de descargas (máx. 2 a la vez, en segundo plano, sin duplicados, cancelable, no muere al cambiar de pantalla) que sustituye en Koin el `DownloadHandler` de `core`; `downloadTrack` solo encola y vuelve. Android sin cambios. | D-048 |
+| **Diagnóstico de congelaciones (escritorio)** | `UiStallWatchdog` escribe en el log (etiqueta `UiStall`) qué hace cada hilo cuando la ventana deja de responder más de 3 s. | D-049 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -58,6 +60,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
 | `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
+| `composeApp/.../jvmMain/.../DesktopApp.kt` (además) | Llama a `installBeatlandDesktopServices()` justo después del bloque `startKoin` (import + 2 líneas) para instalar la cola de descargas y el vigilante de la UI (D-048, D-049) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
 | `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
 | `composeApp/.../ui/component/CreateSheet.kt` | El botón "Crear" del Home ofrece el selector de canciones tras crear una playlist (D-045) |
@@ -87,6 +90,9 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/translation/TranslationQueue.kt` | Cola de traducciones: una a la vez, una por canción, prioridad a la que suena (D-031) |
 | `composeApp/.../beatland/lyrics/LyricsTranslationStyle.kt` | Color, tipografía y tamaño de la traducción en todas las vistas de letra (D-030) |
 | `composeApp/.../beatland/collage/` + `androidMain`/`jvmMain` (7 archivos) | Collage automático de miniaturas: `expect`, observador y `actual` por plataforma; `PlaylistCoverDiagnostics` (log de cómo se dibuja la portada, D-043); `DriveLetterFileUriMapper` (Coil en Windows, D-044) |
+| `composeApp/src/jvmMain/.../beatland/download/` (2 archivos) | `DownloadQueue` (cola con límite de concurrencia, sin duplicados, cancelación y estados coherentes) y `ThrottledDownloadHandler` (decorador de `DownloadHandler` + `installThrottledDownloads()`, que lo registra en Koin) (D-048) |
+| `composeApp/src/jvmMain/.../beatland/diagnostics/UiStallWatchdog.kt` | Vigilante de bloqueos de la interfaz: escribe en el log las pilas de los hilos cuando la UI no responde (D-049) |
+| `composeApp/src/jvmMain/.../beatland/BeatlandDesktop.kt` | `installBeatlandDesktopServices()`: el único punto que `DesktopApp.kt` llama para lo propio de escritorio (D-048, D-049) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |

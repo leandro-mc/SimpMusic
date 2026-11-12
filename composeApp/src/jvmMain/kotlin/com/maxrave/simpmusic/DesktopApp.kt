@@ -37,6 +37,7 @@ import com.maxrave.domain.notification.DesktopNotificationManager
 import com.maxrave.data.io.getHomeFolderPath
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.beatland.collage.DriveLetterFileUriMapper
+import com.maxrave.simpmusic.beatland.installBeatlandDesktopServices
 import com.maxrave.simpmusic.di.viewModelModule
 import com.maxrave.simpmusic.extension.DesktopWindowChrome
 import com.maxrave.simpmusic.ui.component.CustomTitleBar
@@ -208,6 +209,8 @@ fun runDesktopApp(args: Array<String> = emptyArray()) {
         )
         loadKoinModules(viewModelModule)
     }
+    // Beatland (D-048, D-049): download queue + UI watchdog. After Koin, before anything asks for the handler.
+    installBeatlandDesktopServices()
 
     val language =
         runBlocking {

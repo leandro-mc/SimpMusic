@@ -29,6 +29,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | `DesktopApp.kt` | Conservar el `ToastHost` diferido (`toastHostReady`) (D-036); el resto de cambios de marca ya se reaplican con `apply_brand.py`. |
 | `desktopApp/build.gradle.kts` (bloque `windows {}`, `description`/`vendor`) | Conservar los metadatos del MSI, **el `upgradeUuid` fijo** (D-035) y `beatlandWindowsVersion` / `msiPackageVersion` (D-037). |
 | `composeApp/src/jvmMain/kotlin/com/maxrave/simpmusic/DesktopApp.kt` | Tomar upstream y reaplicar el import y `add(DriveLetterFileUriMapper())` dentro de `.components { }` del `ImageLoader` (D-044). |
+| `composeApp/src/jvmMain/kotlin/com/maxrave/simpmusic/DesktopApp.kt` (además) | Reaplicar el import y la llamada `installBeatlandDesktopServices()` justo después del bloque `startKoin { }` y antes de leer el idioma: debe ejecutarse **después** de Koin y **antes** de que nada pida el `DownloadHandler` (D-048, D-049). |
 | `composeApp/src/commonMain/kotlin/com/maxrave/simpmusic/ui/component/AdapterItems.kt` | Tomar upstream y reaplicar, en `HomeItemContentPlaylist`, el import de `PlaylistCoverDiagnostics` y los *callbacks* `onSuccess`/`onError` del `AsyncImage` (D-043). |
 | `composeApp/build.gradle.kts` | Tomar upstream, **incluidas las sumas de `mpvNativesChecksums`** (upstream es la fuente de confianza: nunca pegar el "actual" de un error; D-040), y reaplicar `notCompatibleWithConfigurationCache` de `mpvSetupAll` (D-012) y el filtro `mpvSlicesToSetup` / `-PmpvSlices` (D-040). |
 | `gradle/libs.versions.toml` | Conservar AGP `9.3.0` (D-019). |
@@ -49,3 +50,6 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 ## Si upstream toca el submódulo `core`
 
 El puntero `core` se actualiza solo con el merge. Tras el merge: `git submodule update --init`. Nunca commitear dentro de `core/`.
+
+- Si cambia `DownloadHandler` (`domain/…/mediaservice/handler/DownloadHandler.kt`) o el `DownloadUtils` de escritorio (`media-jvm/…/download/DownloadUtils.kt`), revisar `beatland/download/` (D-048): el decorador sustituye `downloadTrack`, `removeDownload`, `removeAllDownloads` y `downloadTask` y delega el resto; la cola asume que `downloadTrack` de escritorio suspende hasta terminar y que deja `SongEntity.downloadState` en DOWNLOADED o NOT_DOWNLOADED.
+- Si el `DownloadHandler` pasa a registrarse de otra forma en Koin (otro tipo, `qualifier`, o `allowOverride(false)`), `installThrottledDownloads()` deja de sustituirlo (lo avisa en el log: «The queue was NOT installed»).

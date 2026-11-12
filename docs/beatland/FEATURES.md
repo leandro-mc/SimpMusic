@@ -91,6 +91,27 @@ esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y 
 **Dependencias de upstream:** `LyricsCanvasRepository.{getAITranslationLyrics,getSavedTranslatedLyrics,insertTranslatedLyrics,removeTranslatedLyrics}`,
 `Lyrics`/`Line`, `AppleMusicTranslatedColor`, `DataStoreManager.useAITranslation`.
 
+## Cola de descargas de escritorio y vigilante de la interfaz (D-048, D-049)
+
+**Qué resuelve.** En Windows, «descargar todas» (una playlist grande, las ~150 canciones de un artista) lanzaba las descargas todas a la vez. Ahora van de a **2** (constante `MAX_CONCURRENT_DOWNLOADS`), en segundo plano.
+
+**Cómo funciona (solo escritorio).**
+- `installBeatlandDesktopServices()` (llamada desde `DesktopApp.kt`, justo tras `startKoin`) registra en Koin un `ThrottledDownloadHandler` que envuelve el `DownloadHandler` de `core`. Todas las pantallas, y también `core` (auto-descarga de «me gusta», Smart downloads), hablan con ese decorador sin enterarse.
+- `downloadTrack` encola y vuelve al instante; la cola entrega a `core` solo 2 canciones a la vez, en `Dispatchers.IO`. Sin duplicados por `videoId`; se ignoran las ya descargadas.
+- Cancelar (`removeDownload`, o Ajustes → «Limpiar caché de descargas» = `removeAllDownloads`) saca de la cola lo que espera, detiene lo que corre y borra los parciales.
+- Los avisos a la interfaz se agrupan (máx. cada 250 ms) aunque cambien muchas canciones.
+- Al arrancar, lo que una ejecución anterior dejó «descargando» sin estar descargándose (por ejemplo tras matar el proceso) vuelve a «no descargada».
+
+**Log.** Etiqueta `DownloadQueue` (Info/Warn): `Queued`, `Started`, `Finished`, `Failed`, `Cancelled`, `Skipped`, y `waiting=N running=M/2` en cada línea.
+
+**Vigilante `UiStall`.** Si la ventana deja de responder más de 3 s escribe en el log (etiqueta `UiStall`, nivel Warn) la pila del hilo de UI, la del reproductor, el estado de los hilos de trabajo y la de algunos hilos en código de descarga; y `UI thread responsive again after N ms` cuando se recupera. No escribe nada si la interfaz está sana.
+
+**Cambiar el límite:** `MAX_CONCURRENT_DOWNLOADS` en `beatland/download/DownloadQueue.kt` (compilar de nuevo). Súbelo solo si con el valor actual no aparecen líneas `UiStall`.
+
+**Android no cambia** (usa la cola persistente de media3).
+
+**Limitación conocida (viene de `core`):** si cancelas una descarga que ya estaba *en curso*, los avisos de escritorio por lote («descarga iniciada/terminada») dejan de salir hasta reiniciar la app. Las descargas no se ven afectadas.
+
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).

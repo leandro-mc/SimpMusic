@@ -95,6 +95,21 @@ Si aun así no aparece, exporta el log de la app y busca las líneas `PlaylistCo
 `Building…` → `Collage of playlist N: 600x600, … bytes` → `Collage saved…` significan que se generó bien y el fallo estaría al **mostrarla**;
 un aviso `not built` o `cannot be decoded` indica el motivo. Pasa esas líneas.
 
+## Descargas masivas y congelaciones (D-048, D-049)
+
+Las descargas van en una **cola de segundo plano de 2 canciones a la vez**: pulsar «descargar» en una playlist o un artista encola todo al instante y la app sigue fluida y reproduciendo.
+
+**Prueba (con el instalador nuevo):**
+1. Con música sonando, abre una playlist grande (~150 canciones) y pulsa descargar todas. Repite con el top de un artista (selección múltiple → Descargar).
+2. Comprueba: la interfaz sigue fluida (puedes navegar, buscar, pausar, cambiar de canción); la música no se corta; el botón de descarga de la playlist y los iconos de cada canción avanzan; las canciones se van completando de 2 en 2.
+3. Cancela: abre el menú de tres puntos de una canción que esté descargando y pulsa «Cancel download»; luego prueba Ajustes → «Limpiar caché de descargas» (quita **todas** las descargas, también las que esperan en la cola). Las canciones vuelven a «no descargadas» y la cola se vacía.
+4. Sal de la app con normalidad (bandeja → Salir). Vuelve a abrirla: ninguna canción debe quedar «descargando» sin descargarse.
+5. Con descargas en curso, sal de la pantalla de la playlist y entra en otra: las descargas siguen.
+
+**Si algo se congela otra vez**, exporta el log de la app (pantalla de registro) y pasa las líneas con las etiquetas **`UiStall`** (qué hacía cada hilo mientras la ventana no respondía) y **`DownloadQueue`** (qué hacía la cola). El log está en `C:\Users\<tu usuario>\.simpmusic\logs\app.log`.
+
+**Nota:** si cancelas una descarga que ya estaba en curso, los avisos de Windows por lote («descarga iniciada/terminada») dejan de salir hasta reiniciar la app (limitación de `core`); las descargas funcionan igual.
+
 ## Lista de comprobación tras instalar
 
 1. La app abre y dice **Beatland** (ventana, bandeja, menú Inicio).
@@ -102,3 +117,4 @@ un aviso `not built` o `cannot be decoded` indica el motivo. Pasa esas líneas.
 3. Reproduce una canción (confirma que libmpv funciona).
 4. Crea una playlist y añade canciones con el selector.
 5. Cierra sesión de todo lo demás y vuelve a abrir: los ajustes persisten.
+6. Descarga una playlist grande (~150 canciones): la interfaz sigue fluida y la música no se corta (ver «Descargas masivas y congelaciones»).
