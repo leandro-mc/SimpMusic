@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
 import com.maxrave.simpmusic.extension.greyScale
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
@@ -100,6 +101,8 @@ fun AppBottomNavigationBar(
             selectedIndex = BottomNavScreen.Home.ordinal
         }
     }
+    // Beatland (D-050): the lit tab follows the real destination (back button, deep links, leaving Search).
+    SyncSelectedTab(navController, bottomNavScreens, selectedIndex) { selectedIndex = it }
     val selectTab: (BottomNavScreen) -> Unit = { screen ->
         if (selectedIndex == screen.ordinal) {
             if (currentBackStackEntry?.destination?.hierarchy?.any {

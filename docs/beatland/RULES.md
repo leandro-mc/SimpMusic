@@ -79,6 +79,7 @@ Reglas:
 - `upgradeUuid` del MSI en `desktopApp/build.gradle.kts` y el workflow `beatland-windows-installer.yml` (D-035).
 - Paquetes `beatland/picker/` y `beatland/collage/`, `PlaylistCollageEffect()` en `App.kt` y `beatland_strings.xml` (D-024, D-026, D-027); `MAX_SONG_SELECTION = 500` (D-023).
 - Paquete `beatland/download/` (cola de descargas de escritorio), `beatland/diagnostics/UiStallWatchdog.kt`, `beatland/BeatlandDesktop.kt` y la llamada `installBeatlandDesktopServices()` en `DesktopApp.kt` (D-048, D-049). Sin ella, «descargar todas» vuelve a lanzar todas las descargas a la vez y a congelar la app.
+- `beatland/navigation/TabSelectionSync.kt` y sus llamadas `SyncSelectedTab(...)` en las tres barras de navegación (D-050). Sin ellas, atrás/gesto atrás, salir de Buscar y los *deep links* vuelven a dejar resaltada una pestaña distinta de la pantalla.
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.

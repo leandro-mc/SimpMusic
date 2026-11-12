@@ -47,6 +47,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.maxrave.domain.data.player.GenericMediaItem
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
@@ -144,6 +145,8 @@ actual fun LiquidGlassAppBottomNavigationBar(
             selectedIndex = BottomNavScreen.Home.ordinal
         }
     }
+    // Beatland (D-050): the lit tab follows the real destination (back button, deep links, leaving Search).
+    SyncSelectedTab(navController, bottomNavScreens, selectedIndex) { selectedIndex = it }
     var isExpanded by rememberSaveable {
         mutableStateOf(true)
     }

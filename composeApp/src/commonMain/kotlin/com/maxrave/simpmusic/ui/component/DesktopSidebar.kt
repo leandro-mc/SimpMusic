@@ -79,6 +79,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import com.kyant.backdrop.highlight.Highlight
 import com.maxrave.domain.data.model.library.LibraryCollectionPreview
+import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
 import com.maxrave.simpmusic.expect.ui.rememberBackdrop
@@ -172,6 +173,8 @@ fun DesktopSidebar(
             selectedIndex = BottomNavScreen.Home.ordinal
         }
     }
+    // Beatland (D-050): the lit tab follows the real destination (back button, deep links, leaving Search).
+    SyncSelectedTab(navController, navScreens + BottomNavScreen.Library, selectedIndex) { selectedIndex = it }
     val selectTab: (BottomNavScreen) -> Unit = { screen ->
         if (selectedIndex == screen.ordinal) {
             if (currentBackStackEntry?.destination?.hierarchy?.any { it.hasRoute(screen.destination::class) } == true) {

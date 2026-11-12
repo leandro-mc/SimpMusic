@@ -112,6 +112,21 @@ esas canciones cambian. Si el usuario elige su propia portada, esa se respeta y 
 
 **Limitación conocida (viene de `core`):** si cancelas una descarga que ya estaba *en curso*, los avisos de escritorio por lote («descarga iniciada/terminada») dejan de salir hasta reiniciar la app. Las descargas no se ven afectadas.
 
+## Barra de navegación sincronizada con la pantalla (D-050)
+
+La pestaña resaltada de la barra inferior (teléfono, con vidrio o plana) y de la barra lateral (escritorio) sigue ahora a la pantalla real, por cualquier camino: tocar una pestaña, botón o gesto atrás, salir de Buscar, enlaces profundos y el tile de reconocimiento. Abrir una subpantalla (playlist, álbum, reproductor…) conserva la pestaña de la que se abrió.
+
+**Recorridos para probar en Android** (en cada uno, mira qué pestaña está resaltada y qué pantalla se ve; deben coincidir):
+1. Biblioteca → Buscar (botón de la lupa) → Atrás.
+2. Biblioteca → Atrás (vuelve a Inicio): Inicio debe quedar resaltada.
+3. Biblioteca → abrir una playlist → Atrás: sigue en Biblioteca; Atrás otra vez → Inicio resaltada.
+4. Biblioteca → Buscar → tocar Biblioteca de nuevo: vuelve a Biblioteca con su estado.
+5. Tocar dos veces la misma pestaña (Inicio, Biblioteca, Buscar): recarga sin cambiar la selección.
+6. Con el gesto de atrás predictivo (Android 14+): empezar el gesto y soltar sin completarlo no debe cambiar nada; completarlo sí debe actualizar la barra.
+7. Mix y Analíticas: activar/desactivar el seguimiento local (Ajustes) o cerrar sesión de YouTube estando en esa pestaña: debe caer a Inicio, resaltada.
+8. Enlace profundo `simpmusic://library` o `simpmusic://analytics` con la app abierta en otra pestaña: la barra debe señalar la pestaña a la que llega.
+9. Abrir el reproductor a pantalla completa desde una playlist de Biblioteca y volver: Biblioteca sigue resaltada.
+
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).
