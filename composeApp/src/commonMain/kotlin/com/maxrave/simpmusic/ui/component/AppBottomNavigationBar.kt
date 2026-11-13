@@ -39,6 +39,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
+import com.maxrave.simpmusic.beatland.navigation.returnToTab
 import com.maxrave.simpmusic.extension.greyScale
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
@@ -111,7 +112,7 @@ fun AppBottomNavigationBar(
             ) {
                 reloadDestinationIfNeeded(screen.destination::class)
             } else {
-                navController.navigate(screen.destination)
+                navController.returnToTab(screen.destination)
             }
         } else {
             selectedIndex = screen.ordinal
@@ -469,7 +470,7 @@ fun AppNavigationRail(
                                 screen.destination::class,
                             )
                         } else {
-                            navController.navigate(screen.destination)
+                            navController.returnToTab(screen.destination)
                         }
                     } else {
                         selectedIndex = screen.ordinal

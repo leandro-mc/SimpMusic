@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kyant.backdrop.highlight.Highlight
 import com.maxrave.domain.repository.ListenTogetherRepository
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerSheet
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.ui.icon.Add
@@ -164,7 +165,7 @@ fun CreateActions(
             },
             onListenTogether = {
                 showCreate = false
-                navController.navigate(ListenTogetherDestination)
+                navController.navigateOnce(ListenTogetherDestination)
             },
         )
     }

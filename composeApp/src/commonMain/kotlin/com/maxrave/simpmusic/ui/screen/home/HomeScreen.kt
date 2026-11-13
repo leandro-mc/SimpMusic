@@ -119,6 +119,7 @@ import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.brand.ForkPolicy
 import com.maxrave.simpmusic.expect.openUrl
 import com.maxrave.simpmusic.expect.ui.HorizontalScrollBar
@@ -722,7 +723,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.doneShowLogInAlert(doNotShowAgain)
-                    navController.navigate(LoginDestination)
+                    navController.navigateOnce(LoginDestination)
                 }) {
                     Text(stringResource(Res.string.go_to_log_in_page))
                 }
@@ -1087,7 +1088,7 @@ fun HomeScreen(
                     CreateActions(
                         backdrop = chipBackdrop,
                         navController = navController,
-                        onSettings = { navController.navigate(SettingsDestination) },
+                        onSettings = { navController.navigateOnce(SettingsDestination) },
                     )
                 }
                 Row(
@@ -1278,14 +1279,14 @@ private fun HomeAccountButton(
                 leadingIcon = { Icon(SimpIcons.Notifications, contentDescription = null) },
                 onClick = {
                     menuOpen = false
-                    navController.navigate(NotificationDestination)
+                    navController.navigateOnce(NotificationDestination)
                 },
             )
             if (!signedIn) {
                 Button(
                     onClick = {
                         menuOpen = false
-                        navController.navigate(LoginDestination)
+                        navController.navigateOnce(LoginDestination)
                     },
                     modifier =
                         Modifier

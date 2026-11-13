@@ -68,6 +68,7 @@ import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.mediaservice.handler.MediaPlayerHandler
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.expect.ui.rememberVideoAspectRatio
 import com.maxrave.simpmusic.extension.GradientAngle
 import com.maxrave.simpmusic.extension.GradientOffset
@@ -703,7 +704,7 @@ fun NowPlayingScreenContent(
             },
             onOpenListenTogether = {
                 onDismiss()
-                navController.navigate(ListenTogetherDestination)
+                navController.navigateOnce(ListenTogetherDestination)
             },
             onAddToYouTubeLiked = { sharedViewModel.addToYouTubeLiked() },
             onShowMoreSheet = { showSheet = true },
@@ -723,7 +724,7 @@ fun NowPlayingScreenContent(
             onLyricsOffsetChange = { sharedViewModel.setLyricsOffsetMs(it) },
             onEnterFullscreenVideo = {
                 onDismiss()
-                navController.navigate(FullscreenDestination)
+                navController.navigateOnce(FullscreenDestination)
             },
             onDismiss = onDismiss,
             onToolbarVisibilityChange = { shouldShowToolbar = it },
@@ -910,7 +911,7 @@ fun NowPlayingScreenContent(
                 onLogIn = {
                     showCommentsSheet = false
                     onDismiss()
-                    navController.navigate(LoginDestination)
+                    navController.navigateOnce(LoginDestination)
                 },
                 onDismiss = { showCommentsSheet = false },
                 initialDraft = commentDraft,

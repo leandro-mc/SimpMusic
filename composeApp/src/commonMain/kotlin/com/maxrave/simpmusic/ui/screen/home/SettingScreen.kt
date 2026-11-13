@@ -111,6 +111,7 @@ import com.maxrave.domain.repository.ImportProgress
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.brand.ForkPolicy
 import com.maxrave.simpmusic.expect.floatinglyrics.floatingLyricsWindowShowing
 import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
@@ -2087,7 +2088,7 @@ fun SettingScreen(
                                 confirmLabel = runBlocking { getString(Res.string.log_out_from_spotify) },
                             ) { viewModel.setSpotifyLogIn(false) }
                         } else {
-                            navController.navigate(SpotifyLoginDestination)
+                            navController.navigateOnce(SpotifyLoginDestination)
                         }
                     },
                 )
@@ -2134,7 +2135,7 @@ fun SettingScreen(
                                 confirmLabel = runBlocking { getString(Res.string.log_out_from_discord) },
                             ) { viewModel.logOutDiscord() }
                         } else {
-                            navController.navigate(DiscordLoginDestination)
+                            navController.navigateOnce(DiscordLoginDestination)
                         }
                     },
                 )
@@ -2170,7 +2171,7 @@ fun SettingScreen(
                                     confirmLabel = runBlocking { getString(Res.string.log_out_from_lastfm) },
                                 ) { viewModel.logOutLastfm() }
                             } else {
-                                navController.navigate(LastfmLoginDestination)
+                                navController.navigateOnce(LastfmLoginDestination)
                             }
                         },
                     )
@@ -2776,7 +2777,7 @@ fun SettingScreen(
                     title = stringResource(Res.string.version),
                     subtitle = stringResource(Res.string.version_format, VersionManager.getVersionName()),
                     onClick = {
-                        navController.navigate(CreditDestination)
+                        navController.navigateOnce(CreditDestination)
                     },
                 )
                 // BEATLAND: update rows hidden while the upstream update check is off (D-009)
@@ -2879,7 +2880,7 @@ fun SettingScreen(
                     title = stringResource(Res.string.app_log),
                     subtitle = stringResource(Res.string.app_log_description),
                     onClick = {
-                        navController.navigate(AppLogDestination)
+                        navController.navigateOnce(AppLogDestination)
                     },
                 )
             }
@@ -3195,7 +3196,7 @@ fun SettingScreen(
                                 text = Res.string.add_an_account,
                             ) {
                                 showYouTubeAccountDialog = false
-                                navController.navigate(LoginDestination)
+                                navController.navigateOnce(LoginDestination)
                             }
                         }
                     }

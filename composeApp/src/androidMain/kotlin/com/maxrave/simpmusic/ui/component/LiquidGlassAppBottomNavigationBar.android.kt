@@ -48,6 +48,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.maxrave.domain.data.player.GenericMediaItem
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
+import com.maxrave.simpmusic.beatland.navigation.returnToTab
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
@@ -190,7 +191,7 @@ actual fun LiquidGlassAppBottomNavigationBar(
             ) {
                 reloadDestinationIfNeeded(screen.destination::class)
             } else {
-                navController.navigate(screen.destination)
+                navController.returnToTab(screen.destination)
             }
         } else {
             selectedIndex = index

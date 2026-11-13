@@ -80,6 +80,8 @@ import coil3.request.ImageRequest
 import com.kyant.backdrop.highlight.Highlight
 import com.maxrave.domain.data.model.library.LibraryCollectionPreview
 import com.maxrave.simpmusic.beatland.navigation.SyncSelectedTab
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
+import com.maxrave.simpmusic.beatland.navigation.returnToTab
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
 import com.maxrave.simpmusic.expect.ui.rememberBackdrop
@@ -180,7 +182,7 @@ fun DesktopSidebar(
             if (currentBackStackEntry?.destination?.hierarchy?.any { it.hasRoute(screen.destination::class) } == true) {
                 reloadDestinationIfNeeded(screen.destination::class)
             } else {
-                navController.navigate(screen.destination)
+                navController.returnToTab(screen.destination)
             }
         } else {
             selectedIndex = screen.ordinal
@@ -274,7 +276,7 @@ fun DesktopSidebar(
                             pinned = true,
                             playing = false,
                             collapsed = collapsed,
-                            onClick = { navController.navigate(LibraryDynamicPlaylistDestination(type = collection.type.toStringParams())) },
+                            onClick = { navController.navigateOnce(LibraryDynamicPlaylistDestination(type = collection.type.toStringParams())) },
                         ) {
                             Box(
                                 Modifier
@@ -294,7 +296,7 @@ fun DesktopSidebar(
                     pinned = false,
                     playing = item.queueId != null && item.queueId.removePrefix("VL") == playingQueueId,
                     collapsed = collapsed,
-                    onClick = { navController.navigate(item.destination) },
+                    onClick = { navController.navigateOnce(item.destination) },
                 ) {
                     SidebarCover(item)
                 }

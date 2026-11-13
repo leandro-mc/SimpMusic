@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.extension.LeftToRight
 import com.maxrave.simpmusic.ui.icon.ArrowForwardIos
 import simpmusic.composeapp.generated.resources.analytics_avg_per_day
@@ -357,7 +358,7 @@ fun AnalyticsScreen(
                         wrappedReady?.let { ready ->
                             WrappedEntryCard(
                                 wrapped = ready.wrapped,
-                                onClick = { navController.navigate(WrappedDestination) },
+                                onClick = { navController.navigateOnce(WrappedDestination) },
                             )
                         }
                     }

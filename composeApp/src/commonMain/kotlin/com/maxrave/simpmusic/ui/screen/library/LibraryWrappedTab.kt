@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.maxrave.domain.data.type.MonthlyRecapItem
 import com.maxrave.domain.utils.LocalResource
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.ui.component.GridLibraryPlaylist
 import com.maxrave.simpmusic.ui.component.WrappedEntryCard
 import com.maxrave.simpmusic.ui.navigation.destination.home.WrappedDestination
@@ -66,7 +67,7 @@ fun LibraryWrappedTab(
                 {
                     WrappedEntryCard(
                         wrapped = it.wrapped,
-                        onClick = { navController.navigate(WrappedDestination) },
+                        onClick = { navController.navigateOnce(WrappedDestination) },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = CARD_GUTTER, vertical = 8.dp),
                     )
                 }

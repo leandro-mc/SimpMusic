@@ -77,6 +77,7 @@ import com.maxrave.domain.data.model.listentogether.RoomConnection
 import com.maxrave.domain.data.model.listentogether.RoomJoinRequest
 import com.maxrave.domain.data.model.listentogether.RoomMember
 import com.maxrave.domain.data.model.listentogether.RoomSuggestion
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.brand.Brand
 import com.maxrave.simpmusic.expect.shareUrl
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
@@ -205,7 +206,7 @@ fun ListenTogetherScreen(
         val shareCode: () -> Unit = {
             state.roomCode?.let { shareUrl(title = shareTitle, url = SHARE_PREFIX + it) }
         }
-        val openSettings: () -> Unit = { navController.navigate(ListenTogetherSettingsDestination) }
+        val openSettings: () -> Unit = { navController.navigateOnce(ListenTogetherSettingsDestination) }
 
         // Home's ambient top glow, tinted from the THEME rather than artwork — this page has none.
         // Same recipe as HomeScreen's first item: an angled two-stop gradient with a scrim easing

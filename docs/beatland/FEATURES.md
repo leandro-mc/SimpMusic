@@ -127,6 +127,21 @@ La pestaña resaltada de la barra inferior (teléfono, con vidrio o plana) y de 
 8. Enlace profundo `simpmusic://library` o `simpmusic://analytics` con la app abierta en otra pestaña: la barra debe señalar la pestaña a la que llega.
 9. Abrir el reproductor a pantalla completa desde una playlist de Biblioteca y volver: Biblioteca sigue resaltada.
 
+## Navegación sin pantallas repetidas (D-052)
+
+Pulsar varias veces la misma opción ya no apila copias: el panel lateral de escritorio (Favoritas, Descargas, Más reproducidas, listas, álbumes, artistas), las pestañas (Inicio, Mix, Analíticas, Buscar, Biblioteca) y los botones de pantallas globales (Ajustes, Notificaciones, Wrapped, Escuchar juntos…) abren la pantalla una sola vez.
+
+**Recorridos para probar en Windows:**
+1. Pulsar «Favoritas» del panel lateral 5 veces seguidas y luego Atrás: debe volver a donde estabas, no a Favoritas otras 4 veces.
+2. Lo mismo con «Descargas» y con «Más reproducidas».
+3. Favoritas → pulsar «Inicio»: debe mostrar Inicio y Atrás no debe volver a Favoritas.
+4. «Analíticas» (stats) varias veces seguidas: una sola pantalla.
+5. Abrir una playlist del panel y luego otra distinta: sí deben apilarse (Atrás vuelve a la primera).
+6. Biblioteca → abrir una playlist → pulsar «Biblioteca»: vuelve a la Biblioteca sin apilar otra.
+7. Ajustes (desde Inicio o Biblioteca) pulsado dos veces rápido: una sola pantalla de ajustes.
+
+**Limitación conocida:** abrir con doble clic muy rápido una tarjeta dentro de una pantalla (un álbum, una playlist) puede todavía apilar dos copias; si lo notas, avísame.
+
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).

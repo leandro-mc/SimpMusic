@@ -33,6 +33,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Descargas masivas en escritorio** | Cola propia de descargas (máx. 2 a la vez, en segundo plano, sin duplicados, cancelable, no muere al cambiar de pantalla) que sustituye en Koin el `DownloadHandler` de `core`; `downloadTrack` solo encola y vuelve. Android sin cambios. | D-048 |
 | **Diagnóstico de congelaciones (escritorio)** | `UiStallWatchdog` escribe en el log (etiqueta `UiStall`) qué hace cada hilo cuando la ventana deja de responder más de 3 s. | D-049 |
 | **Barra de navegación** | La pestaña resaltada (teléfono y escritorio) siempre coincide con la pantalla real: atrás/gesto atrás, salir de Buscar, *deep links*. | D-050 |
+| **Navegación sin pantallas repetidas** | Pulsar varias veces Favoritas, Descargas, una pestaña o un botón global ya no apila copias: Atrás no recorre n veces la misma pantalla, y «Inicio» con una subpantalla encima vuelve al Inicio que ya estaba. | D-052 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -63,6 +64,9 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
 | `composeApp/.../jvmMain/.../DesktopApp.kt` (además) | Llama a `installBeatlandDesktopServices()` justo después del bloque `startKoin` (import + 2 líneas) para instalar la cola de descargas y el vigilante de la UI (D-048, D-049) |
 | `composeApp/.../ui/component/AppBottomNavigationBar.kt`, `DesktopSidebar.kt`, `composeApp/.../androidMain/.../LiquidGlassAppBottomNavigationBar.android.kt` | Cada una llama a `SyncSelectedTab(...)` (import + comentario + 1 línea) para que la pestaña resaltada siga al destino real (D-050) |
+| `DesktopSidebar.kt`, `AppBottomNavigationBar.kt`, `LiquidGlassAppBottomNavigationBar.android.kt` (además) | Las cuatro copias de «pestaña seleccionada con subpantalla encima» llaman a `returnToTab(...)`, y las filas del panel a `navigateOnce(...)` (D-052) |
+| `App.kt` (además) | Los enlaces profundos a Biblioteca, Analíticas y colecciones usan `navigateOnce(...)` (D-052) |
+| `HomeScreen.kt`, `LibraryScreen.kt`, `LibraryWrappedTab.kt`, `AnalyticsScreen.kt`, `SettingScreen.kt`, `NowPlayingScreen.kt`, `ListenTogetherScreen.kt`, `CreateSheet.kt` | 19 botones a pantallas globales sin argumentos usan `navigateOnce(...)` en vez de `navigate(...)` (D-052) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
 | `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
 | `composeApp/.../ui/component/CreateSheet.kt` | El botón "Crear" del Home ofrece el selector de canciones tras crear una playlist (D-045) |
@@ -96,6 +100,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/src/jvmMain/.../beatland/diagnostics/UiStallWatchdog.kt` | Vigilante de bloqueos de la interfaz: escribe en el log las pilas de los hilos cuando la UI no responde (D-049) |
 | `composeApp/src/jvmMain/.../beatland/BeatlandDesktop.kt` | `installBeatlandDesktopServices()`: el único punto que `DesktopApp.kt` llama para lo propio de escritorio (D-048, D-049) |
 | `composeApp/.../beatland/navigation/TabSelectionSync.kt` | `SyncSelectedTab`: selecciona la pestaña de la entrada más alta de la pila de navegación que es (o cuelga de) una pestaña (D-050) |
+| `composeApp/.../beatland/navigation/SingleScreenNavigation.kt` | `navigateOnce` (no abre la pantalla ya abierta) y `returnToTab` (vuelve a la pestaña en vez de apilarla) (D-052) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante) y nombre. Desde D-047 ya no llevan íconos: el launcher sale de `androidApp/src/main/res` |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 no los usa nada; se conservan para volver al ícono propio |

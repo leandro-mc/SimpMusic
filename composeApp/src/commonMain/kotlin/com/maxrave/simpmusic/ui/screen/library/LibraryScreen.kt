@@ -59,6 +59,7 @@ import com.maxrave.domain.data.model.taste.TasteProfile
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerSheet
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
 import com.maxrave.simpmusic.expect.ui.rememberBackdrop
@@ -292,7 +293,7 @@ fun LibraryScreen(
                                     TasteCard(
                                         state = tasteState,
                                         onGenerate = tasteViewModel::generate,
-                                        onOpenSettings = { navController.navigate(SettingsDestination) },
+                                        onOpenSettings = { navController.navigateOnce(SettingsDestination) },
                                         onShare = { sharingTaste = it },
                                         modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 8.dp),
                                     )
@@ -498,7 +499,7 @@ fun LibraryScreen(
             // The Library bar had no actions slot at all — added for the Listen Together entry,
             // which the design canvas puts on Home AND Library.
             actions = {
-                ListenTogetherIconButton { navController.navigate(ListenTogetherDestination) }
+                ListenTogetherIconButton { navController.navigateOnce(ListenTogetherDestination) }
             },
         )
         AnimatedVisibility(visible = selectionState.isActive) {

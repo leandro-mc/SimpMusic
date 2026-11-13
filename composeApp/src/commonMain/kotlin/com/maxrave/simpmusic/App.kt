@@ -68,6 +68,7 @@ import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
 import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.beatland.collage.PlaylistCollageEffect
+import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.expect.Orientation
 import com.maxrave.simpmusic.expect.currentOrientation
 import com.maxrave.simpmusic.expect.openUrl
@@ -341,17 +342,17 @@ fun App(
                                 viewModel.makeToast(getString(Res.string.this_link_is_not_supported))
                             } else {
                                 viewModel.requestLibraryTab(tab)
-                                navController.navigate(LibraryDestination)
+                                navController.navigateOnce(LibraryDestination)
                             }
                         } else {
-                            navController.navigate(LibraryDynamicPlaylistDestination(type = type))
+                            navController.navigateOnce(LibraryDynamicPlaylistDestination(type = type))
                         }
                     }
 
                     // simpmusic://analytics — added for the launch banners.
                     "analytics" -> {
                         if (isAppLinkAvailable(appPath, null, localTrackingOn, youTubeLoggedIn)) {
-                            navController.navigate(AnalyticsDestination)
+                            navController.navigateOnce(AnalyticsDestination)
                         } else {
                             viewModel.makeToast(getString(Res.string.this_link_is_not_supported))
                         }
@@ -363,7 +364,7 @@ fun App(
                     "taste" -> {
                         if (isAppLinkAvailable(appPath, null, localTrackingOn, youTubeLoggedIn)) {
                             viewModel.requestLibraryTab(LibraryChipType.YOUR_LIBRARY)
-                            navController.navigate(LibraryDestination)
+                            navController.navigateOnce(LibraryDestination)
                         } else {
                             viewModel.makeToast(getString(Res.string.this_link_is_not_supported))
                         }
