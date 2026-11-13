@@ -66,7 +66,7 @@ Descarga las librerías del reproductor (libmpv), compila y deja el instalador e
 ## Qué cambia respecto al SimpMusic de escritorio
 
 - Nombre **Beatland** en la ventana, la bandeja del sistema, el ejecutable (`Beatland.exe`), el menú Inicio, el instalador y "Aplicaciones".
-- Ícono de la app original (D-047) en el ejecutable, la ventana, la bandeja y el mini reproductor, con el nombre Beatland. La pantalla de créditos sigue mostrando el logo de Beatland hasta que el dueño decida.
+- Ícono de la app original (D-047) en el ejecutable, la ventana, la bandeja y el mini reproductor, con el nombre Beatland. La pantalla de créditos también muestra el logo original.
 - Funcionan en escritorio: selector de canciones para playlists, collage de miniaturas (en Windows lee las carátulas con Skia, incluidas las WebP; D-038), traducción de letras con IA fiable + regenerar, y el estilo de traducción.
 - **No existe en escritorio:** la letra flotante (es una función solo de Android).
 

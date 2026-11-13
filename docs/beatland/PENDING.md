@@ -2,7 +2,7 @@
 
 | Rama | Qué | Origen |
 |---|---|---|
-| `feature/brand-audit` | Auditoría de lo que el script no cubre: drawables/imágenes con texto de marca, `fastlane/`, `README.md`, logos, pantalla de créditos (conservando la atribución a upstream y la licencia GPL-3.0). | `BRANDING.md` |
+| `feature/brand-audit` | Auditoría de lo que el script no cubre. Hecho en D-051: imágenes con texto de marca (OCR), literales Kotlin en cualquier capitalización, canal de notificación, pantalla de créditos. Pendiente: `fastlane/` y `README.md` (metadatos de tienda y documentación del repo; no se ven dentro de la app), conservando la atribución a upstream y la licencia GPL-3.0. | `BRANDING.md` |
 
 ## Notas abiertas
 

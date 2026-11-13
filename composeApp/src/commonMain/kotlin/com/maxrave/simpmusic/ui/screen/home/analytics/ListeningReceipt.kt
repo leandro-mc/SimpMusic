@@ -277,7 +277,7 @@ private fun ListeningReceiptPaper(
                 .padding(start = 20.dp, top = 40.dp, end = 20.dp, bottom = 16.dp),
     ) {
         Text(
-            text = "SIMPMUSIC",
+            text = Brand.NAME.uppercase(), // BEATLAND (D-051): the brand, not upstream's hard-coded name
             modifier = Modifier.fillMaxWidth(),
             style =
                 TextStyle(
@@ -359,7 +359,7 @@ private fun ListeningReceiptPaper(
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp, bottom = 4.dp),
         )
         Text(
-            text = "simpmusic.org",
+            text = Brand.NAME.lowercase(), // BEATLAND (D-051): upstream printed its website here; the brand has none
             modifier = Modifier.fillMaxWidth(),
             style = mono.copy(fontSize = 14.sp, lineHeight = 18.sp, textAlign = TextAlign.Center),
         )

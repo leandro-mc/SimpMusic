@@ -81,7 +81,7 @@ fun CreditScreen(
 
         // App icon
         Image(
-            painter = painterResource(Res.drawable.beatland_app_icon), // BEATLAND (D-035): was app_icon, the SimpMusic logo
+            painter = painterResource(Res.drawable.app_icon),
             contentDescription = "App Icon",
             modifier =
                 Modifier

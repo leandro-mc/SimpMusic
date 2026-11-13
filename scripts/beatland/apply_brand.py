@@ -13,7 +13,12 @@ What it manages (see docs/beatland/BRANDING.md for the rules):
   2. composeApp/src/commonMain/kotlin/.../brand/Brand.kt        -> generated constant `Brand.NAME`
   3. androidApp/src/beatland/res/values/app_name.xml            -> launcher name (release)
      androidApp/src/beatlandDebug/res/values/app_name.xml       -> launcher name (debug, "<name> Dev")
+     androidApp/src/beatland/res/values/notification_channel.xml -> name of the playback notification channel
+                                                                   (overrides the string `core` ships)
   4. conveyor.conf                                              -> start-menu group, StartupWMClass, vcs-url
+
+It also catches the name written in other capitalisations ("Simpmusic", "SIMPMUSIC", "Simp Music"):
+only the all-lowercase form is left alone, because that is how schemes, domains and folders are spelled.
 
 It is IDEMPOTENT and it handles RENAMES: the previously applied brand is read from Brand.kt, so
 changing `brand.name` from "Beatland" to something else rewrites both the original "SimpMusic" and
@@ -57,6 +62,12 @@ PROTECTED_PHRASES = [
     re.compile(r"SimpMusic[ \u00a0]+lyrics(?:'s)?", re.IGNORECASE),
 ]
 
+# The name in any capitalisation. Only the all-lowercase spelling (url schemes, domains, the data
+# folder, identifiers) is never a display name; every other spelling is.
+VARIANT_RE = re.compile(r"simp[ \u00a0]?music", re.IGNORECASE)
+
+ANDROID_CHANNEL_FILE = ROOT / "androidApp/src/beatland/res/values/notification_channel.xml"
+
 URL_RE = re.compile(r"https?://[^\s<>\"']+")
 ELEMENT_RE = re.compile(
     r"(?P<open><(?P<tag>string|item)(?=[\s>])(?P<attrs>[^>]*)>)(?P<body>.*?)(?P<close></(?P=tag)>)",
@@ -94,6 +105,26 @@ def xml_escape_apostrophe(text: str) -> str:
     return text  # brand names with apostrophes are not supported (see check in read_brand)
 
 
+def display_variants(text: str) -> list[str]:
+    """Spellings of the original name in `text` that are NOT all lowercase (all lowercase = identifier)."""
+    return [m.group(0) for m in VARIANT_RE.finditer(text) if m.group(0) != m.group(0).lower()]
+
+
+def variant_to_brand(m: re.Match, brand: str) -> str:
+    word = m.group(0)
+    if word == word.lower():
+        return word
+    return brand.upper() if word == word.upper() else brand
+
+
+def channel_xml(brand: str) -> str:
+    return (
+        "<resources>\n"
+        f'    <string name="notification_channel_name" translatable="false">{brand} Playback Notification</string>\n'
+        "</resources>\n"
+    )
+
+
 def replace_visible(text: str, old_names: list[str], brand: str) -> str:
     """Replace old names with `brand`, skipping URLs and protected phrases."""
     stash: list[str] = []
@@ -107,6 +138,7 @@ def replace_visible(text: str, old_names: list[str], brand: str) -> str:
         protected = rx.sub(keep, protected)
     for old in old_names:
         protected = protected.replace(old, brand)
+    protected = VARIANT_RE.sub(lambda m: variant_to_brand(m, brand), protected)
     return re.sub(r"\u0000(\d+)\u0000", lambda m: stash[int(m.group(1))], protected)
 
 
@@ -178,6 +210,15 @@ def apply(brand: str, dry: bool) -> int:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content, encoding="utf-8", newline="\n")
 
+    # 3b) playback notification channel name: `core` ships its own Android string with the original
+    #     name, and the app's resources win over a library's, so this flavor file replaces it
+    if not ANDROID_CHANNEL_FILE.exists() or ANDROID_CHANNEL_FILE.read_text(encoding="utf-8") != channel_xml(brand):
+        print(f"  android  {ANDROID_CHANNEL_FILE.relative_to(ROOT)}")
+        total += 1
+        if not dry:
+            ANDROID_CHANNEL_FILE.parent.mkdir(parents=True, exist_ok=True)
+            ANDROID_CHANNEL_FILE.write_text(channel_xml(brand), encoding="utf-8", newline="\n")
+
     # 4) conveyor.conf (display-facing lines only)
     if CONVEYOR.exists():
         text = CONVEYOR.read_text(encoding="utf-8")
@@ -195,7 +236,7 @@ def apply(brand: str, dry: bool) -> int:
 
 # ----------------------------------------------------------------------------- --check
 
-KOTLIN_LITERAL_RE = re.compile(r'"[^"\n]*SimpMusic[^"\n]*"')
+KOTLIN_LITERAL_RE = re.compile(r'"[^"\n]*simp[ \u00a0]?music[^"\n]*"', re.IGNORECASE)
 IGNORED_LITERAL_FRAGMENTS = (
     "github.com/maxrave-dev/SimpMusic",  # upstream links kept on purpose
     "SimpMusic GitHub Release",  # update-channel label: it IS upstream's release feed (D-009)
@@ -216,7 +257,7 @@ def check(brand: str) -> int:
             probe = m.group("body")
             for rx in [URL_RE, *PROTECTED_PHRASES]:
                 probe = rx.sub("", probe)
-            if ORIGINAL_NAME in probe:
+            if display_variants(probe):
                 line = text[: m.start()].count("\n") + 1
                 problems.append(f"{f.relative_to(ROOT)}:{line}: {probe.strip()[:90]}")
 
@@ -228,11 +269,16 @@ def check(brand: str) -> int:
                 if stripped.startswith(("import ", "package ", "//", "*", "/*")):
                     continue
                 for lit in KOTLIN_LITERAL_RE.findall(line):
+                    if not display_variants(lit):
+                        continue  # all lowercase: scheme, domain, folder or identifier
                     if any(frag in line for frag in IGNORED_LITERAL_FRAGMENTS):
                         continue
                     if re.search(r"Logger\.|log\(|println\(", line):
                         continue  # log text is not user-visible
                     problems.append(f"{f.relative_to(ROOT)}:{n}: {lit}")
+
+    if not ANDROID_CHANNEL_FILE.exists() or ANDROID_CHANNEL_FILE.read_text(encoding="utf-8") != channel_xml(brand):
+        problems.append(f"{ANDROID_CHANNEL_FILE.relative_to(ROOT)}: missing or out of date (run apply_brand.py)")
 
     if problems:
         print(f'Visible "{ORIGINAL_NAME}" left behind ({len(problems)}):')

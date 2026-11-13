@@ -58,7 +58,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | Acción "Letra flotante" en el menú de la canción en reproducción (D-032) |
 | `composeApp/.../ui/component/{ModalBottomSheet,LyricsView,AppleMusicLyricsLines}.kt`, `.../player/content/{NowPlayingContentSpotify,NowPlayingContentM3Expressive,applemusic/AppleMusicShared}.kt` | Acción "Regenerar traducción"; estilo de traducción (color, tipografía, tamaño); se ocultan traducciones en blanco |
 | `composeApp/.../ui/screen/home/SettingScreen.kt` (además) | El interruptor de la letra flotante lee `floatingLyricsWindowShowing()` (D-032) |
-| `composeApp/.../ui/screen/other/CreditScreen.kt` | Logo de créditos = `beatland_app_icon` (D-035) |
+| `composeApp/.../ui/screen/home/analytics/ListeningReceipt.kt` | El título y el pie de la factura salen de `Brand.NAME` en vez de literales de upstream (D-051) |
 | `desktopApp/build.gradle.kts` (además) | Versión del `.msi` = `major.minor` de upstream + número de compilación de Beatland (`msiPackageVersion`, D-037) |
 | `composeApp/.../DesktopApp.kt` (además) | `ToastHost()` se compone dos cuadros después de la primera composición (D-036) |
 | `composeApp/.../jvmMain/.../DesktopApp.kt` (además) | Llama a `installBeatlandDesktopServices()` justo después del bloque `startKoin` (import + 2 líneas) para instalar la cola de descargas y el vigilante de la UI (D-048, D-049) |
@@ -80,7 +80,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | Ruta | Para qué |
 |---|---|
 | `beatland.properties` | Nombre de la marca (fuente única) |
-| `scripts/beatland/apply_brand.py` | Aplica la marca a strings, `Brand.kt`, `app_name.xml`, `conveyor.conf`; `--check` busca "SimpMusic" visibles |
+| `scripts/beatland/apply_brand.py` | Aplica la marca a strings, `Brand.kt`, `app_name.xml`, el nombre del canal de notificación y `conveyor.conf`; reconoce el nombre en cualquier capitalización; `--check` busca "SimpMusic" visibles en recursos y en literales Kotlin (D-051) |
+| `androidApp/src/beatland/res/values/notification_channel.xml` | Nombre del canal de notificación de reproducción (**generado** por `apply_brand.py`; sobrescribe el recurso de `core`) (D-051) |
 | `scripts/beatland/generate_icon.py` | Genera el ícono propio (vectores + PNG/ICO/ICNS). Sin efecto activo desde D-047 mientras el flavor no tenga esos archivos; no borrar |
 | `composeApp/.../brand/Brand.kt` | `Brand.NAME` (**generado** por `apply_brand.py`) |
 | `composeApp/.../brand/ForkPolicy.kt` | Interruptores: promos y verificador de actualizaciones |
@@ -97,7 +98,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/navigation/TabSelectionSync.kt` | `SyncSelectedTab`: selecciona la pestaña de la entrada más alta de la pila de navegación que es (o cuelga de) una pestaña (D-050) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante) y nombre. Desde D-047 ya no llevan íconos: el launcher sale de `androidApp/src/main/res` |
-| `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 solo los usa la pantalla de créditos (decisión pendiente); se conservan para volver al ícono propio |
+| `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 no los usa nada; se conservan para volver al ícono propio |
 | `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |
 | `.github/workflows/beatland-android-check.yml` | Compila `beatlandDebug` en GitHub (`isFullBuild` false y true) y sube la APK como artefacto; se dispara con una etiqueta `beatland-android-check-*` (D-046) |
 | `scripts/beatland/prefetch-gradle.sh` | Descarga Gradle con reintentos y SHA-256 antes de que lo haga el *wrapper* (solo CI; D-042) |
