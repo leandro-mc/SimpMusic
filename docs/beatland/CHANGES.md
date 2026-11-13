@@ -17,7 +17,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | Tema | Qué cambia | Decisión |
 |---|---|---|
 | **Nombre** | La app se llama **Beatland** en todos los textos visibles (31 idiomas), en el launcher, en el escritorio y en nombres de archivos compartidos. Se cambia desde `beatland.properties` + `apply_brand.py`. | D-005, D-014 |
-| **Ícono** | Ícono nuevo "Beamed" (notas con travesaño-onda), generado por script. Vectores adaptativos, monocromo, PNG, ICO, ICNS. | D-020 |
+| **Ícono** | Se usa el ícono de la app original en todas las plataformas, con el nombre Beatland (el flavor `beatland` ya no sobrescribe el ícono). El ícono propio «Beamed» y su generador se conservan para poder volver a él. | D-047 (antes D-020) |
 | **Instalación en paralelo** | Flavor Android `beatland` (`applicationId` con sufijo `.beatland`) junto a `official`; `beatland` es el predeterminado. | D-002, D-021 |
 | **Letra flotante** | Ventana flotante con la letra encima de otras apps (solo Android, solo flavor `beatland`). Se abre desde Ajustes **o desde el menú de la canción en reproducción**; la vista expandida tiene un miniplayer sutil (pausa, siguiente, progreso) y control de velocidad de 0,1 en 0,1 que vuelve a 1.0× al cerrar la ventana. Paleta azul, sin morado. | D-004, D-032 |
 | **Selector de canciones para playlists** | Al crear una playlist (y desde "Añadir canciones" en cualquier playlist local) se abre un selector con Recientes / Más escuchadas / Me gusta y búsqueda en biblioteca + YouTube Music, con selección sin tope. Hecho con los componentes de la app (hoja, `Chip`, `SongFullWidthItems`, píldora de búsqueda). | D-024, D-025 |
@@ -80,9 +80,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | Ruta | Para qué |
 |---|---|
 | `beatland.properties` | Nombre de la marca (fuente única) |
-| `conveyor.conf` (además) | El ícono de macOS de `mac { icons }` apunta al de Beatland (D-045) |
 | `scripts/beatland/apply_brand.py` | Aplica la marca a strings, `Brand.kt`, `app_name.xml`, `conveyor.conf`; `--check` busca "SimpMusic" visibles |
-| `scripts/beatland/generate_icon.py` | Genera todo el ícono (vectores + PNG/ICO/ICNS) |
+| `scripts/beatland/generate_icon.py` | Genera el ícono propio (vectores + PNG/ICO/ICNS). Sin efecto activo desde D-047 mientras el flavor no tenga esos archivos; no borrar |
 | `composeApp/.../brand/Brand.kt` | `Brand.NAME` (**generado** por `apply_brand.py`) |
 | `composeApp/.../brand/ForkPolicy.kt` | Interruptores: promos y verificador de actualizaciones |
 | `composeApp/.../floatinglyrics/` (androidMain, 4 archivos) | Servicio, interfaz, permiso y ciclo de vida de la letra flotante |
@@ -97,8 +96,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/src/jvmMain/.../beatland/BeatlandDesktop.kt` | `installBeatlandDesktopServices()`: el único punto que `DesktopApp.kt` llama para lo propio de escritorio (D-048, D-049) |
 | `composeApp/.../beatland/navigation/TabSelectionSync.kt` | `SyncSelectedTab`: selecciona la pestaña de la entrada más alta de la pila de navegación que es (o cuelga de) una pestaña (D-050) |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
-| `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante), nombre e íconos |
-| `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos de escritorio y de la app (generados) |
+| `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante) y nombre. Desde D-047 ya no llevan íconos: el launcher sale de `androidApp/src/main/res` |
+| `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 solo los usa la pantalla de créditos (decisión pendiente); se conservan para volver al ícono propio |
 | `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |
 | `.github/workflows/beatland-android-check.yml` | Compila `beatlandDebug` en GitHub (`isFullBuild` false y true) y sube la APK como artefacto; se dispara con una etiqueta `beatland-android-check-*` (D-046) |
 | `scripts/beatland/prefetch-gradle.sh` | Descarga Gradle con reintentos y SHA-256 antes de que lo haga el *wrapper* (solo CI; D-042) |

@@ -14,7 +14,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 | Archivo en conflicto | Qué hacer |
 |---|---|
 | `composeResources/values*/*.xml` | Tomar la versión de upstream y volver a correr `apply_brand.py` (paso 6). |
-| `conveyor.conf`, `desktopApp/build.gradle.kts` | Tomar upstream y reaplicar los puntos de `RULES.md` → "Mantener siempre". Los íconos (`iconFile`, `icons`, también el de `mac {}`) deben seguir apuntando a `beatland_app_icon.*`, no a `rounded_app_icon`/`circle_app_icon` (D-045). |
+| `conveyor.conf`, `desktopApp/build.gradle.kts` | Tomar upstream y reaplicar los puntos de `RULES.md` → "Mantener siempre". Los íconos (`iconFile`, `icons`, también el de `mac {}`) son los de upstream (`circle_app_icon` y, en macOS, `rounded_app_icon`): desde D-047 no hay nada que reaplicar aquí. |
 | `androidApp/build.gradle.kts` | Conservar los bloques `productFlavors`, `IS_PERSONAL_FORK` y `ignoredFlavors … "beatland"`. |
 | `MainActivity.kt` | Conservar `!BuildConfig.IS_PERSONAL_FORK` en `checkOfficialBuild`. |
 | `SettingScreen.kt` | Conservar el bloque `floating_lyrics` y el `if (ForkPolicy.UPSTREAM_UPDATE_CHECK_ENABLED)` que envuelve los ajustes de actualización; si upstream cambió el patrón de `SettingGroup`/`SettingItem`, adaptar. |

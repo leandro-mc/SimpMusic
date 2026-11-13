@@ -83,7 +83,7 @@ Reglas:
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.
-- Íconos generados por `scripts/beatland/generate_icon.py` (D-020), que **sobrescribe** `drawable-v24/ic_launcher_*.xml`, los `mipmap-*` del flavor y `beatland_app_icon.*`; sus referencias en escritorio también. No editar esos archivos a mano.
+- Ícono: se usa el de la app original (D-047). El flavor `beatland` no debe llevar archivos de ícono (`mipmap-*`, `drawable-v24/ic_launcher_*`), porque sobrescribirían al original. `scripts/beatland/generate_icon.py` (ícono propio, D-020) se conserva y, si se ejecuta, **sobrescribe** esos archivos del flavor y `beatland_app_icon.*`; no editarlos a mano.
 - Los `notCompatibleWithConfigurationCache` de `mpvSetupAll` y `writeConveyorConfig`.
 - El filtro `-PmpvSlices` de `mpvSetupAll` (`mpvSlicesToSetup`) y que el workflow/script de Windows lo pasen (D-040). Las sumas de `mpvNativesChecksums` solo se aceptan si coinciden con las de `upstream/dev`: **nunca pegar el valor "actual" de un error de checksum** (eso desactiva la verificación).
 

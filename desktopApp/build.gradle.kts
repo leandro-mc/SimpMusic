@@ -220,7 +220,7 @@ compose.desktop {
                     }
                 includeAllModules = true
                 packageVersion = formatedDate
-                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.icns"))
+                iconFile.set(rootDir.resolve("composeApp/icon/rounded_app_icon.icns"))
                 val macExtraPlistKeys =
                     """
                     <key>LSApplicationCategoryType</key>
@@ -256,7 +256,7 @@ compose.desktop {
                         .get()
                         .removeSuffix("-hf")
                 msiPackageVersion = beatlandWindowsVersion // BEATLAND (D-037): see the comment at the top of this file
-                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.ico"))
+                iconFile.set(rootDir.resolve("composeApp/icon/circle_app_icon.ico"))
                 // BEATLAND (D-035): Windows installer (.msi) settings.
                 menuGroup = beatlandBrandName // Start menu folder
                 shortcut = true // desktop shortcut
@@ -272,7 +272,7 @@ compose.desktop {
                     libs.versions.version.name
                         .get()
                         .removeSuffix("-hf")
-                iconFile.set(rootDir.resolve("composeApp/icon/beatland_app_icon.png"))
+                iconFile.set(rootDir.resolve("composeApp/icon/circle_app_icon.png"))
             }
         }
 
@@ -440,7 +440,7 @@ tasks.register("packageConveyorAppImage") {
         FileUtils.copyDirectory(conveyorOutput, appDir)
 
         // Ensure top-level PNG icon expected by appimagetool exists.
-        val iconSrc = rootDir.resolve("composeApp/icon/beatland_app_icon.png")
+        val iconSrc = rootDir.resolve("composeApp/icon/circle_app_icon.png")
         val iconDst = appDir.resolve("simpmusic.png")
         if (!iconDst.exists() && iconSrc.exists()) {
             FileUtils.copyFile(iconSrc, iconDst)

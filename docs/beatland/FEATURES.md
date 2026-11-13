@@ -9,7 +9,7 @@ Se activa en Ajustes → "Floating lyrics". Oculta en cualquier otro build/plata
 - `composeApp/src/androidMain/.../floatinglyrics/` → `ComposeServiceLifecycle.kt`, `FloatingLyricsOverlayUi.kt`, `FloatingLyricsPermission.kt`, `FloatingLyricsService.kt`
 - `composeApp/src/commonMain/.../expect/floatinglyrics/FloatingLyricsCapability.kt` (+ `.android.kt` en androidMain, `.jvm.kt` en jvmMain)
 - `androidApp/src/beatland/AndroidManifest.xml` (permiso `SYSTEM_ALERT_WINDOW` y el servicio, añadidos por el merge de manifests)
-- `androidApp/src/beatland/res/**` (ícono) y `androidApp/src/beatlandDebug/res/**`
+- `androidApp/src/beatland/res/**` (nombre; sin ícono desde D-047) y `androidApp/src/beatlandDebug/res/**`
 
 **Ganchos en archivos de upstream (los únicos):**
 - `SettingScreen.kt`: imports + bloque `item(key = "floating_lyrics")`, justo antes de `sponsor_block`.
@@ -130,7 +130,7 @@ La pestaña resaltada de la barra inferior (teléfono, con vidrio o plana) y de 
 ## Otros cambios respecto al original
 
 - **Promos del autor y verificador de actualizaciones desactivados** mediante `ForkPolicy` (D-007, D-009).
-- **Ícono Beatland** generado por script (D-020): `python3 scripts/beatland/generate_icon.py [--preview]` (requiere Pillow y numpy). Verifica además que las notas queden dentro de la zona segura del ícono adaptativo.
+- **Ícono:** la app usa el de la app original con el nombre Beatland (D-047). El ícono propio «Beamed» (D-020) se conserva y se regenera con `python3 scripts/beatland/generate_icon.py [--preview]` (requiere Pillow y numpy); ver D-047 para volver a él.
 - Flavor Android `beatland` instalable junto al oficial (D-002) y sin bloqueo de "build no oficial" (D-010).
 - Nombre y ajustes de escritorio con la marca parametrizada (`BRANDING.md`).
 - Ajuste de configuration cache en tareas de mpv/Conveyor (D-012).
