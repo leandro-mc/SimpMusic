@@ -65,11 +65,12 @@ class PlaylistSongPickerViewModel(
         val library: List<SongEntity> = emptyList(),
         val online: OnlineState = OnlineState(),
         val selected: List<SongEntity> = emptyList(),
+        /** The ids of [selected], built once per state (D-053): it used to be rebuilt on every read. */
+        val selectedIds: Set<String> = emptySet(),
         val alreadyInPlaylist: Set<String> = emptySet(),
         val isAdding: Boolean = false,
     ) {
         val isSearching: Boolean get() = query.isNotBlank()
-        val selectedIds: Set<String> get() = selected.mapTo(HashSet()) { it.videoId }
     }
 
     private var playlistId: Long = NO_PLAYLIST
@@ -144,6 +145,7 @@ class PlaylistSongPickerViewModel(
                 // Not searching (or the query changed and the debounce has not fired yet): hide stale results.
                 online = if (lib.second.isBlank()) OnlineState() else online,
                 selected = sel,
+                selectedIds = sel.mapTo(HashSet()) { it.videoId },
                 alreadyInPlaylist = already,
                 isAdding = isAdding,
             )

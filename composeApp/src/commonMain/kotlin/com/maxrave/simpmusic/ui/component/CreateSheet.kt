@@ -51,6 +51,7 @@ import com.kyant.backdrop.highlight.Highlight
 import com.maxrave.domain.repository.ListenTogetherRepository
 import com.maxrave.simpmusic.beatland.navigation.navigateOnce
 import com.maxrave.simpmusic.beatland.picker.PlaylistSongPickerSheet
+import com.maxrave.simpmusic.beatland.playlist.NewPlaylistSheet
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.ui.icon.Add
 import com.maxrave.simpmusic.ui.icon.Groups
@@ -293,74 +294,17 @@ private fun SheetHandle() {
     }
 }
 
-/** Name a new local playlist. Shared by Library's create tile and the Create sheet. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Name a new local playlist. Shared by Library's create tile and the Create sheet.
+ *
+ * BEATLAND (D-053): the sheet itself now lives in `beatland/playlist/NewPlaylistSheet.kt`; this keeps the
+ * name and signature so every caller stays as upstream wrote it. [sharedViewModel] is no longer used.
+ */
 @Composable
 fun CreateLocalPlaylistSheet(
     onDismiss: () -> Unit,
     onCreate: (String) -> Unit,
-    sharedViewModel: SharedViewModel = koinInject(),
+    @Suppress("UNUSED_PARAMETER") sharedViewModel: SharedViewModel = koinInject(),
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    var newTitle by remember { mutableStateOf("") }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.Transparent,
-        contentColor = Color.Transparent,
-        dragHandle = null,
-        scrimColor = Color.Black.copy(alpha = .5f),
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-    ) {
-        Card(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-            colors = CardDefaults.cardColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                // The sheet is handed no insets, so nothing else lifts the field above the keyboard.
-                // Navigation bars are left out: EndOfModalBottomSheet already pads for them.
-                modifier = Modifier.windowInsetsPadding(WindowInsets.ime.exclude(WindowInsets.navigationBars)),
-            ) {
-                SheetHandle()
-                OutlinedTextField(
-                    value = newTitle,
-                    onValueChange = { s -> newTitle = s },
-                    label = {
-                        Text(text = stringResource(Res.string.playlist_name))
-                    },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-                TextButton(
-                    onClick = {
-                        if (newTitle.isBlank()) {
-                            coroutineScope.launch { sharedViewModel.makeToast(getString(Res.string.playlist_name_cannot_be_empty)) }
-                        } else {
-                            onCreate(newTitle)
-                            coroutineScope.launch {
-                                sheetState.hide()
-                                onDismiss()
-                            }
-                        }
-                    },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.CenterHorizontally),
-                ) {
-                    Text(text = stringResource(Res.string.create))
-                }
-                EndOfModalBottomSheet()
-            }
-        }
-    }
+    NewPlaylistSheet(onDismiss = onDismiss, onCreate = onCreate)
 }

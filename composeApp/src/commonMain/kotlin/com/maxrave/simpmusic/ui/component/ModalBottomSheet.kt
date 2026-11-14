@@ -137,6 +137,9 @@ import com.maxrave.domain.utils.FilterState
 import com.maxrave.domain.utils.connectArtists
 import com.maxrave.domain.utils.toListName
 import com.maxrave.logger.Logger
+import com.maxrave.simpmusic.beatland.playlist.NewPlaylistRow
+import com.maxrave.simpmusic.beatland.playlist.NewPlaylistSheet
+import com.maxrave.simpmusic.beatland.playlist.createLocalPlaylistAndGet
 import com.maxrave.simpmusic.expect.copyToClipboard
 import com.maxrave.simpmusic.expect.floatinglyrics.floatingLyricsWindowShowing
 import com.maxrave.simpmusic.expect.floatinglyrics.hasFloatingLyricsOverlayPermission
@@ -2636,6 +2639,9 @@ fun AddToPlaylistModalBottomSheet(
                 onDismiss()
             }
         }
+    // BEATLAND (D-053): "New playlist" row. null = the name sheet is closed, otherwise the name to start from.
+    var newPlaylistInitialName by remember { mutableStateOf<String?>(null) }
+    val playlistRepository: LocalPlaylistRepository = koinInject()
     if (isBottomSheetVisible) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
@@ -2755,6 +2761,11 @@ fun AddToPlaylistModalBottomSheet(
                         }
                     }
 
+                    // BEATLAND (D-053): create a playlist from here; the song(s) go straight into it.
+                    if (!isYouTubePlaylistClicked) {
+                        NewPlaylistRow(onClick = { newPlaylistInitialName = query.trim() })
+                    }
+
                     val keyword = query.trim()
                     val shownLocalPlaylist =
                         remember(listLocalPlaylist, keyword) { listLocalPlaylist.filter { it.title.contains(keyword, ignoreCase = true) } }
@@ -2867,6 +2878,20 @@ fun AddToPlaylistModalBottomSheet(
                 }
             }
         }
+    }
+    newPlaylistInitialName?.let { initialName ->
+        NewPlaylistSheet(
+            initialName = initialName,
+            onDismiss = { newPlaylistInitialName = null },
+            onCreate = { name ->
+                coroutineScope.launch {
+                    playlistRepository.createLocalPlaylistAndGet(name)?.let { created ->
+                        onClick(created)
+                        hideModalBottomSheet()
+                    }
+                }
+            },
+        )
     }
 }
 

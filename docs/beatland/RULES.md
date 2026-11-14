@@ -81,6 +81,7 @@ Reglas:
 - Paquete `beatland/download/` (cola de descargas de escritorio), `beatland/diagnostics/UiStallWatchdog.kt`, `beatland/BeatlandDesktop.kt` y la llamada `installBeatlandDesktopServices()` en `DesktopApp.kt` (D-048, D-049). Sin ella, «descargar todas» vuelve a lanzar todas las descargas a la vez y a congelar la app.
 - `beatland/navigation/TabSelectionSync.kt` y sus llamadas `SyncSelectedTab(...)` en las tres barras de navegación (D-050). Sin ellas, atrás/gesto atrás, salir de Buscar y los *deep links* vuelven a dejar resaltada una pestaña distinta de la pantalla.
 - `beatland/navigation/SingleScreenNavigation.kt` y sus llamadas `navigateOnce(...)` / `returnToTab(...)` (D-052). Sin ellas, pulsar varias veces una fila del panel, una pestaña o un botón global vuelve a apilar copias de la misma pantalla.
+- Paquete `beatland/playlist/` y sus enganches en `CreateSheet.kt` y `AddToPlaylistModalBottomSheet` (D-053); el selector usa su propia fila `PickerSongRow`, no `SongFullWidthItems` (D-053).
 - Paquete `floatinglyrics/` (androidMain) y los `expect/actual` de `FloatingLyricsCapability`.
 - El bloque `floating_lyrics` en `SettingScreen.kt`.
 - `beatland.properties`, `scripts/beatland/`, `docs/beatland/`, `composeApp/.../brand/Brand.kt`.

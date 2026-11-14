@@ -43,7 +43,7 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 - Selección múltiple **sin tope**; las canciones que ya están en la playlist salen marcadas y no se pueden volver a elegir.
 - Botón "Añadir N canciones" (solo aparece con canciones seleccionadas); se añaden una a una con `addTrackToLocalPlaylist` (que inserta la canción en la base si viene de la búsqueda).
 - **Vista previa (D-026):** cada fila tiene un botón ▶ en el extremo derecho para reproducir la canción antes de decidir; mientras suena pasa a ⏸. Reemplaza la cola actual, como al tocar una canción en cualquier lugar de la app.
-- Construido solo con componentes de la app (D-025): `SongFullWidthItems` en modo selección, `Chip`, píldora de búsqueda y hoja como las de `ModalBottomSheet.kt`.
+- Construido con componentes de la app (D-025): `Chip`, píldora de búsqueda y hoja como las de `ModalBottomSheet.kt`; la fila de canción es propia y ligera (`PickerSongRow`, D-053) para que responda al clic al instante en PC.
 - Además, el tope de la selección múltiple normal pasa de 25 a 500 (D-023).
 
 **Archivos propios (nuevos):** `composeApp/src/commonMain/.../beatland/picker/{PlaylistSongPickerViewModel,PlaylistSongPickerSheet,AddSongsRow}.kt`,
@@ -54,7 +54,7 @@ Al crear una playlist (Biblioteca → crear) se abre una hoja a pantalla casi co
 
 **Dependencias de upstream (validar tras cada sync):** `SongRepository.{getAllSongs,getMostPlayedSongs,getLikedSongs}`, `SearchRepository.getSearchDataSong`,
 `LocalPlaylistRepository.{addTrackToLocalPlaylist,getListTrackVideoId,getAllLocalPlaylists,insertLocalPlaylist}`, `SongsResult.toTrack`, `Track.toSongEntity`,
-`SongFullWidthItems`, `Chip`, `rememberSurfaceDarkColors`, `LocalForceDarkText`, `typo()`, `SimpIcons.{Add,Close,Search}`.
+`Chip`, `rememberSurfaceDarkColors`, `LocalForceDarkText`, `typo()`, `SimpIcons.{Add,Close,Search}`.
 
 ## Collage automático de playlists locales (D-027)
 
@@ -141,6 +141,22 @@ Pulsar varias veces la misma opción ya no apila copias: el panel lateral de esc
 7. Ajustes (desde Inicio o Biblioteca) pulsado dos veces rápido: una sola pantalla de ajustes.
 
 **Limitación conocida:** abrir con doble clic muy rápido una tarjeta dentro de una pantalla (un álbum, una playlist) puede todavía apilar dos copias; si lo notas, avísame.
+
+## Crear playlists (D-053)
+
+- **Hoja de nombre nueva:** el campo es un cuadro relleno y redondeado como los buscadores de la app, con icono y botón de borrar; el botón «Crear» es el principal de la app. Se enfoca solo al abrir, **Enter crea**, un nombre vacío se explica bajo el campo y un doble clic no crea dos playlists. Aparece desde el «+» de Inicio y desde «Crear» en la Biblioteca.
+- **Agregar a playlist → Nueva playlist:** en la hoja «Agregar a playlist» (menú de tres puntos de una canción, selección múltiple…), la primera fila es «Nueva playlist». Pide el nombre (empieza con lo que hayas escrito en el buscador de la hoja), crea la playlist y mete en ella la canción o la selección. Está también cuando aún no tienes ninguna playlist.
+- **Selector de canciones (PC):** toda la fila es el objetivo del clic y se marca al instante; el ratón muestra cursor de mano y resalte; el botón de vista previa es más grande.
+
+**Para probar en Windows:**
+1. «+» de Inicio → Playlist local: la hoja debe verse igual de cuidada que el resto, con el cursor ya en el campo. Escribe un nombre y pulsa Enter.
+2. Lo mismo desde Biblioteca → «Crear».
+3. Menú de tres puntos de una canción → «Agregar a playlist» → «Nueva playlist»: crea la playlist y la canción debe estar dentro.
+4. Selecciona varias canciones (clic largo en una) → Agregar a playlist → «Nueva playlist»: todas deben entrar.
+5. En el selector que se abre al crear una playlist, pulsa muchas filas seguidas con el ratón: cada clic debe marcar al primer intento, sin esperas, y la lista debe seguir fluida mientras suena música.
+6. Doble clic muy rápido en «Crear»: debe crear una sola playlist.
+
+**Para probar en Android:** los mismos recorridos 1–4; el teclado debe subir al abrir la hoja de nombre y la tecla «Hecho» debe crear.
 
 ## Otros cambios respecto al original
 

@@ -35,4 +35,6 @@
     <string name="bl_floating_lyrics_open">Letra flotante</string>
     <string name="bl_floating_lyrics_close">Cerrar letra flotante</string>
     <string name="bl_floating_lyrics_permission">Permite «Mostrar sobre otras apps» para esta app y vuelve a abrirla</string>
+    <string name="bl_newpl_title">Nueva playlist</string>
+    <string name="bl_newpl_clear">Borrar nombre</string>
 </resources>

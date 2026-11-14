@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -57,12 +58,21 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import com.maxrave.domain.data.entities.SongEntity
 import com.maxrave.simpmusic.ui.component.Chip
-import com.maxrave.simpmusic.ui.component.SongFullWidthItems
+import com.maxrave.simpmusic.ui.component.rememberHolderPainter
 import com.maxrave.simpmusic.ui.component.rememberSurfaceDarkColors
+import com.maxrave.simpmusic.ui.icon.Check
 import com.maxrave.simpmusic.ui.icon.Close
 import com.maxrave.simpmusic.ui.icon.Pause
 import com.maxrave.simpmusic.ui.icon.PlayArrow
@@ -98,7 +108,7 @@ import simpmusic.composeapp.generated.resources.bl_picker_title
  *
  * UX rule (docs/beatland/RULES.md): this screen is built ONLY from the app's own pieces so it reads as
  * part of it — the sheet shell of `SelectedSongsBottomSheet`/the add-to-playlist sheet, the pill search
- * field of the latter, [Chip], [SongFullWidthItems] in selection mode (its circle indicator and row tint)
+ * field of the latter, [Chip], its own light song row (D-053) with the app's selection circle and row tint
  * and [rememberSurfaceDarkColors] for every surface/text colour. No ad-hoc colours.
  *
  * Pick from Recent / Most played / Liked, or type to search your library and YouTube Music at once.
@@ -425,9 +435,15 @@ private fun InfoText(text: String) {
 }
 
 /**
- * One song, drawn by the app's own [SongFullWidthItems] in selection mode (circle indicator + row tint).
- * The preview button sits at the far RIGHT edge — opposite the selection circle on the left, which is
- * where a tap means "pick" — so a quick tap on the row can never start playback by mistake.
+ * One song. BEATLAND (D-053): a light row of its own instead of the app's `SongFullWidthItems`. That one is
+ * built for lists you browse and opens a database flow per row, runs an endless marquee on every long title
+ * and animates its width and its selection circle in; with a few dozen rows in a sheet on a PC that was
+ * enough to make clicks feel late. This row only draws what it is given, so ticking a song costs the rows
+ * whose own state changed and nothing else.
+ *
+ * The whole row is the click target (a mouse gets a hand cursor and the ripple's hover tint) and ticks at
+ * once, without any animation to wait for. The preview button sits at the far RIGHT edge — opposite the
+ * selection circle on the left — so a quick click on the row can never start playback by mistake.
  */
 @Composable
 private fun PickerRow(
@@ -437,31 +453,105 @@ private fun PickerRow(
     playingId: String,
     viewModel: PlaylistSongPickerViewModel,
 ) {
-    val inPlaylist = alreadyInPlaylist.contains(song.videoId)
-    val isPlayingThis = playingId == song.videoId
-    val colors = rememberSurfaceDarkColors()
-    val right: @Composable () -> Unit = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (inPlaylist) {
-                Text(
-                    text = stringResource(Res.string.bl_picker_already_in),
-                    style = typo().labelSmall,
-                    color = colors.subtitle,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            PreviewButton(playing = isPlayingThis, onClick = { viewModel.togglePreview(song) })
-        }
-    }
-    SongFullWidthItems(
-        songEntity = song,
-        isPlaying = isPlayingThis,
-        selectionMode = true,
-        isSelected = inPlaylist || selectedIds.contains(song.videoId),
-        onSelectToggle = { if (!inPlaylist) viewModel.toggle(song) },
-        modifier = Modifier.fillMaxWidth().alpha(if (inPlaylist) 0.55f else 1f),
-        rightView = right,
+    PickerSongRow(
+        song = song,
+        selected = selectedIds.contains(song.videoId),
+        inPlaylist = alreadyInPlaylist.contains(song.videoId),
+        playing = playingId == song.videoId,
+        onToggle = { viewModel.toggle(song) },
+        onPreview = { viewModel.togglePreview(song) },
     )
+}
+
+@Composable
+private fun PickerSongRow(
+    song: SongEntity,
+    selected: Boolean,
+    inPlaylist: Boolean,
+    playing: Boolean,
+    onToggle: () -> Unit,
+    onPreview: () -> Unit,
+) {
+    val colors = rememberSurfaceDarkColors()
+    val scheme = MaterialTheme.colorScheme
+    val checked = selected || inPlaylist
+    val thumbnail = song.thumbnails
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .alpha(if (inPlaylist) 0.55f else 1f)
+                .background(if (selected && !inPlaylist) scheme.primary.copy(alpha = 0.14f) else Color.Transparent)
+                .pointerHoverIcon(if (inPlaylist) PointerIcon.Default else PointerIcon.Hand)
+                .clickable(enabled = !inPlaylist, onClick = onToggle)
+                .heightIn(min = 64.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(if (checked) scheme.primary else Color.Transparent)
+                    .border(1.5.dp, if (checked) scheme.primary else colors.subtitle, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Icon(
+                    imageVector = SimpIcons.Check,
+                    contentDescription = null,
+                    tint = scheme.onPrimary,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        AsyncImage(
+            model =
+                ImageRequest
+                    .Builder(LocalPlatformContext.current)
+                    .data(thumbnail)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .diskCacheKey(thumbnail)
+                    .build(),
+            placeholder = rememberHolderPainter(),
+            error = rememberHolderPainter(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = song.title,
+                style = typo().titleSmall,
+                color = colors.content,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val artists = song.artistName?.joinToString(", ").orEmpty()
+            if (artists.isNotEmpty()) {
+                Text(
+                    text = artists,
+                    style = typo().bodySmall,
+                    color = colors.subtitle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (inPlaylist) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(Res.string.bl_picker_already_in),
+                style = typo().labelSmall,
+                color = colors.subtitle,
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        PreviewButton(playing = playing, onClick = onPreview)
+    }
 }
 
 /** Small round outlined play button; filled with the app's primary pair while its song is playing. */
@@ -475,8 +565,7 @@ private fun PreviewButton(
     Box(
         modifier =
             Modifier
-                .padding(start = 4.dp, end = 2.dp)
-                .size(34.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(if (playing) scheme.primary else Color.Transparent)
                 .border(1.dp, if (playing) scheme.primary else colors.subtitle.copy(alpha = 0.5f), CircleShape)

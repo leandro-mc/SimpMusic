@@ -34,6 +34,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Diagnóstico de congelaciones (escritorio)** | `UiStallWatchdog` escribe en el log (etiqueta `UiStall`) qué hace cada hilo cuando la ventana deja de responder más de 3 s. | D-049 |
 | **Barra de navegación** | La pestaña resaltada (teléfono y escritorio) siempre coincide con la pantalla real: atrás/gesto atrás, salir de Buscar, *deep links*. | D-050 |
 | **Navegación sin pantallas repetidas** | Pulsar varias veces Favoritas, Descargas, una pestaña o un botón global ya no apila copias: Atrás no recorre n veces la misma pantalla, y «Inicio» con una subpantalla encima vuelve al Inicio que ya estaba. | D-052 |
+| **Crear playlists** | Hoja de nombre rehecha con el estilo de la app; «Nueva playlist» dentro de «Agregar a playlist» (la canción o selección entra en la playlist recién creada); selector de canciones con filas ligeras y más sensibles al clic en PC. | D-053 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -66,6 +67,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../ui/component/AppBottomNavigationBar.kt`, `DesktopSidebar.kt`, `composeApp/.../androidMain/.../LiquidGlassAppBottomNavigationBar.android.kt` | Cada una llama a `SyncSelectedTab(...)` (import + comentario + 1 línea) para que la pestaña resaltada siga al destino real (D-050) |
 | `DesktopSidebar.kt`, `AppBottomNavigationBar.kt`, `LiquidGlassAppBottomNavigationBar.android.kt` (además) | Las cuatro copias de «pestaña seleccionada con subpantalla encima» llaman a `returnToTab(...)`, y las filas del panel a `navigateOnce(...)` (D-052) |
 | `App.kt` (además) | Los enlaces profundos a Biblioteca, Analíticas y colecciones usan `navigateOnce(...)` (D-052) |
+| `composeApp/.../ui/component/CreateSheet.kt` (además) | `CreateLocalPlaylistSheet` delega en `NewPlaylistSheet` (mismo nombre y firma) (D-053) |
+| `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | `AddToPlaylistModalBottomSheet`: fila «Nueva playlist» y hoja de nombre (3 imports, estado, la fila y el bloque `newPlaylistInitialName?.let`) (D-053) |
 | `HomeScreen.kt`, `LibraryScreen.kt`, `LibraryWrappedTab.kt`, `AnalyticsScreen.kt`, `SettingScreen.kt`, `NowPlayingScreen.kt`, `ListenTogetherScreen.kt`, `CreateSheet.kt` | 19 botones a pantallas globales sin argumentos usan `navigateOnce(...)` en vez de `navigate(...)` (D-052) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
 | `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
@@ -101,7 +104,8 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/src/jvmMain/.../beatland/BeatlandDesktop.kt` | `installBeatlandDesktopServices()`: el único punto que `DesktopApp.kt` llama para lo propio de escritorio (D-048, D-049) |
 | `composeApp/.../beatland/navigation/TabSelectionSync.kt` | `SyncSelectedTab`: selecciona la pestaña de la entrada más alta de la pila de navegación que es (o cuelga de) una pestaña (D-050) |
 | `composeApp/.../beatland/navigation/SingleScreenNavigation.kt` | `navigateOnce` (no abre la pantalla ya abierta) y `returnToTab` (vuelve a la pestaña en vez de apilarla) (D-052) |
-| `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector (claves `bl_`) |
+| `composeApp/.../beatland/playlist/` (3 archivos) | `NewPlaylistSheet` (hoja de nombre), `NewPlaylistRow` (fila «Nueva playlist») y `createLocalPlaylistAndGet` (crea y devuelve la playlist) (D-053) |
+| `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector y de «Nueva playlist» (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante) y nombre. Desde D-047 ya no llevan íconos: el launcher sale de `androidApp/src/main/res` |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 no los usa nada; se conservan para volver al ícono propio |
 | `.github/workflows/beatland-windows-installer.yml` | Compila el instalador de Windows en GitHub; se dispara con una etiqueta `beatland-desktop-*`; solo descarga la libmpv de `windows-x64`, comprueba que `libmpv-2.dll` quedó en su sitio, pre-descarga Gradle con reintentos y publica los errores de Gradle como anotaciones (D-035, D-040, D-042) |

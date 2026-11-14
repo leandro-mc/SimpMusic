@@ -37,4 +37,6 @@
     <string name="bl_floating_lyrics_open">Floating lyrics</string>
     <string name="bl_floating_lyrics_close">Close floating lyrics</string>
     <string name="bl_floating_lyrics_permission">Allow “Display over other apps” for this app, then open it again</string>
+    <string name="bl_newpl_title">New playlist</string>
+    <string name="bl_newpl_clear">Clear name</string>
 </resources>
