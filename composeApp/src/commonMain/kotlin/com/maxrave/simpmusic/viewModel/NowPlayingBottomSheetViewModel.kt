@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.update
@@ -306,7 +307,12 @@ class NowPlayingBottomSheetViewModel(
                 }
 
                 is NowPlayingBottomSheetUIEvent.AddToPlaylist -> {
-                    val targetPlaylist = uiState.value.listLocalPlaylist.find { it.id == ev.playlistId } ?: return@launch
+                    val targetPlaylist =
+                        uiState.value.listLocalPlaylist.find { it.id == ev.playlistId }
+                            // BEATLAND (D-055): a playlist created a moment ago ("Add to playlist" -> "New playlist") is not
+                            // in this cached list yet, so read it from the repository like SongSelectionViewModel does.
+                            ?: localPlaylistRepository.getAllLocalPlaylists().firstOrNull()?.find { it.id == ev.playlistId }
+                            ?: return@launch
                     val newList = (targetPlaylist.tracks ?: emptyList<String>()).toMutableList()
                     if (newList.contains(songUIState.videoId)) {
                         return@launch

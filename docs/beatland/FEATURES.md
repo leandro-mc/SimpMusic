@@ -151,7 +151,7 @@ Pulsar varias veces la misma opción ya no apila copias: el panel lateral de esc
 **Para probar en Windows:**
 1. «+» de Inicio → Playlist local: la hoja debe verse igual de cuidada que el resto, con el cursor ya en el campo. Escribe un nombre y pulsa Enter.
 2. Lo mismo desde Biblioteca → «Crear».
-3. Menú de tres puntos de una canción → «Agregar a playlist» → «Nueva playlist»: crea la playlist y la canción debe estar dentro.
+3. Menú de tres puntos de una canción → «Agregar a playlist» → «Nueva playlist»: crea la playlist y la canción debe estar dentro (aparece el aviso de que se añadió a la playlist). Repetir desde la pantalla del reproductor (D-055).
 4. Selecciona varias canciones (clic largo en una) → Agregar a playlist → «Nueva playlist»: todas deben entrar.
 5. En el selector que se abre al crear una playlist, pulsa muchas filas seguidas con el ratón: cada clic debe marcar al primer intento, sin esperas, y la lista debe seguir fluida mientras suena música.
 6. Doble clic muy rápido en «Crear»: debe crear una sola playlist.

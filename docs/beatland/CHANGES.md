@@ -70,6 +70,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `App.kt` (además) | Los enlaces profundos a Biblioteca, Analíticas y colecciones usan `navigateOnce(...)` (D-052) |
 | `composeApp/.../ui/component/CreateSheet.kt` (además) | `CreateLocalPlaylistSheet` delega en `NewPlaylistSheet` (mismo nombre y firma) (D-053) |
 | `composeApp/.../ui/component/ModalBottomSheet.kt` (además) | `AddToPlaylistModalBottomSheet`: fila «Nueva playlist» y hoja de nombre (3 imports, estado, la fila y el bloque `newPlaylistInitialName?.let`) (D-053) |
+| `composeApp/.../viewModel/NowPlayingBottomSheetViewModel.kt` (además) | `AddToPlaylist`: si la playlist elegida no está aún en la lista en memoria, la lee del repositorio (1 import y 4 líneas) (D-055) |
 | `HomeScreen.kt`, `LibraryScreen.kt`, `LibraryWrappedTab.kt`, `AnalyticsScreen.kt`, `SettingScreen.kt`, `NowPlayingScreen.kt`, `ListenTogetherScreen.kt`, `CreateSheet.kt` | 19 botones a pantallas globales sin argumentos usan `navigateOnce(...)` en vez de `navigate(...)` (D-052) |
 | `composeApp/.../ui/screen/home/HomeScreen.kt` | Guardas de `ForkPolicy` en los diálogos promocionales y en el *launch banner* (D-045) |
 | `composeApp/.../ui/component/LyricsPromoLine.kt` | `return` inicial si `ForkPolicy.UPSTREAM_PROMOS_ENABLED` es falso (D-045) |
