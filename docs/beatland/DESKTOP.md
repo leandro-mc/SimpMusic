@@ -3,16 +3,15 @@
 Beatland de escritorio se instala con un archivo **`.msi`** (instalador normal de Windows). Funciona en **Windows 10/11 de 64 bits**.
 Es **un instalador sin firmar** (no hay certificado de pago): Windows SmartScreen avisará una vez, ver el paso 4.
 
-> **Estado honesto:** el agente de IA no puede compilar. Los instaladores `beatland-desktop-v1` a `v3` se compilaron, instalaron y actualizaron en el sitio;
-> los cambios posteriores (D-039 y D-040) solo se comprueban cuando GitHub compila uno nuevo. Si falla, copia el texto del error (instrucciones más abajo) y se corrige.
+> **Estado honesto:** el agente de IA no puede compilar. Desde D-054 el instalador se compila **en tu PC** (sección «Lo normal»); GitHub Actions queda como vía excepcional, solo cuando tú lo autorizas y como máximo una vez por semana. Si falla, copia el texto del error y se corrige.
 
-## Opción A (recomendada): que GitHub lo compile, sin instalar nada en tu PC
+## Excepcional (D-054): que GitHub lo compile
 
-El repositorio es público, así que las "Actions" de GitHub son gratis. Una máquina Windows de GitHub compila el instalador (15-40 min) y te lo deja para descargar.
+**Solo cuando el dueño lo autoriza, y como máximo una vez por semana.** GitHub deshabilitó los workflows de este fork el 2026-11-14 por exceso de ejecuciones (*"Workflows on this fork have been disabled"*), así que no se usa para probar: compila en tu PC (sección «Lo normal»). Los workflows están deshabilitados uno a uno; para una ejecución autorizada se habilita solo el del instalador, se crea una etiqueta y se vuelve a deshabilitar (`RULES.md`, «CI»).
 
-**Una sola vez — activar las Actions de tu fork**
-1. Entra a tu repositorio en GitHub → pestaña **Actions**.
-2. Si ves el mensaje *"Workflows aren't being run on this forked repository"*, pulsa **"I understand my workflows, go ahead and enable them"**.
+Una máquina Windows de GitHub compila el instalador (15-40 min) y te lo deja para descargar.
+
+**Si ves el mensaje de que los workflows están deshabilitados** (pestaña **Actions**), es la protección de GitHub para forks: reactivarla con el botón verde no ejecuta nada por sí solo, porque los workflows siguen deshabilitados individualmente.
 
 **Cada vez que quieras generar un instalador**
 1. Repositorio → **Releases** → **Draft a new release** (a la derecha).
@@ -48,7 +47,7 @@ El repositorio es público, así que las "Actions" de GitHub son gratis. Una má
    - Un instalador **más antiguo** que el instalado tampoco se instala encima (Windows lo trata como un retroceso).
 6. **Desinstalar:** Configuración → Aplicaciones → Beatland.
 
-## Opción B: compilarlo tú en tu PC (solo si la A no te sirve)
+## Lo normal (D-054): compilarlo tú en tu PC
 
 Necesitas, una sola vez:
 1. **JDK 21** (con `jpackage`): `winget install Microsoft.OpenJDK.21` y comprobar que `JAVA_HOME` apunta a él. (El JDK que trae Android Studio puede no incluir `jpackage`.)
@@ -73,15 +72,15 @@ Descarga las librerías del reproductor (libmpv), compila y deja el instalador e
 ## Datos y cosas a saber
 
 - **Carpeta de datos:** `C:\Users\<tu usuario>\.simpmusic`. Es la **misma** que usa el SimpMusic de escritorio original: si lo tienes instalado, no abras los dos a la vez y ten en cuenta que comparten base de datos y ajustes. (La ruta forma parte del submódulo `core`, que no se puede cambiar; ver D-003.)
-- La app **no se actualiza sola** (el verificador de actualizaciones está desactivado, D-009): para actualizar, genera un instalador nuevo (Opción A) e instálalo encima.
+- La app **no se actualiza sola** (el verificador de actualizaciones está desactivado, D-009): para actualizar, genera un instalador nuevo (sección «Lo normal», en tu PC) e instálalo encima.
 - Las sesiones (YouTube, Last.fm) y los ajustes de escritorio son independientes de los de Android: hay que iniciar sesión y configurar la IA de nuevo.
 - La primera vez Windows Defender puede escanear el instalador un rato; es normal.
 
 ## Sobre los workflows del repositorio original en tu fork
 
-Cada vez que sincronizas `dev` con el original, GitHub ejecuta en tu fork los workflows de upstream (`android.yml`, `desktop-package.yml`…), que necesitan
-secretos que tu fork no tiene y **fallarán** (no afecta a tu app). Para evitar el ruido: pestaña **Actions** → elige cada uno de esos workflows → menú **⋯ → Disable workflow**.
-**No** desactives "Beatland - Windows installer (.msi)".
+Cada vez que sincronizas `dev` con el original, GitHub ejecutaría en tu fork los workflows de upstream (`android.yml`, `desktop-package.yml`…), que necesitan
+secretos que tu fork no tiene y **fallarían**, además de gastar cómputo. Por eso están **deshabilitados** (pestaña **Actions** → cada workflow → **⋯ → Disable workflow**), igual que `pr-triage.yml` y, desde D-054, también los dos de Beatland:
+se habilitan solo para una ejecución autorizada. No los reactives.
 
 ## Si algo falla al abrir
 

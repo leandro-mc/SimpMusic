@@ -35,6 +35,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | **Barra de navegación** | La pestaña resaltada (teléfono y escritorio) siempre coincide con la pantalla real: atrás/gesto atrás, salir de Buscar, *deep links*. | D-050 |
 | **Navegación sin pantallas repetidas** | Pulsar varias veces Favoritas, Descargas, una pestaña o un botón global ya no apila copias: Atrás no recorre n veces la misma pantalla, y «Inicio» con una subpantalla encima vuelve al Inicio que ya estaba. | D-052 |
 | **Crear playlists** | Hoja de nombre rehecha con el estilo de la app; «Nueva playlist» dentro de «Agregar a playlist» (la canción o selección entra en la playlist recién creada); selector de canciones con filas ligeras y más sensibles al clic en PC. | D-053 |
+| **Política de GitHub Actions** | Los seis workflows están deshabilitados; CI solo con autorización explícita del dueño y como máximo una vez por semana; las pruebas se compilan en el PC del dueño. | D-054 |
 | **Carpeta de backups automáticos** | `Download/Beatland` en vez de `Download/SimpMusic`. | D-005 |
 | **Documentación para agentes** | `AGENTS.md`, `docs/beatland/`, y una línea al inicio de `CLAUDE.md`. | D-001, D-015 |
 
@@ -105,6 +106,7 @@ git diff --stat dev...myapp -- . ':!docs' | tail -1  # resumen
 | `composeApp/.../beatland/navigation/TabSelectionSync.kt` | `SyncSelectedTab`: selecciona la pestaña de la entrada más alta de la pila de navegación que es (o cuelga de) una pestaña (D-050) |
 | `composeApp/.../beatland/navigation/SingleScreenNavigation.kt` | `navigateOnce` (no abre la pantalla ya abierta) y `returnToTab` (vuelve a la pestaña en vez de apilarla) (D-052) |
 | `composeApp/.../beatland/playlist/` (3 archivos) | `NewPlaylistSheet` (hoja de nombre), `NewPlaylistRow` (fila «Nueva playlist») y `createLocalPlaylistAndGet` (crea y devuelve la playlist) (D-053) |
+| `.github/workflows/beatland-windows-installer.yml`, `beatland-android-check.yml`, `scripts/beatland/build-windows-installer.ps1` (además) | Solo comentarios de cabecera con la política de CI (D-054); sin cambios de lógica |
 | `composeResources/values/beatland_strings.xml`, `values-es/…` | Textos del selector y de «Nueva playlist» (claves `bl_`) |
 | `androidApp/src/beatland/**`, `androidApp/src/beatlandDebug/**` | Manifest del flavor (permiso y servicio de la letra flotante) y nombre. Desde D-047 ya no llevan íconos: el launcher sale de `androidApp/src/main/res` |
 | `composeApp/icon/beatland_app_icon.*`, `composeResources/drawable/beatland_app_icon.png` | Íconos propios (generados). Desde D-047 no los usa nada; se conservan para volver al ícono propio |

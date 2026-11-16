@@ -3,8 +3,8 @@
   Builds the Beatland Windows installer (.msi) on THIS computer.
 
 .DESCRIPTION
-  Easier alternative with nothing to install: let GitHub build it (see docs/beatland/DESKTOP.md, "Option A").
-  Use this script only if you prefer building locally. It needs:
+  This is the NORMAL way to build the installer (D-054): GitHub Actions is only used when the owner authorizes a run, about once
+  a week at most (see docs/beatland/DESKTOP.md). It needs:
     1. A JDK 17 or newer that includes jpackage (JDK 21 recommended):   winget install Microsoft.OpenJDK.21
     2. WiX Toolset 3.x (candle.exe + light.exe):                         choco install wixtoolset   (or https://github.com/wixtoolset/wix3/releases)
     3. The repository with its submodule:  git submodule update --init --recursive

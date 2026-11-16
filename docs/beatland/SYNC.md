@@ -4,7 +4,7 @@ Cada cierto tiempo se traen las novedades del proyecto original. **Nunca** se ha
 
 ## Pasos
 
-1. **Dueño:** en GitHub, "Sync fork" sobre la rama `dev` (debe ser fast-forward; `dev` nunca tiene commits propios).
+1. **Dueño:** en GitHub, "Sync fork" sobre la rama `dev` (debe ser fast-forward; `dev` nunca tiene commits propios). **Antes**, comprobar en la pestaña Actions que `android.yml` y `desktop-package.yml` siguen deshabilitados: empujar a `dev` los dispararía (D-054).
    Si `dev` se desvió, avisar: algo se commiteó donde no debía.
 2. Crear la rama de integración desde `myapp`:
    `git checkout myapp && git checkout -b sync/dev-AAAA-MM-DD`

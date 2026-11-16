@@ -1,5 +1,11 @@
 name: Beatland Android build check
 
+# CI POLICY (D-054) - READ BEFORE USING: GitHub switched off the workflows of this fork on 2026-11-14 because too many runs were
+# started in a few days (every run here builds twice and stores two APKs of about 300 MB). This workflow is therefore kept DISABLED
+# in the Actions tab and is turned on only for a run the owner has asked for or authorized, about once a week at most. It is NOT a
+# test loop: compile on the owner's PC first (docs/beatland/BUILD.md). An AI agent must never create a beatland-android-check-* tag,
+# nor enable this workflow, without an explicit request from the owner.
+#
 # Builds the `beatlandDebug` APK on GitHub so the Android side can be checked without compiling on a PC (D-046).
 # The Windows installer workflow only compiles the desktop target; this one compiles Android, including the
 # `checkBeatlandDebugDuplicateClasses` step that the desktop build does not have.

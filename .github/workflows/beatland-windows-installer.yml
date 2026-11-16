@@ -1,5 +1,10 @@
 name: Beatland - Windows installer (.msi)
 
+# CI POLICY (D-054) - READ BEFORE USING: GitHub switched off the workflows of this fork on 2026-11-14 because too many runs were
+# started in a few days. This workflow is therefore kept DISABLED in the Actions tab and is turned on only for a run the owner has
+# asked for or authorized, about once a week at most. It is NOT a test loop: compile on the owner's PC first (docs/beatland/BUILD.md).
+# An AI agent must never create a beatland-desktop-* tag, nor enable this workflow, without an explicit request from the owner.
+#
 # Builds the Windows installer of Beatland on a GitHub Windows machine, so nothing has to be installed on your PC.
 #
 # HOW TO RUN IT (see docs/beatland/DESKTOP.md):

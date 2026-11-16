@@ -8,13 +8,24 @@ Estas reglas se superponen a `CLAUDE.md`. Ver `DECISIONS.md` para el porqué de 
 2. Toda funcionalidad nueva va en `feature/<nombre>` creada desde `myapp`. No commitees directo en `myapp`
    salvo la documentación o la sincronización con `dev` (ver `SYNC.md`).
 3. **No hay forma de compilar en el entorno del agente.** Cuando termines, di al dueño qué compilar
-   (variante `beatlandDebug` o `beatlandRelease`) y espera los errores. No afirmes que compila.
+   (variante `beatlandDebug` o `beatlandRelease`) y espera los errores. No afirmes que compila. **Tampoco uses GitHub Actions como sustituto:** ver «CI» más abajo (D-054).
 4. Toda decisión nueva se registra en `DECISIONS.md`, y todo cambio respecto al original (archivo de upstream tocado o archivo propio nuevo) en `CHANGES.md`, en el mismo commit que lo introduce.
 5. Minimiza los cambios en archivos del proyecto original: prefiere **archivos nuevos**, source sets de
    flavor (`androidApp/src/beatland/`) y ganchos pequeños. Cada línea cambiada en un archivo de upstream es
    un futuro conflicto de merge.
 6. No toques el submódulo `core/` (apunta a `maxrave-dev/core`, que no es nuestro). Si algo requiere cambiarlo,
    busca un gancho en `composeApp`/`androidApp` o pregunta al dueño.
+
+## CI (GitHub Actions): solo con autorización del dueño (D-054)
+
+GitHub deshabilitó los workflows de este fork el 2026-11-14 por exceso de ejecuciones (unas 20 en pocos días; cada comprobación de Android compila dos veces y guarda dos APK de ~300 MB). Desde entonces:
+
+1. **El agente NUNCA crea etiquetas `beatland-desktop-*` ni `beatland-android-check-*`, no lanza workflows (`workflow_dispatch`) y no habilita workflows** salvo que el dueño lo pida o lo autorice de forma explícita en ese mensaje. «Termina la tarea» o «verifica» **no** son una autorización.
+2. **Máximo ideal: una ejecución por semana**, y solo para algo que lo justifique (un instalador para el dueño, o una comprobación de Android antes de fusionar). Si ya hubo una esta semana, pregunta antes de proponer otra.
+3. **CI no es un bucle de pruebas.** El agente no compila en Actions commits intermedios ni «prueba a ver si compila». La verificación normal es que **el dueño compile en su PC** (`BUILD.md`, «Comprobar en tu PC»). El agente entrega el código y la lista de qué probar.
+4. Los seis workflows están **deshabilitados** (`disabled_manually`) y no se reactivan: los de upstream (`android.yml`, `desktop-package.yml`, `android-release.yml`: se disparan solos con *push* a `dev`/`main` y necesitan secretos que el fork no tiene), `pr-triage.yml` y los dos de Beatland (ids `395284174` instalador de Windows y `414023843` comprobación de Android). **Ejecución autorizada:** habilitar solo ese workflow (`PUT /repos/leandro-mc/SimpMusic/actions/workflows/<id>/enable`), crear **una** etiqueta, esperar el resultado y volver a deshabilitarlo (`…/disable`).
+5. **Sincronizar `dev` también cuenta:** empujar a `dev` dispararía `android.yml` y `desktop-package.yml` si estuvieran activos. Antes de sincronizar, comprueba que siguen deshabilitados.
+6. Si GitHub vuelve a decir «Workflows on this fork have been disabled», **no insistas** con etiquetas ni reintentos: avisa al dueño, que decide si lo reactiva.
 
 ## UX y armonía con la app (prioridad máxima)
 
